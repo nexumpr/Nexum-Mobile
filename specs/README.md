@@ -22,6 +22,24 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`120-contratos-end-to-end`](120-contratos-end-to-end/spec.md) | Integración técnica contractual con Go | `040-cliente-http-contratos`, `050-sesion-credenciales`, `060-cache-offline` |
 | [`130-Registro-Usuario`](130-Registro-Usuario/spec.md) | Pantalla y flujo de registro (Sign Up) | `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 | [`140-Login`](140-Login/spec.md) | Pantalla y flujo de inicio de sesión | `030-di-navegacion-ui`, `040-cliente-http-contratos`, `050-sesion-credenciales` |
+| [`150-Refresh-Token`](150-Refresh-Token/spec.md) | Renovación y rotación de tokens de sesión (NEXUM-E003) | `140-Login`, `040-cliente-http-contratos`, `050-sesion-credenciales` |
+| [`151-github-actions`](151-github-actions.md) | Pipeline de release a Google Play con GitHub Actions | `100-ci-versiones-android`, `110-distribucion-google-play` |
+| [`160-Logout`](160-Logout/spec.md) | Cierre de sesión y revocación en servidor (NEXUM-E004) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `050-sesion-credenciales` |
+| [`170-Recuperar-Contrasena`](170-Recuperar-Contrasena/spec.md) | Solicitud de recuperación de contraseña (NEXUM-E005) | `140-Login`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`180-Restablecer-Contrasena`](180-Restablecer-Contrasena/spec.md) | Restablecimiento de contraseña con token (NEXUM-E006) | `170-Recuperar-Contrasena`, `140-Login`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`190-Cambiar-Contrasena`](190-Cambiar-Contrasena/spec.md) | Cambio de contraseña autenticado con reautenticación (NEXUM-E007) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`200-Sesiones-Activas`](200-Sesiones-Activas/spec.md) | Consulta de sesiones y dispositivos activos (NEXUM-E008) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`210-Revocar-Sesion`](210-Revocar-Sesion/spec.md) | Revocación de sesión en dispositivo remoto (NEXUM-E009) | `200-Sesiones-Activas`, `140-Login`, `160-Logout`, `040-cliente-http-contratos` |
+| [`220-Solicitud-Verificacion-Email`](220-Solicitud-Verificacion-Email/spec.md) | Solicitud y reenvío de verificación de correo (NEXUM-E010) | `130-Registro-Usuario`, `140-Login`, `040-cliente-http-contratos` |
+| [`230-Confirmar-Verificacion-Email`](230-Confirmar-Verificacion-Email/spec.md) | Confirmación de verificación de correo con token (NEXUM-E011) | `220-Solicitud-Verificacion-Email`, `140-Login`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`240-Perfil-Usuario`](240-Perfil-Usuario/spec.md) | Consulta de perfil del usuario autenticado (NEXUM-E012) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`250-Editar-Perfil`](250-Editar-Perfil/spec.md) | Edición de atributos de perfil del usuario (NEXUM-E013) | `240-Perfil-Usuario`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
+| [`260-Eliminar-Cuenta`](260-Eliminar-Cuenta/spec.md) | Eliminación definitiva de cuenta y datos del usuario (NEXUM-E014) | `240-Perfil-Usuario`, `140-Login`, `150-Refresh-Token`, `160-Logout`, `040-cliente-http-contratos`, `050-sesion-credenciales` |
+| [`270-Aviso-Privacidad-Vigente`](270-Aviso-Privacidad-Vigente/spec.md) | Consulta del aviso de privacidad legalmente vigente (NEXUM-E015) | `130-Registro-Usuario`, `240-Perfil-Usuario`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
+| [`280-Historial-Consentimientos`](280-Historial-Consentimientos/spec.md) | Consulta del historial de consentimientos del usuario (NEXUM-E016) | `270-Aviso-Privacidad-Vigente`, `240-Perfil-Usuario`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
+| [`290-Registrar-Consentimiento`](290-Registrar-Consentimiento/spec.md) | Registro de aceptación de nueva versión del aviso (NEXUM-E017) | `270-Aviso-Privacidad-Vigente`, `280-Historial-Consentimientos`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
+| [`300-Estado-Onboarding`](300-Estado-Onboarding/spec.md) | Consulta de estado y progreso de onboarding (NEXUM-E018) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
+| [`310-Completar-Onboarding`](310-Completar-Onboarding/spec.md) | Finalización de onboarding en modo completo o limitado (NEXUM-E019) | `300-Estado-Onboarding`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -34,4 +52,22 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `000-arquitectura-base`: marco SDD documental existente.
 - `010-*` a `120-*`: preparados, **ninguna implementación acreditada por la mera existencia de archivos**.
 - `130-Registro-Usuario` y `140-Login`: **implementadas y probadas** el 2026-11-04 (evidencia en `memoria.md` §8 y en cada `task.md`); fuente mock sin Backend real.
+- `150-Refresh-Token`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `151-github-actions`: **Fase A documental completada** (2026-11-05); implementación en workflow/Gradle preparada.
+- `160-Logout`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `170-Recuperar-Contrasena`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `180-Restablecer-Contrasena`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `190-Cambiar-Contrasena`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `200-Sesiones-Activas`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `210-Revocar-Sesion`: **Fase A documental completada** (2026-11-10); implementación técnica pendiente de mandato de Fase B.
+- `220-Solicitud-Verificacion-Email`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `230-Confirmar-Verificacion-Email`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `240-Perfil-Usuario`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `250-Editar-Perfil`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `260-Eliminar-Cuenta`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `270-Aviso-Privacidad-Vigente`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `280-Historial-Consentimientos`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `290-Registrar-Consentimiento`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `300-Estado-Onboarding`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `310-Completar-Onboarding`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.

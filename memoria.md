@@ -68,3 +68,184 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Incidencias corregidas:** `RegisterScreen.kt` lambda composable en el elvis de `supportingText`; import `AuthIntent` inexistente en `AuthViewModelTest` → `RegisterIntent`; carrera efectos/colector en pruebas → `UnconfinedTestDispatcher`.
 - **NO EJECUTADO:** pruebas de instrumentación/emulador (sin dispositivo); verificación visual manual; `git push` (requiere autorización aparte).
 - **Riesgos abiertos:** fuente mock sin Backend real (sustitución en `040`/`120`); token en memoria hasta `050`; M-P02 (DI/red/JSON) sigue pendiente — se usó composición manual; catálogos `frequency`/`type`, campos de `user` y verificación del `201` por confirmar.
+
+## 9. Evidencia — Fase A de `151-github-actions` (documental)
+- **Fecha:** 2026-11-05 · **Mandato:** aprobación humana para crear la especificación y actualizar la memoria; **sin Fase B, sin push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o workflows reales**.
+- **Archivos creados (1):** `specs/151-github-actions.md` (archivo único por decisión humana — desvío controlado de la convención de carpetas; frontmatter `format: single_file`, requisitos `M151-R01…R05`, planes `N151-P01…P05`, tareas `N151-T01…T05`).
+- **Archivos modificados (1):** `memoria.md` (esta sección).
+- **Contenido:** YAML exacto de `.github/workflows/google-play-release.yml` (trigger `push: main` + `workflow_dispatch`, `permissions: contents: read`, `concurrency`, setup-java Temurin 17 con cache Gradle, validación previa de los 5 secretos, decodificación de `KEYSTORE_BASE64`, `./gradlew bundleRelease` y `r0adkll/upload-google-play@v1` con `tracks: internal`); snippet Gradle de `signingConfigs` condicional por `KEYSTORE_FILE`; checklist manual de GitHub Secrets (`KEYSTORE_BASE64`, `KEY_ALIAS`, `KEY_PASSWORD`, `STORE_PASSWORD`, `SERVICE_ACCOUNT_JSON`) con comando PowerShell de base64 y pasos de Play Console; plan de Fase B pendiente.
+- **Verificación:** inputs de la action contrastados con `action.yml`/README de `r0adkll/upload-google-play` (`tracks` en vez del deprecado `track`, `serviceAccountJsonPlainText`); trazabilidad requisito → plan → tarea revisada; sin secretos reales en el documento (MO-PR10).
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase documental sin ejecución de código.
+- **Push/despliegue:** `NO EJECUTADO` — requiere autorización separada (MO-PR16).
+- **Pendiente:** mandato humano para la Fase B (crear el `.yml`, parchear `app/build.gradle.kts`, `.gitignore`, `bundleRelease` y configurar secretos manualmente); decisión de track tras `internal`; estrategia de `versionCode` (hoy fijo en 1) dentro de M-P06.
+
+## 10. Evidencia — Fase A de `150-Refresh-Token` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación 150 con `spec.md`, `plan.md` y `task.md` a partir del endpoint NEXUM-E003 (`POST /api/v1/auth/refresh` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, dependencias Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/150-Refresh-Token/spec.md` (v1.0.0, requisitos `M150-R01…R05`), `specs/150-Refresh-Token/plan.md` (v1.0.0, planes `N150-P01…P06`), `specs/150-Refresh-Token/task.md` (v1.0.0, tareas `N150-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E003 con payload rotativo `RefreshRequest(refreshToken)`, respuesta `200` con `RefreshResponse(accessToken, refreshToken, expiresIn)`, rotación obligatoria de refresh token, detección de reutilización ilegítima / token revocado con purga obligatoria de `TokenStorage` y navegación a Login (`AuthEffect.NavigateToLogin`), aislamiento de fallos de red (preservación de sesión local ante errores 5xx o desconexión), y patrón de concurrencia single-flight con `Mutex` en `AuthRepository`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, rotación en `MockAuthApi`, control con `Mutex`, observador en UI y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 11. Evidencia — Fase A de `160-Logout` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación de cierre de sesión a partir del endpoint NEXUM-E004 (`POST /api/v1/auth/logout` [M], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/160-Logout/spec.md` (v1.0.0, requisitos `M160-R01…R05`), `specs/160-Logout/plan.md` (v1.0.0, planes `N160-P01…P06`), `specs/160-Logout/task.md` (v1.0.0, tareas `N160-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E004 (`POST /api/v1/auth/logout`, `204 No Content`), payload `LogoutRequest(refreshToken)` y cabecera `Authorization: Bearer <accessToken>`, regla fail-secure de purga incondicional de credenciales locales en `TokenStorage` (incluso ante caída de red o 401), diálogo composable de confirmación de salida ("Perfil > Salir"), navegación con reseteo de historial (`AuthEffect.NavigateToLogin`), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, método en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, diálogo Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 12. Evidencia — Fase A de `170-Recuperar-Contrasena` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación de solicitud de recuperación de contraseña a partir del endpoint NEXUM-E005 (`POST /api/v1/auth/password/forgot` [E], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/170-Recuperar-Contrasena/spec.md` (v1.0.0, requisitos `M170-R01…R05`), `specs/170-Recuperar-Contrasena/plan.md` (v1.0.0, planes `N170-P01…P06`), `specs/170-Recuperar-Contrasena/task.md` (v1.0.0, tareas `N170-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E005 (`POST /api/v1/auth/password/forgot`, `202 Accepted`), payload `ForgotPasswordRequest(email)` con respuesta neutra idéntica `ForgotPasswordResponse(message)` para prevenir la enumeración de usuarios (MO-PR06), validación local previa de email, control antispam / cooldown en UI, manejo de `429 Too Many Requests`, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ForgotPasswordScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 13. Evidencia — Fase A de `180-Restablecer-Contrasena` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación de restablecimiento de contraseña a partir del endpoint NEXUM-E006 (`POST /api/v1/auth/password/reset` [E], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/180-Restablecer-Contrasena/spec.md` (v1.0.0, requisitos `M180-R01…R05`), `specs/180-Restablecer-Contrasena/plan.md` (v1.0.0, planes `N180-P01…P06`), `specs/180-Restablecer-Contrasena/task.md` (v1.0.0, tareas `N180-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E006 (`POST /api/v1/auth/password/reset`, `204 No Content`), payload `ResetPasswordRequest(resetToken, newPassword)`, validación local de contraseña (mínimo 8 caracteres alfanuméricos) y coincidencia estricta con confirmación, regla de seguridad que prohíbe el auto-login tras reseteo forzando inicio de sesión explícito (`AuthEffect.NavigateToLogin`), tratamiento de tokens expirados/consumidos de un solo uso con opción de re-solicitud, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ResetPasswordScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 14. Evidencia — Fase A de `190-Cambiar-Contrasena` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación de cambio autenticado de contraseña a partir del endpoint NEXUM-E007 (`POST /api/v1/auth/password/change` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/190-Cambiar-Contrasena/spec.md` (v1.0.0, requisitos `M190-R01…R05`), `specs/190-Cambiar-Contrasena/plan.md` (v1.0.0, planes `N190-P01…P06`), `specs/190-Cambiar-Contrasena/task.md` (v1.0.0, tareas `N190-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E007 (`POST /api/v1/auth/password/change`, `204 No Content`), payload `ChangePasswordRequest(currentPassword, newPassword)` con cabecera `Authorization: Bearer <accessToken>`, reautenticación obligatoria con contraseña actual, validación de contraseña nueva (≥8 caracteres alfanuméricos, distinta a la actual, coincidente con confirmación), purga inmediata de contraseñas de la memoria de la UI tras el éxito (MO-PR06, MO-PR10), revocación selectiva de sesiones remotas, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ChangePasswordScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 15. Evidencia — Fase A de `200-Sesiones-Activas` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación de consulta de sesiones activas a partir del endpoint NEXUM-E008 (`GET /api/v1/auth/sessions` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/200-Sesiones-Activas/spec.md` (v1.0.0, requisitos `M200-R01…R05`), `specs/200-Sesiones-Activas/plan.md` (v1.0.0, planes `N200-P01…P06`), `specs/200-Sesiones-Activas/task.md` (v1.0.0, tareas `N200-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E008 (`GET /api/v1/auth/sessions`, `200 OK`), payload `List<SessionItemResponse>` con `id`, `device`, `lastSeenAt`, `current`, regla estricta de cero fuga de secretos (prohibición de refresh tokens o hashes en la respuesta, MO-PR06, MO-PR10), estados MVI explícitos (`Loading`, `Content`, `Empty`, `Error`, `Offline`, MO-PR08), soporte de pull-to-refresh y badge de "Este dispositivo" para la sesión actual, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR08, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ActiveSessionsScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 16. Evidencia — Fase A de `210-Revocar-Sesion` (documental)
+- **Fecha:** 2026-11-10 · **Mandato:** solicitud humana para crear la especificación de revocación de sesión remota a partir del endpoint NEXUM-E009 (`DELETE /api/v1/auth/sessions/{sessionId}` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/210-Revocar-Sesion/spec.md` (v1.0.0, requisitos `M210-R01…R05`), `specs/210-Revocar-Sesion/plan.md` (v1.0.0, planes `N210-P01…P06`), `specs/210-Revocar-Sesion/task.md` (v1.0.0, tareas `N210-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E009 (`DELETE /api/v1/auth/sessions/{sessionId}`, `204 No Content`), cabecera `Authorization: Bearer <accessToken>` y parámetro de ruta `sessionId`, autorización estricta por titular (anti-IDOR), diálogo de confirmación accesible antes de revocar, actualización reactiva/optimista del listado de sesiones en `ActiveSessionsScreen`, branching seguro para purgar sesión local si se revoca el dispositivo actual (`TokenStorage.clear()`, MO-PR15), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, diálogo Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 17. Evidencia — Fase A de `220-Solicitud-Verificacion-Email` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de solicitud de verificación de correo a partir del endpoint NEXUM-E010 (`POST /api/v1/auth/email-verification/request` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/220-Solicitud-Verificacion-Email/spec.md` (v1.0.0, requisitos `M220-R01…R05`), `specs/220-Solicitud-Verificacion-Email/plan.md` (v1.0.0, planes `N220-P01…P06`), `specs/220-Solicitud-Verificacion-Email/task.md` (v1.0.0, tareas `N220-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E010 (`POST /api/v1/auth/email-verification/request`, `202 Accepted`), soporte dual (con `Authorization: Bearer <accessToken>` o con payload `EmailVerificationRequest(email)`), regla de no enumeración de cuentas (respuesta neutra idéntica `EmailVerificationResponse(message)`, MO-PR06), temporizador de reintento en UI (*cooldown* de 60 s), manejo de `429 Too Many Requests`, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `EmailVerificationRequestScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 18. Evidencia — Fase A de `230-Confirmar-Verificacion-Email` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de confirmación de verificación de correo a partir del endpoint NEXUM-E011 (`POST /api/v1/auth/email-verification/confirm` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/230-Confirmar-Verificacion-Email/spec.md` (v1.0.0, requisitos `M230-R01…R05`), `specs/230-Confirmar-Verificacion-Email/plan.md` (v1.0.0, planes `N230-P01…P06`), `specs/230-Confirmar-Verificacion-Email/task.md` (v1.0.0, tareas `N230-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E011 (`POST /api/v1/auth/email-verification/confirm`, `204 No Content`), payload `ConfirmEmailVerificationRequest(verificationToken)`, consumo e invalidación de token de un solo uso en servidor (anti-replay), soporte de deep link (`https://app.nexum.mx/verify-email?token=...`) o entrada manual, branching de navegación contextual (`AuthEffect.NavigateToApp` si hay sesión activa, o `AuthEffect.NavigateToLogin` si no hay sesión), tratamiento de token expirado con enlace hacia reenvío (`220-Solicitud-Verificacion-Email`), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR10, MO-PR15); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ConfirmEmailVerificationScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 19. Evidencia — Fase A de `240-Perfil-Usuario` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de consulta de perfil de usuario a partir del endpoint NEXUM-E012 (`GET /api/v1/users/me` [M], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/240-Perfil-Usuario/spec.md` (v1.0.0, requisitos `M240-R01…R05`), `specs/240-Perfil-Usuario/plan.md` (v1.0.0, planes `N240-P01…P06`), `specs/240-Perfil-Usuario/task.md` (v1.0.0, tareas `N240-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E012 (`GET /api/v1/users/me`, `200 OK`), payload `UserProfileResponse(id, name, email, emailVerified, createdAt)`, derivación estricta de identidad mediante el JWT Bearer (prohibición de enviar `userId` por parámetro, anti-IDOR, MO-PR06), estados MVI de perfil con pull-to-refresh y preservación de datos ante caída de red (MO-PR08), badge visual según el estado de `emailVerified` con enlace hacia reenvío de verificación (`220-Solicitud-Verificacion-Email`), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ProfileScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 20. Evidencia — Fase A de `250-Editar-Perfil` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de edición de perfil de usuario a partir del endpoint NEXUM-E013 (`PATCH /api/v1/users/me` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/250-Editar-Perfil/spec.md` (v1.0.0, requisitos `M250-R01…R05`), `specs/250-Editar-Perfil/plan.md` (v1.0.0, planes `N250-P01…P06`), `specs/250-Editar-Perfil/task.md` (v1.0.0, tareas `N250-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E013 (`PATCH /api/v1/users/me`, `200 OK`), payload `UpdateProfileRequest(name)` con cabecera `Authorization: Bearer <accessToken>`, validación local de nombre (2..50 caracteres), control de habilitación de botón mediante detección de cambios frente al valor actual, sincronización atómica del nuevo nombre en `Session.user` de `TokenStorage` (MO-PR04, MO-PR15), componente `EditProfileDialog` en Compose, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `EditProfileDialog` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 21. Evidencia — Fase A de `260-Eliminar-Cuenta` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de eliminación definitiva de cuenta a partir del endpoint NEXUM-E014 (`DELETE /api/v1/users/me` [M], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/260-Eliminar-Cuenta/spec.md` (v1.0.0, requisitos `M260-R01…R06`), `specs/260-Eliminar-Cuenta/plan.md` (v1.0.0, planes `N260-P01…P06`), `specs/260-Eliminar-Cuenta/task.md` (v1.0.0, tareas `N260-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E014 (`DELETE /api/v1/users/me`, respuesta síncrona `204 No Content` o asíncrona `202 Accepted` con `deletionRequestId`), cabecera `Authorization: Bearer <accessToken>` y cabecera opcional `Idempotency-Key`, payload `DeleteAccountRequest(password, confirmation = "ELIMINAR")`, doble confirmación estricta en UI mediante diálogo modal destructivo con advertencias de irreversibilidad, control reactivo de habilitación del botón ("Eliminar definitivamente"), purga incondicional de credenciales en `TokenStorage` (fail-secure, MO-PR06, MO-PR15) tras éxito o conflicto 409, navegación destructiva a Login (`AuthEffect.NavigateToLogin`), tratamiento local aislado para modo demo/invitado (sin peticiones HTTP ni contraseñas de red), manejo resiliente de error de credenciales (`401 Unauthorized`) sin cerrar sesión, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR10, MO-PR15, MO-PR17); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `DeleteAccountDialog` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 22. Evidencia — Fase A de `270-Aviso-Privacidad-Vigente` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de consulta del aviso de privacidad legalmente vigente a partir del endpoint NEXUM-E015 (`GET /api/v1/privacy/notices/current` [M], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/270-Aviso-Privacidad-Vigente/spec.md` (v1.0.0, requisitos `M270-R01…R06`), `specs/270-Aviso-Privacidad-Vigente/plan.md` (v1.0.0, planes `N270-P01…P06`), `specs/270-Aviso-Privacidad-Vigente/task.md` (v1.0.0, tareas `N270-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E015 (`GET /api/v1/privacy/notices/current`, `200 OK`), parámetro de consulta opcional `locale` (`es-MX`), payload `PrivacyNoticeResponse(version, title, body, publishedAt)`, endpoint público no autenticado consultable tanto antes de iniciar sesión (`RegisterScreen > Ver aviso`) como en perfil autenticado (`ProfileScreen > Privacidad`), veracidad del tratamiento de datos en backend eliminando la afirmación simulada de la demo local (MO-PR04, MO-PR06), suministro y propagación del campo `version` para su incorporación en el alta (`POST /api/v1/auth/register`), resiliencia y fallback con copia local de respaldo ante modo fuera de línea (MO-PR08), accesibilidad tipográfica y de lectura en pantalla (MO-PR07), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08, MO-PR17); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `PrivacyNoticeScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 23. Evidencia — Fase A de `280-Historial-Consentimientos` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de consulta del historial de consentimientos del usuario a partir del endpoint NEXUM-E016 (`GET /api/v1/users/me/consents` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/280-Historial-Consentimientos/spec.md` (v1.0.0, requisitos `M280-R01…R06`), `specs/280-Historial-Consentimientos/plan.md` (v1.0.0, planes `N280-P01…P06`), `specs/280-Historial-Consentimientos/task.md` (v1.0.0, tareas `N280-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E016 (`GET /api/v1/users/me/consents`, `200 OK`), cabecera `Authorization: Bearer <accessToken>`, payload `List<ConsentItemResponse>` con `noticeVersion`, `acceptedAt`, `source`, inmutabilidad estricta y carácter de solo lectura de la bitácora auditable de consentimientos (prohibición de alteración retroactiva, MO-PR04, MO-PR06), derivación estricta de identidad mediante el token JWT sin aceptar `userId` ajeno (anti-IDOR), formateo temporal de timestamps UTC a la zona horaria local del dispositivo (MO-PR07), estados MVI con soporte de pull-to-refresh y conservación de memoria ante fallo de red (MO-PR08), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `ConsentHistoryScreen` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 24. Evidencia — Fase A de `290-Registrar-Consentimiento` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de registro de aceptación de nueva versión del aviso a partir del endpoint NEXUM-E017 (`POST /api/v1/users/me/consents` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/290-Registrar-Consentimiento/spec.md` (v1.0.0, requisitos `M290-R01…R06`), `specs/290-Registrar-Consentimiento/plan.md` (v1.0.0, planes `N290-P01…P06`), `specs/290-Registrar-Consentimiento/task.md` (v1.0.0, tareas `N290-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E017 (`POST /api/v1/users/me/consents`, `201 Created`), cabecera `Authorization: Bearer <accessToken>` y cabecera opcional `Idempotency-Key`, payload `RecordConsentRequest(noticeVersion, accepted = true)`, respuesta `RecordConsentResponse(consentId, recordedAt)`, prevención estricta de envíos duplicados mediante validación contra historial local (`280`) y absorción resiliente de `409 Conflict` como éxito idempotente (MO-PR04, MO-PR06), diálogo modal de aceptación `UpdateConsentDialog` con Material 3 y control reactivo de habilitación, propagación inmediata del nuevo consentimiento al historial en memoria, y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `UpdateConsentDialog` en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 25. Evidencia — Fase A de `300-Estado-Onboarding` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de consulta de estado y progreso de onboarding a partir del endpoint NEXUM-E018 (`GET /api/v1/users/me/onboarding` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/300-Estado-Onboarding/spec.md` (v1.0.0, requisitos `M300-R01…R06`), `specs/300-Estado-Onboarding/plan.md` (v1.0.0, planes `N300-P01…P06`), `specs/300-Estado-Onboarding/task.md` (v1.0.0, tareas `N300-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E018 (`GET /api/v1/users/me/onboarding`, `200 OK`), cabecera `Authorization: Bearer <accessToken>`, payload `OnboardingStatusResponse(stepsCompleted, finishedAt)`, desacoplamiento explícito entre el estado remoto de onboarding y la gobernanza nativa de permisos en Android (el permiso de micrófono y notificaciones se comprueba en el sistema operativo, MO-PR09), enrutamiento determinista de arranque a `HomeScreen` si `finishedAt != null` o a `OnboardingScreen` si está pendiente, resiliencia offline con uso de caché local persistida para evitar bloqueos en zonas sin cobertura (MO-PR08), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08, MO-PR09); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, integración de enrutamiento en Compose y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 26. Evidencia — Fase A de `310-Completar-Onboarding` (documental)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para crear la especificación de finalización de onboarding a partir del endpoint NEXUM-E019 (`PATCH /api/v1/users/me/onboarding` [S], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/310-Completar-Onboarding/spec.md` (v1.0.0, requisitos `M310-R01…R06`), `specs/310-Completar-Onboarding/plan.md` (v1.0.0, planes `N310-P01…P06`), `specs/310-Completar-Onboarding/task.md` (v1.0.0, tareas `N310-T01…T06` todas `- [ ]`).
+- **Archivos modificados (2):** `specs/README.md` (enlace al mapa y actualización de progreso), `memoria.md` (esta sección).
+- **Contenido:** Contrato NEXUM-E019 (`PATCH /api/v1/users/me/onboarding`, `200 OK`), cabecera `Authorization: Bearer <accessToken>` y cabecera opcional `Idempotency-Key`, payload `UpdateOnboardingRequest(completed = true, limitedMode = false/true)`, disparadores en UI con botones accesibles "Continuar a Nexum" y "Continuar con funciones limitadas" (MO-PR07), no suplantación de permisos de Android (los flags remotos no conceden permisos de micrófono o notificaciones en el SO, MO-PR09), avance no bloqueante con fail-open local ante fallo de red (MO-PR08), navegación definitiva con desapilado de Compose Navigation (`NavigateToHome`), y simulación en `MockAuthApi`.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08, MO-PR09); sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, integración en `OnboardingScreen` y pruebas unitarias con `kotlinx-coroutines-test`).
