@@ -74,8 +74,8 @@ class AuthViewModelTest {
     private fun AuthViewModel.fillValidForm() {
         onIntent(RegisterIntent.NameChanged("Alex"))
         onIntent(RegisterIntent.EmailChanged("alex@example.com"))
-        onIntent(RegisterIntent.PasswordChanged("Password1"))
-        onIntent(RegisterIntent.ConfirmPasswordChanged("Password1"))
+        onIntent(RegisterIntent.PasswordChanged("Password123456"))
+        onIntent(RegisterIntent.ConfirmPasswordChanged("Password123456"))
         onIntent(RegisterIntent.IncomeAmountChanged("12000.00"))
         onIntent(
             RegisterIntent.ExpenseChanged(

@@ -6,8 +6,10 @@ import mx.nexum.app.auth.data.dto.Frequency
 data class ExpenseDraft(
     val concept: String = "",
     val amount: String = "",
-    val categoryId: String = "",
-    val type: ExpenseType = ExpenseType.fixed
+    val category: String = "Servicios",
+    val frequency: String = "monthly",
+    val type: String = "fixed",
+    val categoryId: String = ""
 )
 
 data class RegisterUiState(
@@ -17,10 +19,11 @@ data class RegisterUiState(
     val confirmPassword: String = "",
     val isPasswordVisible: Boolean = false,
     val incomeAmount: String = "",
-    val incomeFrequency: Frequency = Frequency.monthly,
-    val expenses: List<ExpenseDraft> = listOf(ExpenseDraft()),
+    val incomeFrequency: String = "monthly",
+    val expenses: List<ExpenseDraft> = emptyList(),
     val termsAccepted: Boolean = false,
     val isLoading: Boolean = false,
+    val isSuccess: Boolean = false,
     val nameError: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
@@ -28,7 +31,8 @@ data class RegisterUiState(
     val incomeError: String? = null,
     val expensesError: String? = null,
     val termsError: String? = null,
-    val formError: String? = null
+    val formError: String? = null,
+    val retryAfterSeconds: String? = null
 )
 
 data class LoginUiState(

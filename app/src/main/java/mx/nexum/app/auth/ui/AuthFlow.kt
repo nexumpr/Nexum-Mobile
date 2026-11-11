@@ -37,7 +37,7 @@ class AuthFlowViewModel : ViewModel() {
 fun AuthFlow(modifier: Modifier = Modifier) {
     val flowViewModel: AuthFlowViewModel = viewModel()
     val repository = flowViewModel.repository
-    val registerViewModel: AuthViewModel = viewModel { AuthViewModel(repository) }
+    val registerViewModel: RegisterViewModel = viewModel { RegisterViewModel() }
     val loginViewModel: LoginViewModel = viewModel { LoginViewModel(repository) }
 
     var screenName by rememberSaveable { mutableStateOf(AuthScreen.Login.name) }

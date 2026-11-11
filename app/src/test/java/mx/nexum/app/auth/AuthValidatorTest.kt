@@ -24,38 +24,34 @@ class AuthValidatorTest {
     }
 
     @Test
-    fun passwordCortaTieneError() {
-        assertEquals("Mínimo 8 caracteres", AuthValidator.passwordError("Ab1"))
+    fun passwordCortaMenorA12TieneError() {
+        assertEquals("La contraseña debe tener entre 12 y 128 caracteres", AuthValidator.passwordError("Short#123"))
     }
 
     @Test
-    fun passwordSinNumeroTieneError() {
-        assertNotNull(AuthValidator.passwordError("Abcdefgh"))
+    fun passwordVaciaTieneError() {
+        assertEquals("Ingresa tu contraseña", AuthValidator.passwordError(""))
     }
 
     @Test
-    fun passwordSinLetraTieneError() {
-        assertNotNull(AuthValidator.passwordError("12345678"))
+    fun passwordMayorA128TieneError() {
+        val longPassword = "A".repeat(129)
+        assertEquals("La contraseña debe tener entre 12 y 128 caracteres", AuthValidator.passwordError(longPassword))
     }
 
     @Test
-    fun passwordConSimbolosTieneError() {
-        assertNotNull(AuthValidator.passwordError("Abcdefg1!"))
-    }
-
-    @Test
-    fun passwordValidaNoTieneError() {
-        assertNull(AuthValidator.passwordError("Password1"))
+    fun passwordValidaEntre12Y128NoTieneError() {
+        assertNull(AuthValidator.passwordError("ExamplePassphrase#2026"))
     }
 
     @Test
     fun confirmacionDistintaTieneError() {
-        assertEquals("Las contraseñas no coinciden", AuthValidator.confirmationError("Password1", "Password2"))
+        assertEquals("Las contraseñas no coinciden", AuthValidator.confirmationError("ExamplePassphrase#2026", "DifferentPassphrase#2026"))
     }
 
     @Test
     fun confirmacionIgualNoTieneError() {
-        assertNull(AuthValidator.confirmationError("Password1", "Password1"))
+        assertNull(AuthValidator.confirmationError("ExamplePassphrase#2026", "ExamplePassphrase#2026"))
     }
 
     @Test
@@ -70,7 +66,7 @@ class AuthValidatorTest {
 
     @Test
     fun montoDecimalValidoNoTieneError() {
-        assertNull(AuthValidator.amountError("12000.00"))
+        assertNull(AuthValidator.amountError("15000.00"))
     }
 
     @Test
@@ -89,17 +85,24 @@ class AuthValidatorTest {
     }
 
     @Test
+    fun formateoDecimalConvierteAFormatoEsperado() {
+        assertEquals("15000.00", AuthValidator.formatDecimal("15000"))
+        assertEquals("650.00", AuthValidator.formatDecimal("650"))
+        assertEquals("650.50", AuthValidator.formatDecimal("650.5"))
+    }
+
+    @Test
     fun conceptoVacioTieneError() {
         assertNotNull(AuthValidator.conceptError(""))
     }
 
     @Test
-    fun terminosSinAceptarTieneError() {
-        assertNotNull(AuthValidator.termsAcceptedError(false))
+    fun avisoPrivacidadSinAceptarTieneError() {
+        assertNotNull(AuthValidator.privacyAcceptedError(false))
     }
 
     @Test
-    fun terminosAceptadosNoTieneError() {
-        assertNull(AuthValidator.termsAcceptedError(true))
+    fun avisoPrivacidadAceptadoNoTieneError() {
+        assertNull(AuthValidator.privacyAcceptedError(true))
     }
 }

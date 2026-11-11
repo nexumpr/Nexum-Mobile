@@ -13,11 +13,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,7 +31,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import mx.nexum.app.auth.data.dto.Frequency
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
@@ -46,7 +48,25 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Top
     ) {
         Text(text = "Crear cuenta", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Error general en pantalla (400, 409, 422, 429 o red)
+        state.formError?.let { errorText ->
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text(
+                    text = errorText,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+        }
 
         OutlinedTextField(
             value = state.name,
@@ -79,7 +99,9 @@ fun RegisterScreen(
             label = { Text("Contraseña") },
             singleLine = true,
             isError = state.passwordError != null,
-            supportingText = state.passwordError?.let { { Text(it) } },
+            supportingText = {
+                Text(state.passwordError ?: "Mínimo 12 y máximo 128 caracteres")
+            },
             visualTransformation = passwordTransformation(state.isPasswordVisible),
             trailingIcon = {
                 TextButton(onClick = { onIntent(RegisterIntent.TogglePasswordVisibility) }) {
@@ -116,23 +138,39 @@ fun RegisterScreen(
             singleLine = true,
             isError = state.incomeError != null,
             supportingText = {
-                Text(state.incomeError ?: "Frecuencia: mensual")
+                Text(state.incomeError ?: "Frecuencia: mensual (ej. 15000.00)")
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             enabled = !state.isLoading,
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        state.expenses.forEachIndexed { index, draft ->
-            ExpenseRow(
-                index = index,
-                draft = draft,
-                canRemove = state.expenses.size > 1,
-                enabled = !state.isLoading,
-                onIntent = onIntent
+        Text(
+            text = "Gastos recurrentes fijos (opcional)",
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (state.expenses.isEmpty()) {
+            Text(
+                text = "Sin gastos recurrentes agregados. Puedes continuar sin gastos.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+        } else {
+            state.expenses.forEachIndexed { index, draft ->
+                ExpenseCard(
+                    index = index,
+                    draft = draft,
+                    enabled = !state.isLoading,
+                    onIntent = onIntent
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
 
         state.expensesError?.let {
@@ -154,6 +192,8 @@ fun RegisterScreen(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+
+        // Checkbox de Aviso de Privacidad
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -164,7 +204,7 @@ fun RegisterScreen(
                 enabled = !state.isLoading
             )
             Text(
-                text = "Acepto Términos y Condiciones y el aviso de privacidad",
+                text = "He leído y acepto el Aviso de Privacidad (versión 2026-11)",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
@@ -173,14 +213,16 @@ fun RegisterScreen(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = { onIntent(RegisterIntent.Submit) },
-            enabled = state.termsAccepted && !state.isLoading,
+            enabled = !state.isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
@@ -188,7 +230,8 @@ fun RegisterScreen(
             if (state.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
                 Text("Registrarse")
@@ -198,51 +241,65 @@ fun RegisterScreen(
 }
 
 @Composable
-private fun ExpenseRow(
+private fun ExpenseCard(
     index: Int,
     draft: ExpenseDraft,
-    canRemove: Boolean,
     enabled: Boolean,
     onIntent: (RegisterIntent) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = draft.concept,
-            onValueChange = { onIntent(RegisterIntent.ExpenseChanged(index, draft.copy(concept = it))) },
-            label = { Text("Gasto ${index + 1}: concepto") },
-            singleLine = true,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
         ) {
             OutlinedTextField(
-                value = draft.amount,
-                onValueChange = { onIntent(RegisterIntent.ExpenseChanged(index, draft.copy(amount = it))) },
-                label = { Text("Monto") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                enabled = enabled,
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = draft.categoryId,
-                onValueChange = { onIntent(RegisterIntent.ExpenseChanged(index, draft.copy(categoryId = it))) },
-                label = { Text("Categoría") },
+                value = draft.concept,
+                onValueChange = { onIntent(RegisterIntent.ExpenseChanged(index, draft.copy(concept = it))) },
+                label = { Text("Concepto (ej. Internet)") },
                 singleLine = true,
                 enabled = enabled,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             )
-        }
-        if (canRemove) {
-            TextButton(
-                onClick = { onIntent(RegisterIntent.RemoveExpense(index)) },
-                enabled = enabled
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Eliminar gasto")
+                OutlinedTextField(
+                    value = draft.amount,
+                    onValueChange = { onIntent(RegisterIntent.ExpenseChanged(index, draft.copy(amount = it))) },
+                    label = { Text("Monto (ej. 650.00)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = draft.category,
+                    onValueChange = { onIntent(RegisterIntent.ExpenseChanged(index, draft.copy(category = it))) },
+                    label = { Text("Categoría") },
+                    singleLine = true,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { onIntent(RegisterIntent.RemoveExpense(index)) },
+                    enabled = enabled
+                ) {
+                    Text("Eliminar gasto")
+                }
             }
         }
     }
@@ -256,7 +313,7 @@ private fun passwordTransformation(visible: Boolean): VisualTransformation =
 private fun RegisterScreenPreview() {
     NexumTheme {
         RegisterScreen(
-            state = RegisterUiState(incomeFrequency = Frequency.monthly),
+            state = RegisterUiState(),
             onIntent = {}
         )
     }
