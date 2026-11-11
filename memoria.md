@@ -249,3 +249,11 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR06, MO-PR07, MO-PR08, MO-PR09); sin secretos ni tokens reales.
 - **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
 - **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, integración en `OnboardingScreen` y pruebas unitarias con `kotlinx-coroutines-test`).
+
+## 27. Evidencia — Corrección de compilación de `130-Registro-Usuario` (2026-11-11)
+- **Fecha:** 2026-11-11 · **Mandato:** solicitud humana para corregir el error de compilación del registro y dejar la app compilable; alcance limitado a `130-Registro-Usuario`.
+- **Causa:** migración incompleta del commit `6c7e2f3`; `RegisterUiState.incomeFrequency` y `ExpenseDraft.type` cambiaron a `String`, pero el `AuthViewModel` heredado aún los pasaba a `Income.frequency` (`Frequency`) y `RecurringExpense.type` (`ExpenseType`).
+- **Archivos eliminados (2):** `app/src/main/java/mx/nexum/app/auth/ui/AuthViewModel.kt` (código muerto; `AuthFlow` ya usa `RegisterViewModel`) y `app/src/test/java/mx/nexum/app/auth/AuthViewModelTest.kt` (pruebas del flujo mock anterior, reemplazadas por `RegisterViewModelTest`).
+- **Archivos modificados (2):** `app/src/main/java/mx/nexum/app/auth/ui/AuthUiState.kt` (imports sin uso) y `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt` (tipado explícito de `Response.error<RegisterResponseDto>` y eliminación de un `let` redundante en la prueba 429).
+- **Comandos y resultados reales:** `JAVA_HOME=C:\Users\demon\AppData\Local\Programs\Android Studio\jbr`; `.\gradlew.bat assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** · 51 tests · 0 fallos (`AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+- **Limitaciones:** sin push, sin emulador ni pruebas de instrumentación; la verificación visual manual de la pantalla queda pendiente.

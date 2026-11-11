@@ -1,8 +1,5 @@
 package mx.nexum.app.auth.ui
 
-import mx.nexum.app.auth.data.dto.ExpenseType
-import mx.nexum.app.auth.data.dto.Frequency
-
 data class ExpenseDraft(
     val concept: String = "",
     val amount: String = "",

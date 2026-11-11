@@ -240,21 +240,16 @@ class RegisterViewModelTest {
 
     @Test
     fun error429DemasiadasSolicitudesLeeHeaderRetryAfter() = runTest {
-        fakeApi.responseToReturn = Response.error(
-            429,
-            "".toResponseBody()
-        ).let {
-            Response.error(
-                "".toResponseBody(),
-                okhttp3.Response.Builder()
-                    .code(429)
-                    .message("Too Many Requests")
-                    .protocol(okhttp3.Protocol.HTTP_1_1)
-                    .request(okhttp3.Request.Builder().url("https://d2lpmqy5w6x9es.cloudfront.net/api/v1/auth/register").build())
-                    .headers(Headers.headersOf("Retry-After", "30"))
-                    .build()
-            )
-        }
+        fakeApi.responseToReturn = Response.error<RegisterResponseDto>(
+            "".toResponseBody(),
+            okhttp3.Response.Builder()
+                .code(429)
+                .message("Too Many Requests")
+                .protocol(okhttp3.Protocol.HTTP_1_1)
+                .request(okhttp3.Request.Builder().url("https://d2lpmqy5w6x9es.cloudfront.net/api/v1/auth/register").build())
+                .headers(Headers.headersOf("Retry-After", "30"))
+                .build()
+        )
 
         val viewModel = createViewModel()
         viewModel.fillValidForm()
