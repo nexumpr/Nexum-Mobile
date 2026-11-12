@@ -26,6 +26,8 @@ import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.AuthRepositoryImpl
 import mx.nexum.app.auth.data.InMemoryTokenStorage
 import mx.nexum.app.auth.data.MockAuthApi
+import androidx.compose.ui.tooling.preview.Preview
+import mx.nexum.app.ui.theme.NexumTheme
 
 enum class AuthScreen { Login, Register, App }
 
@@ -121,5 +123,21 @@ private fun AppPlaceholder(modifier: Modifier = Modifier) {
             text = "Sesión iniciada",
             style = MaterialTheme.typography.headlineSmall
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AuthFlowPreview() {
+    NexumTheme {
+        AuthFlow()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppPlaceholderPreview() {
+    NexumTheme {
+        AppPlaceholder()
     }
 }

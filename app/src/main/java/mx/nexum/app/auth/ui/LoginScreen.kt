@@ -118,7 +118,7 @@ fun LoginScreen(
 
 @Preview(showBackground = true)
 @Composable
-private fun LoginScreenPreview() {
+fun LoginScreenPreview() {
     NexumTheme {
         LoginScreen(state = LoginUiState(), onIntent = {})
     }
