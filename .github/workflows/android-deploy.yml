@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+
   workflow_dispatch:
 
 permissions:
@@ -19,18 +20,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Configurar Java
+      # 2. Dar permisos de ejecución a Gradle
+      - name: Grant execute permission for Gradle
+        run: chmod +x gradlew
+
+      # 3. Configurar Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 3. Configurar Gradle
+      # 4. Configurar Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # 4. Recuperar y decodificar la clave de firma
+      # 5. Decodificar el certificado JKS
       - name: Configure Android signing
         shell: bash
         env:
@@ -41,7 +46,7 @@ jobs:
           mkdir -p app
 
           if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "ERROR: El secreto ANDROID_KEYSTORE_BASE64 está vacío."
+            echo "ERROR: Falta ANDROID_KEYSTORE_BASE64."
             exit 1
           fi
 
@@ -49,13 +54,13 @@ jobs:
             | base64 --decode > app/upload-key.jks
 
           if [ ! -s app/upload-key.jks ]; then
-            echo "ERROR: El archivo JKS no se generó."
+            echo "ERROR: No se pudo generar el archivo JKS."
             exit 1
           fi
 
-          echo "Archivo JKS generado correctamente."
+          echo "Certificado JKS generado correctamente."
 
-      # 5. Validar la clave
+      # 6. Validar el certificado
       - name: Validate Android keystore
         shell: bash
         env:
@@ -67,21 +72,22 @@ jobs:
             -keystore app/upload-key.jks \
             -storepass "$ANDROID_KEYSTORE_PASSWORD"
 
-          echo "Keystore validado correctamente."
+          echo "Certificado validado correctamente."
 
-      # 6. Ejecutar pruebas
+      # 7. Ejecutar pruebas
       - name: Run tests
         run: ./gradlew test
 
-      # 7. Generar AAB firmado
+      # 8. Generar AAB firmado
       - name: Build Android App Bundle
         run: ./gradlew bundleRelease
         env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_FILE: upload-key.jks
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      # 8. Subir el AAB como artefacto
+      # 9. Guardar el AAB generado
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -89,12 +95,12 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: error
 
-      # 9. Publicar en Google Play
+      # 10. Publicar en Google Play
       - name: Deploy to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.nexum.nexum
           releaseFiles: app/build/outputs/bundle/release/*.aab
-          track: internal
+          tracks: internal
           status: draft
