@@ -44,6 +44,7 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`330-Bootstrap-Inicial`](330-Bootstrap-Inicial/spec.md) | Instantánea agregada de perfil, resumen, racha y conteos al entrar (NEXUM-E021) | `240-Perfil-Usuario`, `300-Estado-Onboarding`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 | [`340-Catalogo-Categorias`](340-Catalogo-Categorias/spec.md) | Consulta del catálogo de categorías con identificadores estables (NEXUM-E022) | `030-di-navegacion-ui`, `040-cliente-http-contratos`, `060-cache-offline` |
 | [`350-Catalogo-Frecuencias`](350-Catalogo-Frecuencias/spec.md) | Consulta del catálogo de frecuencias de ingreso, gasto y recurrencia (NEXUM-E023) | `130-Registro-Usuario`, `340-Catalogo-Categorias`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `060-cache-offline` |
+| [`360-Consultar-Ingreso`](360-Consultar-Ingreso/spec.md) | Consulta del ingreso habitual y su equivalente mensual (NEXUM-E024) | `350-Catalogo-Frecuencias`, `240-Perfil-Usuario`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -78,4 +79,5 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `330-Bootstrap-Inicial`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `340-Catalogo-Categorias`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `350-Catalogo-Frecuencias`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `360-Consultar-Ingreso`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.
