@@ -43,6 +43,7 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`320-Exportar-Datos-Usuario`](320-Exportar-Datos-Usuario/spec.md) | Exportación de datos personales del titular en JSON o CSV (NEXUM-E020) | `240-Perfil-Usuario`, `270-Aviso-Privacidad-Vigente`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
 | [`330-Bootstrap-Inicial`](330-Bootstrap-Inicial/spec.md) | Instantánea agregada de perfil, resumen, racha y conteos al entrar (NEXUM-E021) | `240-Perfil-Usuario`, `300-Estado-Onboarding`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 | [`340-Catalogo-Categorias`](340-Catalogo-Categorias/spec.md) | Consulta del catálogo de categorías con identificadores estables (NEXUM-E022) | `030-di-navegacion-ui`, `040-cliente-http-contratos`, `060-cache-offline` |
+| [`350-Catalogo-Frecuencias`](350-Catalogo-Frecuencias/spec.md) | Consulta del catálogo de frecuencias de ingreso, gasto y recurrencia (NEXUM-E023) | `130-Registro-Usuario`, `340-Catalogo-Categorias`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `060-cache-offline` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -76,4 +77,5 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `320-Exportar-Datos-Usuario`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `330-Bootstrap-Inicial`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `340-Catalogo-Categorias`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `350-Catalogo-Frecuencias`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.
