@@ -40,6 +40,7 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`290-Registrar-Consentimiento`](290-Registrar-Consentimiento/spec.md) | Registro de aceptación de nueva versión del aviso (NEXUM-E017) | `270-Aviso-Privacidad-Vigente`, `280-Historial-Consentimientos`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
 | [`300-Estado-Onboarding`](300-Estado-Onboarding/spec.md) | Consulta de estado y progreso de onboarding (NEXUM-E018) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
 | [`310-Completar-Onboarding`](310-Completar-Onboarding/spec.md) | Finalización de onboarding en modo completo o limitado (NEXUM-E019) | `300-Estado-Onboarding`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
+| [`320-Exportar-Datos-Usuario`](320-Exportar-Datos-Usuario/spec.md) | Exportación de datos personales del titular en JSON o CSV (NEXUM-E020) | `240-Perfil-Usuario`, `270-Aviso-Privacidad-Vigente`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -70,4 +71,5 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `290-Registrar-Consentimiento`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
 - `300-Estado-Onboarding`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
 - `310-Completar-Onboarding`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `320-Exportar-Datos-Usuario`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.
