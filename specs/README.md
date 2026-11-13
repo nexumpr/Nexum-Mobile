@@ -47,6 +47,7 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`360-Consultar-Ingreso`](360-Consultar-Ingreso/spec.md) | Consulta del ingreso habitual y su equivalente mensual (NEXUM-E024) | `350-Catalogo-Frecuencias`, `240-Perfil-Usuario`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 | [`370-Actualizar-Ingreso`](370-Actualizar-Ingreso/spec.md) | Reemplazo del ingreso habitual y recálculo del equivalente mensual (NEXUM-E025) | `360-Consultar-Ingreso`, `350-Catalogo-Frecuencias`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
 | [`380-Resumen-Financiero`](380-Resumen-Financiero/spec.md) | Consulta del resumen mensual: disponible, ingreso, obligatorios, hormiga y reservado (NEXUM-E026) | `360-Consultar-Ingreso`, `330-Bootstrap-Inicial`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`390-Listar-Movimientos`](390-Listar-Movimientos/spec.md) | Historial paginado de movimientos con filtros por tipo y rango (NEXUM-E027) | `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -84,4 +85,5 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `360-Consultar-Ingreso`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `370-Actualizar-Ingreso`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `380-Resumen-Financiero`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `390-Listar-Movimientos`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.
