@@ -310,7 +310,7 @@ private fun passwordTransformation(visible: Boolean): VisualTransformation =
 
 @Preview(showBackground = true)
 @Composable
-private fun RegisterScreenPreview() {
+fun RegisterScreenPreview() {
     NexumTheme {
         RegisterScreen(
             state = RegisterUiState(),

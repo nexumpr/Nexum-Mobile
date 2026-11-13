@@ -84,7 +84,9 @@ class LoginViewModel(
             val request = LoginRequest(
                 email = current.email.trim().lowercase(),
                 password = current.password,
-                deviceName = deviceName
+                deviceId = "installation-" + java.util.UUID.randomUUID().toString(),
+                deviceName = deviceName ?: android.os.Build.MODEL ?: "Android",
+                platform = "android"
             )
             when (val result = repository.login(request)) {
                 is AuthResult.Success -> {

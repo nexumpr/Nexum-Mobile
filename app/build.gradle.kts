@@ -1,3 +1,4 @@
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +6,7 @@ plugins {
 
 android {
     namespace = "mx.nexum.app"
+
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -12,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "mx.nexum.app"
+        applicationId = "com.nexum.nexum"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -21,15 +23,31 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Configuración de firma para Google Play
     val keystoreFile = System.getenv("KEYSTORE_FILE")
 
     if (keystoreFile != null) {
         signingConfigs {
             create("release") {
                 storeFile = file(keystoreFile)
-                storePassword = System.getenv("KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+
+                storePassword = requireNotNull(
+                    System.getenv("KEYSTORE_PASSWORD")
+                ) {
+                    "Falta la variable KEYSTORE_PASSWORD"
+                }
+
+                keyAlias = requireNotNull(
+                    System.getenv("KEY_ALIAS")
+                ) {
+                    "Falta la variable KEY_ALIAS"
+                }
+
+                keyPassword = requireNotNull(
+                    System.getenv("KEY_PASSWORD")
+                ) {
+                    "Falta la variable KEY_PASSWORD"
+                }
             }
         }
     }
@@ -39,15 +57,18 @@ android {
             optimization {
                 enable = false
             }
+
             if (keystoreFile != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
     }
@@ -63,16 +84,20 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

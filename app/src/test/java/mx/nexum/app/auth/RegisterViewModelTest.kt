@@ -8,6 +8,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import mx.nexum.app.auth.data.dto.LoginRequestDto
+import mx.nexum.app.auth.data.dto.LoginResponseDto
 import mx.nexum.app.auth.data.dto.RegisterRequestDto
 import mx.nexum.app.auth.data.dto.RegisterResponseDto
 import mx.nexum.app.auth.data.network.AuthApiService
@@ -46,6 +48,10 @@ class RegisterViewModelTest {
             sentRequest = request
             exceptionToThrow?.let { throw it }
             return responseToReturn
+        }
+
+        override suspend fun login(request: LoginRequestDto): Response<LoginResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
         }
     }
 

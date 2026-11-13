@@ -367,3 +367,18 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Verificación:** Trazabilidad formal requisito → plan → tarea; consistencia con la constitución canónica (`.specify/memory/constitution.md` MO-PR04, MO-PR05, MO-PR06, MO-PR07, MO-PR08, MO-PR12); enlaces relativos a carpetas existentes; sin secretos ni tokens reales.
 - **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
 - **Pendiente:** mandato humano para la Fase B (implementación de DTOs, métodos en `AuthApi`/`AuthRepository`, simulación en `MockAuthApi`, `EditMovementViewModel`, formulario en Compose y pruebas unitarias con `kotlinx-coroutines-test`); tipo exacto de `summaryVersion`, forma de `movement`, semántica de campos ausentes en `PATCH`, mecanismo de conflicto (`409`) y contratos de recálculo de presupuestos y estadísticas **por confirmar con Backend**.
+## 28. Evidencia — Inclusión de Previews de Compose y soporte para emulador (2026-11-12)
+- **Fecha:** 2026-11-12 · **Mandato:** solicitud humana para agregar previsualizaciones (`@Preview`) a todas las pantallas de la carpeta UI (`app/src/main/java/mx/nexum/app/auth/ui`) e instruir la ejecución en emulador.
+- **Alcance:** incorporación de composables de previsualización con `NexumTheme` y visibilidad de previsualización en `LoginScreen.kt`, `RegisterScreen.kt` y `AuthFlow.kt`.
+- **Archivos modificados (3):** `app/src/main/java/mx/nexum/app/auth/ui/LoginScreen.kt` (`@Preview LoginScreenPreview`), `app/src/main/java/mx/nexum/app/auth/ui/RegisterScreen.kt` (`@Preview RegisterScreenPreview`), y `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt` (`@Preview AuthFlowPreview` y `@Preview AppPlaceholderPreview`).
+- **Comandos y resultados reales:** `./gradlew assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** · 51 tests · 0 fallos (`AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+- **Limitaciones:** `git push` no ejecutado (requiere autorización explícita independiente).
+
+## 29. Evidencia — Migración de Login Mock a Endpoint Real E002 (2026-11-12)
+- **Fecha:** 2026-11-12 · **Mandato:** sustitución del inicio de sesión simulado (`MockAuthApi`) por el consumo real del endpoint NEXUM-E002 (`POST https://d2lpmqy5w6x9es.cloudfront.net/api/v1/auth/login`) con DTOs adaptados, metadatos Android (`deviceId`, `deviceName`, `platform`) y manejo de errores HTTP (`400`, `401`, `429`, `500`, `503`).
+- **Archivos creados (1):** `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthApi.kt`.
+- **Archivos modificados (6):** `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`, `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`, `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`, `app/src/main/java/mx/nexum/app/auth/ui/LoginViewModel.kt`, `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`, `memoria.md`.
+- **Comandos y resultados reales:** `./gradlew assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** · 51 tests · 0 fallos; `./gradlew lintDebug` → **BUILD SUCCESSFUL**.
+- **Limitaciones:** sin push, sin emulador ni pruebas de instrumentación; `git push` requiere autorización independiente.
+
+
