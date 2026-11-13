@@ -40,6 +40,17 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`290-Registrar-Consentimiento`](290-Registrar-Consentimiento/spec.md) | Registro de aceptación de nueva versión del aviso (NEXUM-E017) | `270-Aviso-Privacidad-Vigente`, `280-Historial-Consentimientos`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
 | [`300-Estado-Onboarding`](300-Estado-Onboarding/spec.md) | Consulta de estado y progreso de onboarding (NEXUM-E018) | `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
 | [`310-Completar-Onboarding`](310-Completar-Onboarding/spec.md) | Finalización de onboarding en modo completo o limitado (NEXUM-E019) | `300-Estado-Onboarding`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
+| [`320-Exportar-Datos-Usuario`](320-Exportar-Datos-Usuario/spec.md) | Exportación de datos personales del titular en JSON o CSV (NEXUM-E020) | `240-Perfil-Usuario`, `270-Aviso-Privacidad-Vigente`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `070-permisos-privacidad-accesibilidad` |
+| [`330-Bootstrap-Inicial`](330-Bootstrap-Inicial/spec.md) | Instantánea agregada de perfil, resumen, racha y conteos al entrar (NEXUM-E021) | `240-Perfil-Usuario`, `300-Estado-Onboarding`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`340-Catalogo-Categorias`](340-Catalogo-Categorias/spec.md) | Consulta del catálogo de categorías con identificadores estables (NEXUM-E022) | `030-di-navegacion-ui`, `040-cliente-http-contratos`, `060-cache-offline` |
+| [`350-Catalogo-Frecuencias`](350-Catalogo-Frecuencias/spec.md) | Consulta del catálogo de frecuencias de ingreso, gasto y recurrencia (NEXUM-E023) | `130-Registro-Usuario`, `340-Catalogo-Categorias`, `030-di-navegacion-ui`, `040-cliente-http-contratos`, `060-cache-offline` |
+| [`360-Consultar-Ingreso`](360-Consultar-Ingreso/spec.md) | Consulta del ingreso habitual y su equivalente mensual (NEXUM-E024) | `350-Catalogo-Frecuencias`, `240-Perfil-Usuario`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`370-Actualizar-Ingreso`](370-Actualizar-Ingreso/spec.md) | Reemplazo del ingreso habitual y recálculo del equivalente mensual (NEXUM-E025) | `360-Consultar-Ingreso`, `350-Catalogo-Frecuencias`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
+| [`380-Resumen-Financiero`](380-Resumen-Financiero/spec.md) | Consulta del resumen mensual: disponible, ingreso, obligatorios, hormiga y reservado (NEXUM-E026) | `360-Consultar-Ingreso`, `330-Bootstrap-Inicial`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`390-Listar-Movimientos`](390-Listar-Movimientos/spec.md) | Historial paginado de movimientos con filtros por tipo y rango (NEXUM-E027) | `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`400-Registrar-Movimiento`](400-Registrar-Movimiento/spec.md) | Alta de un gasto efectivamente realizado, manual o por voz confirmada (NEXUM-E028) | `390-Listar-Movimientos`, `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`410-Detalle-Movimiento`](410-Detalle-Movimiento/spec.md) | Consulta del detalle exacto de un movimiento (NEXUM-E029) | `390-Listar-Movimientos`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`420-Editar-Movimiento`](420-Editar-Movimiento/spec.md) | Corrección de concepto, monto, categoría o tipo de un gasto registrado (NEXUM-E030) | `410-Detalle-Movimiento`, `400-Registrar-Movimiento`, `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -70,4 +81,15 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `290-Registrar-Consentimiento`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
 - `300-Estado-Onboarding`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
 - `310-Completar-Onboarding`: **Fase A documental completada** (2026-11-11); implementación técnica pendiente de mandato de Fase B.
+- `320-Exportar-Datos-Usuario`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `330-Bootstrap-Inicial`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `340-Catalogo-Categorias`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `350-Catalogo-Frecuencias`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `360-Consultar-Ingreso`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `370-Actualizar-Ingreso`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `380-Resumen-Financiero`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `390-Listar-Movimientos`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `400-Registrar-Movimiento`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `410-Detalle-Movimiento`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `420-Editar-Movimiento`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.
