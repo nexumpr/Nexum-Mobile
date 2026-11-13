@@ -94,7 +94,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: mx.nexum.app
+          packageName: com.nexum.nexum
           releaseFiles: app/build/outputs/bundle/release/*.aab
           track: internal
           status: draft
