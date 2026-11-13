@@ -50,6 +50,7 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 | [`390-Listar-Movimientos`](390-Listar-Movimientos/spec.md) | Historial paginado de movimientos con filtros por tipo y rango (NEXUM-E027) | `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 | [`400-Registrar-Movimiento`](400-Registrar-Movimiento/spec.md) | Alta de un gasto efectivamente realizado, manual o por voz confirmada (NEXUM-E028) | `390-Listar-Movimientos`, `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
 | [`410-Detalle-Movimiento`](410-Detalle-Movimiento/spec.md) | Consulta del detalle exacto de un movimiento (NEXUM-E029) | `390-Listar-Movimientos`, `140-Login`, `150-Refresh-Token`, `030-di-navegacion-ui`, `040-cliente-http-contratos` |
+| [`420-Editar-Movimiento`](420-Editar-Movimiento/spec.md) | Corrección de concepto, monto, categoría o tipo de un gasto registrado (NEXUM-E030) | `410-Detalle-Movimiento`, `400-Registrar-Movimiento`, `340-Catalogo-Categorias`, `380-Resumen-Financiero`, `140-Login`, `150-Refresh-Token`, `040-cliente-http-contratos` |
 
 ## Regla de uso para OpenCode
 1. Abrir OpenCode **dentro de este repositorio**, no desde la carpeta padre.
@@ -90,4 +91,5 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `390-Listar-Movimientos`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `400-Registrar-Movimiento`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - `410-Detalle-Movimiento`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
+- `420-Editar-Movimiento`: **Fase A documental completada** (2026-11-12); implementación técnica pendiente de mandato de Fase B.
 - Estado de tests: **50 unitarios en verde** (2026-11-04); instrumentación **no ejecutada**.
