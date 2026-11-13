@@ -25,14 +25,16 @@ import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.AuthRepositoryImpl
 import mx.nexum.app.auth.data.InMemoryTokenStorage
-import mx.nexum.app.auth.data.MockAuthApi
 import androidx.compose.ui.tooling.preview.Preview
 import mx.nexum.app.ui.theme.NexumTheme
 
 enum class AuthScreen { Login, Register, App }
 
 class AuthFlowViewModel : ViewModel() {
-    val repository: AuthRepository = AuthRepositoryImpl(MockAuthApi(), InMemoryTokenStorage())
+    val repository: AuthRepository = AuthRepositoryImpl(
+        mx.nexum.app.auth.data.RetrofitAuthApi(mx.nexum.app.auth.data.network.NetworkModule.authApiService),
+        InMemoryTokenStorage()
+    )
 }
 
 @Composable

@@ -1,5 +1,7 @@
 package mx.nexum.app.auth.data.network
 
+import mx.nexum.app.auth.data.dto.LoginRequestDto
+import mx.nexum.app.auth.data.dto.LoginResponseDto
 import mx.nexum.app.auth.data.dto.RegisterRequestDto
 import mx.nexum.app.auth.data.dto.RegisterResponseDto
 import retrofit2.Response
@@ -19,4 +21,13 @@ interface AuthApiService {
         @Header("Idempotency-Key") idempotencyKey: String,
         @Body request: RegisterRequestDto
     ): Response<RegisterResponseDto>
+
+    @Headers(
+        "Accept: application/json",
+        "Content-Type: application/json"
+    )
+    @POST("auth/login")
+    suspend fun login(
+        @Body request: LoginRequestDto
+    ): Response<LoginResponseDto>
 }
