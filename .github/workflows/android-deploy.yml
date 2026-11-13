@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-
   workflow_dispatch:
 
 permissions:
@@ -13,11 +12,9 @@ permissions:
 
 jobs:
   build-and-deploy:
-
     runs-on: ubuntu-latest
 
     steps:
-
       # 1. Descargar el repositorio
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,40 +30,71 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # 4. Preparar la firma Android
+      # 4. Recuperar y decodificar la clave de firma
       - name: Configure Android signing
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" \
-            | base64 --decode > app/upload-key.jks
+        shell: bash
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
 
-      # 5. Ejecutar pruebas
+          mkdir -p app
+
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "ERROR: El secreto ANDROID_KEYSTORE_BASE64 está vacío."
+            exit 1
+          fi
+
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" \
+            | base64 --decode > app/upload-key.jks
+
+          if [ ! -s app/upload-key.jks ]; then
+            echo "ERROR: El archivo JKS no se generó."
+            exit 1
+          fi
+
+          echo "Archivo JKS generado correctamente."
+
+      # 5. Validar la clave
+      - name: Validate Android keystore
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          keytool -list \
+            -keystore app/upload-key.jks \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD"
+
+          echo "Keystore validado correctamente."
+
+      # 6. Ejecutar pruebas
       - name: Run tests
         run: ./gradlew test
 
-      # 6. Generar AAB firmado
+      # 7. Generar AAB firmado
       - name: Build Android App Bundle
         run: ./gradlew bundleRelease
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      # 7. Subir el AAB como artefacto
+      # 8. Subir el AAB como artefacto
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-release
           path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
 
-      # 8. Publicar en Google Play
+      # 9. Publicar en Google Play
       - name: Deploy to Google Play
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.empresa.miapp
+          packageName: mx.nexum.app
           releaseFiles: app/build/outputs/bundle/release/*.aab
           track: internal
           status: draft
