@@ -272,4 +272,13 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Comandos y resultados reales:** `./gradlew assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** · 51 tests · 0 fallos; `./gradlew lintDebug` → **BUILD SUCCESSFUL**.
 - **Limitaciones:** sin push, sin emulador ni pruebas de instrumentación; `git push` requiere autorización independiente.
 
+## 30. Evidencia — Corrección de `versionCode` para Google Play Release (2026-11-12)
+- **Fecha:** 2026-11-12 · **Mandato:** resolución del error `Error: Version code 1 has already been used` al subir el AAB a Google Play Console mediante GitHub Actions.
+- **Causa:** Google Play exige que cada AAB subido tenga un `versionCode` estrictamente superior al previo. Estaba fijo en `1`.
+- **Solución:** Modificación de `app/build.gradle.kts` para calcular dinámicamente el `versionCode` basándose en `GITHUB_RUN_NUMBER` (`100 + GITHUB_RUN_NUMBER` en CI, o `2` en desarrollo local), garantizando que cada compilación automatizada tenga un código de versión único y creciente.
+- **Archivos modificados (1):** `app/build.gradle.kts`.
+- **Comandos y resultados reales:** `./gradlew assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL**.
+- **Limitaciones:** sin push automático (requiere autorización explícita para git push).
+
+
 

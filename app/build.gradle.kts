@@ -11,11 +11,18 @@ android {
         }
     }
 
+    val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 1
+    val computedVersionCode = if (System.getenv("GITHUB_RUN_NUMBER") != null) {
+        100 + runNumber
+    } else {
+        2
+    }
+
     defaultConfig {
         applicationId = "mx.nexum.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        versionCode = computedVersionCode
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
