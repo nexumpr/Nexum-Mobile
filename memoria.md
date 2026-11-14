@@ -280,5 +280,42 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Comandos y resultados reales:** `./gradlew assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL**.
 - **Limitaciones:** sin push automático (requiere autorización explícita para git push).
 
+## 31. Evidencia — Fase A de `320-Eliminar-Movimiento` (documental)
+- **Fecha:** 2026-11-13 · **Mandato:** solicitud humana para crear la especificación de eliminación y reversión atómica de movimiento financiero a partir del contrato NEXUM-E031 (`DELETE /api/v1/movements/{movementId}` [M], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/320-Eliminar-Movimiento/spec.md`, `plan.md`, `task.md`.
+- **Archivos modificados (2):** `specs/README.md`, `memoria.md`.
+- **Contenido:** Contrato NEXUM-E031 (`DELETE /api/v1/movements/{movementId}`, `204 No Content`), transacción atómica que reverta `goal.saved = goal.saved - amount` si `goal_id != null`, manejo de errores (404, 409, 412) y resiliencia offline.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea; sin secretos ni tokens reales.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental sin ejecución de código.
+- **Pendiente:** mandato humano para la Fase B (implementación técnica).
 
+## 32. Evidencia — Fase A de `330-Pagos-Recurrentes` (documental)
+- **Fecha:** 2026-11-13 · **Mandato:** solicitud humana para crear la especificación de gestión CRUD de pagos recurrentes a partir de los contratos NEXUM-E032 a E036 (`/api/v1/recurring-payments`), catálogo V6.0.2; **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/330-Pagos-Recurrentes/spec.md`, `plan.md`, `task.md`.
+- **Archivos modificados (2):** `specs/README.md`, `memoria.md`.
+- **Contenido:** Contratos NEXUM-E032 (`GET` listado con `fixedMonthlyEquivalent`), E033 (`POST` crear), E034 (`GET /{id}` detalle), E035 (`PATCH /{id}` editar), E036 (`DELETE /{id}` soft-delete inactivo), distinción de pagos fijos y variables.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental.
+- **Pendiente:** mandato humano para la Fase B.
 
+## 33. Evidencia — Fase A de `340-Registrar-Pago-Recurrente` (documental)
+- **Fecha:** 2026-11-13 · **Mandato:** solicitud humana para crear la especificación de registro de pago recurrente realizado (✓) a partir del contrato NEXUM-E037 (`POST /api/v1/recurring-payments/{recurringPaymentId}/payments` [M], catálogo V6.0.2); **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/340-Registrar-Pago-Recurrente/spec.md`, `plan.md`, `task.md`.
+- **Archivos modificados (2):** `specs/README.md`, `memoria.md`.
+- **Contenido:** Contrato NEXUM-E037 (`201 Created`, `movementId`, `recurringPaymentId`, `updatedSummary`), deduplicación por ocurrencia mediante `Idempotency-Key`, creación de movimiento vinculado sin duplicar el monto fijo en el disponible mensual.
+- **Verificación:** Trazabilidad formal requisito → plan → tarea.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental.
+- **Pendiente:** mandato humano para la Fase B.
+
+## 34. Evidencia — Fase A de `350-Metas-Ahorro` (documental)
+- **Fecha:** 2026-11-13 · **Mandato:** solicitud humana para crear la especificación de gestión de metas de ahorro a partir de los contratos NEXUM-E038 a E040 (`/api/v1/goals`), catálogo V6.0.2; **Fase A documental, sin cambios de código .kt ni push**.
+- **Alcance:** solo documentación; **cero cambios en código `.kt`, Gradle o mocks de ejecución**.
+- **Archivos creados (3):** `specs/350-Metas-Ahorro/spec.md`, `plan.md`, `task.md`.
+- **Archivos modificados (2):** `specs/README.md`, `memoria.md`.
+- **Contenido:** Contratos NEXUM-E038 (`GET` listado de metas activas/completadas, `totalSaved`, porcentaje visual máximo 100%), E039 (`POST` crear con emoji, `targetAmount`, `initialSaved`, fecha límite), E040 (`GET /{goalId}` detalle).
+- **Verificación:** Trazabilidad formal requisito → plan → tarea.
+- **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental.
+- **Pendiente:** mandato humano para la Fase B.
