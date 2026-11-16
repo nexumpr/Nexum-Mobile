@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuración base: Tráfico en texto claro deshabilitado por defecto para garantizar TLS/HTTPS (M040-R02) -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Dominios aprobados de producción y API -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">d2lpmqy5w6x9es.cloudfront.net</domain>
+        <domain includeSubdomains="true">nexum.mx</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

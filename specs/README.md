@@ -53,8 +53,12 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 5. **No realizar push ni despliegue automáticamente.** Los requisitos de producto (ingresos, gastos, presupuestos, metas, voz, ML, etc.) llevarán specs funcionales independientes cuando se autoricen.
 
 ## Progreso
-- `000-arquitectura-base`: marco SDD documental existente.
-- `010-*` a `120-*`: preparados, **ninguna implementación acreditada por la mera existencia de archivos**.
+- `000-arquitectura-base`: marco SDD documental transversal de referencia (no ejecutable en bloque).
+- `010-base-android`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §35 y en `specs/010-base-android/task.md`).
+- `020-nucleo-mvi`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §36 y en `specs/020-nucleo-mvi/task.md`).
+- `030-di-navegacion-ui`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §37 y en `specs/030-di-navegacion-ui/task.md`).
+- `040-cliente-http-contratos`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §38 y en `specs/040-cliente-http-contratos/task.md`).
+- `050-*` a `120-*`: preparados, ninguna implementación acreditada por la mera existencia de archivos.
 - `130-Registro-Usuario` y `140-Login`: **implementadas y probadas** el 2026-11-04 (evidencia en `memoria.md` §8 y en cada `task.md`); fuente mock sin Backend real.
 - `150-Refresh-Token` a `310-Completar-Onboarding`: **Fase A documental completada** (noviembre 2026); implementación técnica pendiente de mandato de Fase B.
 - `320-Eliminar-Movimiento`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
