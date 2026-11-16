@@ -32,7 +32,7 @@ enum class AuthScreen { Login, Register, App }
 
 class AuthFlowViewModel : ViewModel() {
     val repository: AuthRepository = AuthRepositoryImpl(
-        mx.nexum.app.auth.data.RetrofitAuthApi(mx.nexum.app.auth.data.network.NetworkModule.authApiService),
+        mx.nexum.app.auth.data.RetrofitAuthRepositoryApi(),
         InMemoryTokenStorage()
     )
 }
