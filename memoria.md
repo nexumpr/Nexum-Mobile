@@ -19,6 +19,9 @@
 | M-D07 | Contratos de autenticación NEXUM-E001 (registro) y NEXUM-E002 (login) del catálogo V6.0.2; ejemplo 4.1 como fixture | Specs `130-Registro-Usuario` y `140-Login` (2026-11-02). |
 | M-D08 | Registro exige `income` y al menos un gasto recurrente; `frequency` limitada a `monthly` y `type` a `fixed` hasta catálogo confirmado con Backend | Spec `130-Registro-Usuario` (2026-11-02). |
 | M-D09 | `androidx.lifecycle:lifecycle-viewmodel-compose` (producción) y `kotlinx-coroutines-test` (solo pruebas) aprobados para autenticación; sin Retrofit, Hilt ni kotlinx-serialization | Fase A de autenticación (2026-11-02). |
+| M-D10 | Matriz de versiones Android ratificada: Java 21 (JBR), Gradle 9.5.0, AGP 9.3.3, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36, compileSdk 36 | Spec `010-base-android` (2026-11-15). |
+| M-D11 | Inyección de dependencias mediante `AppContainer` manual y navegación desacoplada mediante `AppNavigator` / `NexumAppShell` | Spec `030-di-navegacion-ui` (2026-11-15). |
+| M-D12 | Adaptador HTTP seguro (`safeApiCall`), serialización Gson, contrato canónico de errores (`ApiResult`/`HttpErrorType`) y forzado de TLS/HTTPS vía `network_security_config.xml` | Spec `040-cliente-http-contratos` (2026-11-15). |
 
 ## 3. Requerimientos docentes para la solución final
 - Fidelidad a la maqueta sin quitar funciones; Google Play como forma inicial de evaluación; pruebas, DevSecOps y CI/CD.
@@ -30,8 +33,8 @@
 ## 4. Decisiones pendientes
 | ID | Decisión | Responsable sugerido |
 | --- | --- | --- |
-| M-P01 | SDK target y compatibilidad versiones Kotlin/AGP/Compose; API min 26 provisional | Equipo Mobile. |
-| M-P02 | DI, navegación, cliente HTTP y JSON | Equipo Mobile. |
+| M-P01 | (Resuelta en M-D10) SDK target y compatibilidad versiones Kotlin/AGP/Compose; API min 26 ratificada | Equipo Mobile (cerrada en 010-base-android). |
+| M-P02 | (Resuelta en M-D11 y M-D12) DI, navegación, cliente HTTP y JSON ratificados | Equipo Mobile (cerrada en 040-cliente-http-contratos). |
 | M-P03 | Caché cliente, almacén seguro, SQLite/Room offline y limpieza | Equipo Mobile + Backend. |
 | M-P04 | JWT, renovación, expiración/revocación, logout y errores | Equipo Mobile + Backend. |
 | M-P05 | Push, ML/IA generativa, voz, permisos y privacidad de terceros | Equipo Mobile. |
@@ -428,3 +431,80 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Verificación:** Trazabilidad formal requisito → plan → tarea.
 - **Pruebas Gradle:** `NO EJECUTADAS` — fase puramente documental.
 - **Pendiente:** mandato humano para la Fase B.
+
+## 35. Evidencia — Implementación y verificación de `010-base-android` (2026-11-15)
+- **Fecha:** 2026-11-15 · **Mandato:** autorización explícita para implementar y verificar `010-base-android` como primera unidad atómica de arquitectura base.
+- **Alcance:** ratificación de la matriz de versiones y herramientas (`M010-R01`), comprobación de custodia y reglas de ignorado de secretos/archivos locales en `.gitignore` (`M010-R02`), y ejecución reproducible de compilación, análisis estático y pruebas unitarias (`M010-R03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01 · compileSdk 36 (minor 1) · minSdk 26 · targetSdk 36 · Java 11 source/target compatibility.
+- **Comandos y resultados reales:**
+  - `git check-ignore -v local.properties release.jks release.keystore .gradle/ build/ app/build/` → comprobado que `local.properties`, llaves `.jks`/`.keystore`, directorios `.gradle` y carpetas `build/` están debidamente ignorados por `.gitignore` y `app/.gitignore`. `git status -s` limpio.
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 3m 15s · 51 tests unitarios ejecutados · 0 fallos · 100% éxito (`AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 1m 20s · 36 tareas accionables (4 ejecutadas, 32 up-to-date) · APK debug generado correctamente.
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** in 2m 58s · 0 errores · Reportes generados en `app/build/reports/lint-results-debug.html`.
+- **Archivos verificados:** `gradle/wrapper/gradle-wrapper.properties`, `gradle/libs.versions.toml`, `build.gradle.kts`, `app/build.gradle.kts`, `.gitignore`, `app/.gitignore`.
+- **Archivos modificados:** `specs/010-base-android/task.md` (3 tareas marcadas `[x]` con evidencia), `specs/README.md` (progreso actualizado para `010-base-android`), `memoria.md` (decisión M-D10, cierre de M-P01 y esta sección).
+- **Decisiones ratificadas:** M-D10 (matriz técnica base ratificada formalmente).
+- **Limitaciones y pendientes:**
+  - Pruebas instrumentadas / emulador: no ejecutadas (sin dispositivo físico ni emulador conectado en sesión headless).
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`020-nucleo-mvi`](specs/020-nucleo-mvi/spec.md) (depende de `010-base-android`).
+
+## 36. Evidencia — Implementación y verificación de `020-nucleo-mvi` (2026-11-15)
+- **Fecha:** 2026-11-15 · **Mandato:** autorización explícita para implementar y verificar `020-nucleo-mvi`.
+- **Alcance:** abstracción mínima de estado inmutable (`UiState`), intenciones explícitas (`UiIntent`), efectos efímeros (`UiEffect`) y reductor funcional puro (`Reducer<S, I>`) (`M020-R01`); clase base `MviViewModel` con flujo unidireccional desacoplada de pantallas y de finanzas (`M020-R02`); separación estricta entre estado durable observable (`StateFlow`) y eventos efímeros de disparo único sin repetición (`SharedFlow`, `replay = 0`) (`M020-R03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 1m 11s · 57 tests unitarios ejecutados (6 nuevos de `MviCoreTest`) · 0 fallos · 100% éxito (`MviCoreTest` 6, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 2m 36s · 46 tareas accionables (12 ejecutadas, 34 up-to-date) · APK debug generado.
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** · 0 errores.
+- **Archivos creados (3):**
+  - `app/src/main/java/mx/nexum/app/core/mvi/MviContracts.kt` (interfaces `UiState`, `UiIntent`, `UiEffect`, `Reducer`).
+  - `app/src/main/java/mx/nexum/app/core/mvi/MviViewModel.kt` (ViewModel MVI base con `StateFlow` y `SharedFlow`).
+  - `app/src/test/java/mx/nexum/app/core/mvi/MviCoreTest.kt` (6 pruebas sintéticas de inmutabilidad, UDF, acumuladores y efectos one-shot).
+- **Archivos modificados (2):** `specs/020-nucleo-mvi/task.md` (3 tareas marcadas `[x]`), `specs/README.md` (progreso actualizado para `020-nucleo-mvi`).
+- **Limitaciones y pendientes:**
+  - Sin pruebas instrumentadas/emulador.
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`030-di-navegacion-ui`](specs/030-di-navegacion-ui/spec.md) y [`040-cliente-http-contratos`](specs/040-cliente-http-contratos/spec.md) (dependen de `020-nucleo-mvi`).
+
+## 37. Evidencia — Implementación y verificación de `030-di-navegacion-ui` (2026-11-15)
+- **Fecha:** 2026-11-15 · **Mandato:** autorización explícita para implementar y verificar `030-di-navegacion-ui`.
+- **Alcance:** diseño e implementación del contenedor de inyección de dependencias `AppContainer` y `DefaultAppContainer` para sustitución limpia de dobles en pruebas (`M030-R01`); abstracción de navegación desacoplada `AppDestination`, `TechnicalDestination` y coordinador `SimpleNavigator` (`M030-R02`); shell UI composable Material 3 `NexumAppShell` con accesibilidad (`contentDescription`), Scaffold y aislamiento de red en la interfaz gráfica (`M030-R03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 1m 12s · 64 tests unitarios ejecutados (7 nuevos entre `AppContainerTest` y `AppNavigatorTest`) · 0 fallos · 100% éxito (`AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 2m 35s · 46 tareas accionables (12 ejecutadas, 34 up-to-date) · APK debug generado.
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** · 0 errores.
+- **Archivos creados (5):**
+  - `app/src/main/java/mx/nexum/app/core/di/AppContainer.kt` (interfaz `AppContainer` e implementación `DefaultAppContainer`).
+  - `app/src/main/java/mx/nexum/app/core/navigation/NavigationContracts.kt` (contratos `AppDestination`, `TechnicalDestination`, `AppNavigator`, `SimpleNavigator`).
+  - `app/src/main/java/mx/nexum/app/core/ui/NexumAppShell.kt` (`NexumAppShell` en Compose con Material 3 y accesibilidad).
+  - `app/src/test/java/mx/nexum/app/core/di/AppContainerTest.kt` (2 pruebas de inyección y sustitución de dobles).
+  - `app/src/test/java/mx/nexum/app/core/navigation/AppNavigatorTest.kt` (5 pruebas de pila de navegación y enrutamiento UDF).
+- **Archivos modificados (2):** `specs/030-di-navegacion-ui/task.md` (3 tareas marcadas `[x]`), `specs/README.md` (progreso actualizado para `030-di-navegacion-ui`).
+- **Decisiones ratificadas:** M-D11 (DI manual y navegación desacoplada).
+- **Limitaciones y pendientes:**
+  - Sin pruebas instrumentadas/emulador.
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`040-cliente-http-contratos`](specs/040-cliente-http-contratos/spec.md) (depende de `020-nucleo-mvi`).
+
+## 38. Evidencia — Implementación y verificación de `040-cliente-http-contratos` (2026-11-15)
+- **Fecha:** 2026-11-15 · **Mandato:** autorización explícita para implementar y verificar `040-cliente-http-contratos`.
+- **Alcance:** modelado canónico de errores HTTP e infraestructura (`ApiErrorDetail`, `ApiErrorResponse`, `HttpErrorType`, `NetworkErrorType`, `ApiResult<T>`) asegurando que fallos nunca generen éxito simulado (`M040-R01`); forzado de TLS/HTTPS mediante `network_security_config.xml` enlazado en `AndroidManifest.xml` y adaptador simulable `SimulatedHttpAdapter` (`M040-R02`); adaptador seguro `safeApiCall` que procesa deserialización Gson, códigos 400/401/403/404/409/422/429 (extrayendo cabecera `Retry-After`) y 5xx, así como captura de `SocketTimeoutException`, `UnknownHostException` y `JsonSyntaxException` (`M040-R03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 1m 42s · 75 tests unitarios ejecutados (11 nuevos de `HttpClientAdapterTest`) · 0 fallos · 100% éxito (`HttpClientAdapterTest` 11, `AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 2m 48s · 46 tareas accionables (12 ejecutadas, 34 up-to-date) · APK debug generado.
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** · 0 errores.
+- **Archivos creados (5):**
+  - `app/src/main/res/xml/network_security_config.xml` (configuración de seguridad de red con TLS/HTTPS forzado).
+  - `app/src/main/java/mx/nexum/app/core/network/HttpContracts.kt` (modelos de error y envoltorio `ApiResult`).
+  - `app/src/main/java/mx/nexum/app/core/network/SafeApiCall.kt` (ejecutor seguro de llamadas de red con captura de excepciones).
+  - `app/src/main/java/mx/nexum/app/core/network/SimulatedHttpAdapter.kt` (adaptador simulable para pruebas).
+  - `app/src/test/java/mx/nexum/app/core/network/HttpClientAdapterTest.kt` (11 pruebas unitarias de HTTP, timeout, parsing y errores).
+- **Archivos modificados (3):** `app/src/main/AndroidManifest.xml` (+`android:networkSecurityConfig`), `specs/040-cliente-http-contratos/task.md` (3 tareas marcadas `[x]`), `specs/README.md` (progreso actualizado para `040-cliente-http-contratos`).
+- **Decisiones ratificadas:** M-D12 (adaptadores HTTP, contrato de errores y TLS), cierre de M-P02.
+- **Limitaciones y pendientes:**
+  - Sin pruebas instrumentadas/emulador.
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`050-sesion-credenciales`](specs/050-sesion-credenciales/spec.md) (depende de `040-cliente-http-contratos`).

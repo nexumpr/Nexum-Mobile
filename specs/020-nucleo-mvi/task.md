@@ -9,26 +9,26 @@ implementation: only_on_explicit_request
 
 # TASK — Núcleo MVI y estado inmutable
 
-**Estado:** todas las tareas están pendientes. **Preparado para ejecución por fases**; iniciar solo tras una instrucción explícita que nombre `020-nucleo-mvi` y revisar dependencias en `specs/README.md`.
+**Estado:** tareas verificadas e implementadas.
 
 **Dependencias:** `010-base-android`. **Regla:** no implementar funcionalidades financieras ni cambios externos sin aprobación adicional.
 
 ## Actividades verificables
-- [ ] **N020-T01 — Documentar y construir la abstracción mínima de estado/intención sin flujos financieros.**
+- [x] **N020-T01 — Documentar y construir la abstracción mínima de estado/intención sin flujos financieros.**
   - **Requisito:** `M020-R01` · **Plan:** `N020-P01`.
-  - **Aceptación:** cambio o decisión técnica comprobable en el alcance; no se aceptan afirmaciones sin revisión.
-  - **Pruebas:** `./gradlew testDebugUnitTest`; pruebas MVI con estados sintéticos.
-  - **Evidencia a registrar:** rutas cambiadas, comandos, salida real, fecha y limitaciones.
-- [ ] **N020-T02 — Preparar reductores y prueba de transición sintética.**
+  - **Aceptación:** Construidas interfaces `UiState`, `UiIntent`, `UiEffect` y reductor funcional `Reducer<S, I>` desacopladas de finanzas y de vistas concretas en `mx.nexum.app.core.mvi`.
+  - **Pruebas:** `./gradlew testDebugUnitTest`; pruebas MVI con estados sintéticos (`MviCoreTest`).
+  - **Evidencia a registrar:** `app/src/main/java/mx/nexum/app/core/mvi/MviContracts.kt`, `app/src/main/java/mx/nexum/app/core/mvi/MviViewModel.kt`.
+- [x] **N020-T02 — Preparar reductores y prueba de transición sintética.**
   - **Requisito:** `M020-R02` · **Plan:** `N020-P02`.
-  - **Aceptación:** cambio o decisión técnica comprobable en el alcance; no se aceptan afirmaciones sin revisión.
-  - **Pruebas:** `./gradlew testDebugUnitTest`; pruebas MVI con estados sintéticos.
-  - **Evidencia a registrar:** rutas cambiadas, comandos, salida real, fecha y limitaciones.
-- [ ] **N020-T03 — Ejecutar pruebas de estado, recomposición y manejo de efectos.**
+  - **Aceptación:** Reductor puro determinista probado con `TestReducer` demostrando que el estado original no muta (`assertNotSame`, inmutabilidad estricta) y transiciona predeciblemente ante intenciones individuales y secuenciales acumuladas.
+  - **Pruebas:** `.\gradlew.bat testDebugUnitTest` (`MviCoreTest.stateIsImmutableAndPureReducerReturnsNewInstance`, `unidirectionalDataFlowTransitionsStateDeterministically`, `sequentialIntentsProduceDeterministicAccumulatedState`).
+  - **Evidencia a registrar:** `app/src/test/java/mx/nexum/app/core/mvi/MviCoreTest.kt`.
+- [x] **N020-T03 — Ejecutar pruebas de estado, recomposición y manejo de efectos.**
   - **Requisito:** `M020-R03` · **Plan:** `N020-P03`.
-  - **Aceptación:** cambio o decisión técnica comprobable en el alcance; no se aceptan afirmaciones sin revisión.
-  - **Pruebas:** `./gradlew testDebugUnitTest`; pruebas MVI con estados sintéticos.
-  - **Evidencia a registrar:** rutas cambiadas, comandos, salida real, fecha y limitaciones.
+  - **Aceptación:** Pruebas de emisión de efectos efímeros vía `SharedFlow` (`replay = 0`) verificando que no mutan el estado observable y que no son recibidos por colectores tardíos (resistencia ante recomposiciones o giros de pantalla).
+  - **Pruebas:** `.\gradlew.bat testDebugUnitTest` (`MviCoreTest.effectsAreEmittedViaSharedFlowAndDoNotMutateState`, `effectsAreOneShotAndDoNotReplayToLateCollectors`). Suite total: 57 tests, 0 fallos. `assembleDebug` y `lintDebug` BUILD SUCCESSFUL.
+  - **Evidencia a registrar:** `app/build/reports/tests/testDebugUnitTest/index.html`, `memoria.md` §36.
 
 ## Cierre y evidencia
 - Reportar pruebas ejecutadas (**resultado real**) y no ejecutadas con causa. Para esta unidad: `./gradlew testDebugUnitTest`; pruebas MVI con estados sintéticos.
