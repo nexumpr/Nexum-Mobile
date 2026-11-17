@@ -11,6 +11,7 @@
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">d2lpmqy5w6x9es.cloudfront.net</domain>
         <domain includeSubdomains="true">nexum.mx</domain>
+        <domain includeSubdomains="true">nexumpr.github.io</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- 
+      GOBERNANZA DE SEGURIDAD Y CALIDAD ESTÁTICA — NEXUM-MOBILE
+      Unidad: 090-devsecops-android
+      Reglas rectoras: M090-R01, M090-R02, M090-R03
+    -->
+
+    <!-- REGLAS DE SEGURIDAD CRÍTICA Y ALTA (BLOQUEANTES EN COMPILACIÓN / CI) -->
+    <issue id="BadHostnameVerifier" severity="fatal" />
+    <issue id="NetworkSecurityConfig" severity="fatal" />
+    <issue id="HardcodedDebugMode" severity="fatal" />
+    <issue id="InsecureBaseConfiguration" severity="fatal" />
+    <issue id="TrustAllX509TrustManager" severity="fatal" />
+    <issue id="ExportedContentProvider" severity="fatal" />
+    <issue id="ExportedReceiver" severity="fatal" />
+    <issue id="UnsafeProtectedBroadcastReceiver" severity="fatal" />
+    <issue id="TrulyRandom" severity="fatal" />
+    <issue id="SecureRandom" severity="fatal" />
+    <issue id="AuthLeak" severity="fatal" />
+    <issue id="AllowBackup" severity="error" />
+
+    <!-- REGLAS DE ACCESIBILIDAD Y EXPERIENCIA DE USUARIO (GATE DE CALIDAD M070/M090) -->
+    <issue id="ContentDescription" severity="error" />
+    <issue id="ClickableViewAccessibility" severity="error" />
+
+    <!-- INFORMATIVOS Y ADVERTENCIAS NO BLOQUEANTES -->
+    <issue id="UnusedResources" severity="warning" />
+    <issue id="IconMissingDensityFolder" severity="informational" />
+</lint>
