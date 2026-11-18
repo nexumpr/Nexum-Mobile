@@ -1,22 +1,23 @@
-# Walkthrough — Paso 3: Pagos Recurrentes y Metas de Ahorro
+# Walkthrough — Shell de Navegación Principal (Dashboard Post-Login)
 
-He implementado el **Paso 3** del módulo financiero de Nexum-Mobile, cubriendo el CRUD de pagos recurrentes, el registro de ocurrencias de pago con el icono de check (✓) y clave de idempotencia (Unidades 330 y 340), así como la gestión y visualización de metas de ahorro con la barra de progreso acotada estrictamente a un máximo de 100% (Unidad 350) bajo el diseño **Aero-Futuristic**.
+He implementado el shell de navegación principal para usuarios autenticados (`MainAppShell`), reemplazando el marcador de posición *"Sesión iniciada"* (`AppPlaceholder`) por una interfaz con pestañas (*Bottom Navigation*) que integra todas las pantallas financieras del sistema.
 
 ## Cambios Realizados
 
 ### Módulo Financiero UI (`mx.nexum.app.financial.ui`)
 
-#### [NEW] [RecurringPaymentsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt)
-- ViewModel MVI para listar pagos programados, registrar ocurrencias de pago (✓) con `Idempotency-Key` y desactivar programaciones.
+#### [NEW] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
+- Contenedor con `Scaffold` y barra de navegación inferior (*NavigationBar*) Material 3 que permite alternar fluidamente entre 4 pestañas principales:
+  1. **Resumen** (`FinancialSummaryScreen`)
+  2. **Movimientos** (`MovementsScreen`)
+  3. **Pagos** (`RecurringPaymentsScreen`)
+  4. **Metas** (`GoalsScreen`)
 
-#### [NEW] [GoalsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsViewModel.kt)
-- ViewModel MVI para listar metas de ahorro y crear nuevos objetivos financieros.
+#### [MODIFY] [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt)
+- Conectado `AuthScreen.App` para que invoque `MainAppShell()` al iniciar sesión o registrarse con éxito.
 
-#### [NEW] [RecurringPaymentsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsScreen.kt)
-- Pantalla con estilo Aero-Futurista (*Glassmorphism*) para gestionar pagos recurrentes y registrar pagos realizados con el botón de check (✓) y borrado lógico (`×`).
-
-#### [NEW] [GoalsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsScreen.kt)
-- Pantalla con estilo Aero-Futurista para visualizar tarjetas de metas de ahorro con barra de progreso acotada al 100%.
+#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/build.gradle.kts)
+- Añadida la dependencia `material-icons-extended` para los iconos de navegación inferior.
 
 ---
 
