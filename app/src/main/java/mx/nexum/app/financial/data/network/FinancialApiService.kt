@@ -11,11 +11,13 @@ import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
+import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
+import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -153,4 +155,16 @@ interface FinancialApiService {
         @Header("Authorization") authorization: String,
         @Path("goalId") goalId: String
     ): GoalDto
+
+    @GET("users/me/onboarding")
+    suspend fun getOnboardingStatus(
+        @Header("Authorization") authorization: String
+    ): OnboardingStatusResponse
+
+    @PATCH("users/me/onboarding")
+    suspend fun updateOnboardingStatus(
+        @Header("Authorization") authorization: String,
+        @Body request: UpdateOnboardingRequest,
+        @Header("Idempotency-Key") idempotencyKey: String? = null
+    ): OnboardingStatusResponse
 }

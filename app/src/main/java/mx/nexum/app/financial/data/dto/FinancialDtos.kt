@@ -159,3 +159,14 @@ data class CreateGoalResponse(
     @SerializedName("remaining") val remaining: Double,
     @SerializedName("progressPercent") val progressPercent: Double
 )
+
+// Units 300, 310: Onboarding DTOs (NEXUM-E018 & NEXUM-E019)
+data class OnboardingStatusResponse(
+    @SerializedName("stepsCompleted") val stepsCompleted: List<String>,
+    @SerializedName("finishedAt") val finishedAt: String?
+)
+
+data class UpdateOnboardingRequest(
+    @SerializedName("completed") val completed: Boolean = true,
+    @SerializedName("limitedMode") val limitedMode: Boolean = false
+)
