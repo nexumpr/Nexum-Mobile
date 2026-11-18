@@ -1,0 +1,1 @@
+{"error":{"code":"SESSION_EXPIRED","message":"Sesión sintética expirada","details":{"reason":"token"},"traceId":"tr_synthetic_401"}}

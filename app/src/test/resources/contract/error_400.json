@@ -1,0 +1,1 @@
+{"error":{"code":"VALIDATION_FAILED","message":"Solicitud sintética inválida","details":{"field":"email"},"traceId":"tr_synthetic_400"}}
