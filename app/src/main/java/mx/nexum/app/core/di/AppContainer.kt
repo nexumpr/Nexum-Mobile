@@ -13,6 +13,7 @@ import mx.nexum.app.auth.data.AuthRepositoryImpl
 import mx.nexum.app.auth.data.InMemoryTokenStorage
 import mx.nexum.app.auth.data.TokenStorage
 
+import mx.nexum.app.core.cache.OfflineCacheManager
 import mx.nexum.app.core.session.CredentialStorage
 import mx.nexum.app.core.session.InMemoryCredentialStorage
 import mx.nexum.app.core.session.SessionManager
@@ -22,6 +23,7 @@ interface AppContainer {
     val sessionManager: SessionManager
     val authRepository: AuthRepository
     val tokenStorage: TokenStorage
+    val cacheManager: OfflineCacheManager
 }
 
 class DefaultAppContainer : AppContainer {
@@ -34,4 +36,5 @@ class DefaultAppContainer : AppContainer {
     override val credentialStorage: CredentialStorage by lazy { InMemoryCredentialStorage() }
     override val sessionManager: SessionManager by lazy { SessionManager(credentialStorage, coreAuthApi) }
     override val authRepository: AuthRepository by lazy { AuthRepositoryImpl(api = dataAuthApi, tokenStorage = tokenStorage) }
+    override val cacheManager: OfflineCacheManager by lazy { OfflineCacheManager() }
 }
