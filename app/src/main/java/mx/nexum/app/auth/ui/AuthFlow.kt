@@ -112,7 +112,7 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     onIntent = registerViewModel::onIntent
                 )
 
-                AuthScreen.App -> AppPlaceholder()
+                AuthScreen.App -> mx.nexum.app.financial.ui.MainAppShell()
             }
         }
     }
