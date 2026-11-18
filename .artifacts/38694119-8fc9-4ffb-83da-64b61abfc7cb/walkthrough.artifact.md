@@ -1,22 +1,22 @@
-# Walkthrough — Paso 2: Movimientos Financieros
+# Walkthrough — Paso 3: Pagos Recurrentes y Metas de Ahorro
 
-He implementado el **Paso 2** del módulo financiero de Nexum-Mobile, cubriendo la gestión de movimientos financieros (listado, registro de transacciones y eliminación con reversión atómica de metas bajo el contrato NEXUM-E031) con el diseño **Aero-Futuristic**.
+He implementado el **Paso 3** del módulo financiero de Nexum-Mobile, cubriendo el CRUD de pagos recurrentes, el registro de ocurrencias de pago con el icono de check (✓) y clave de idempotencia (Unidades 330 y 340), así como la gestión y visualización de metas de ahorro con la barra de progreso acotada estrictamente a un máximo de 100% (Unidad 350) bajo el diseño **Aero-Futuristic**.
 
 ## Cambios Realizados
 
 ### Módulo Financiero UI (`mx.nexum.app.financial.ui`)
 
-#### [NEW] [MovementsListViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MovementsListViewModel.kt)
-- ViewModel MVI para listar el historial de movimientos y ejecutar la eliminación (NEXUM-E031).
+#### [NEW] [RecurringPaymentsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt)
+- ViewModel MVI para listar pagos programados, registrar ocurrencias de pago (✓) con `Idempotency-Key` y desactivar programaciones.
 
-#### [NEW] [RegisterMovementViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RegisterMovementViewModel.kt)
-- ViewModel MVI para registrar nuevas transacciones financieras.
+#### [NEW] [GoalsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsViewModel.kt)
+- ViewModel MVI para listar metas de ahorro y crear nuevos objetivos financieros.
 
-#### [NEW] [MovementsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MovementsScreen.kt)
-- Pantalla con estilo Aero-Futurista (*Glassmorphism*) para visualizar el listado de movimientos con tarjetas translúcidas e icono de borrado (`×`).
+#### [NEW] [RecurringPaymentsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsScreen.kt)
+- Pantalla con estilo Aero-Futurista (*Glassmorphism*) para gestionar pagos recurrentes y registrar pagos realizados con el botón de check (✓) y borrado lógico (`×`).
 
-#### [NEW] [RegisterMovementScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RegisterMovementScreen.kt)
-- Formulario translúcido estilizado para registrar nuevas transacciones.
+#### [NEW] [GoalsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsScreen.kt)
+- Pantalla con estilo Aero-Futurista para visualizar tarjetas de metas de ahorro con barra de progreso acotada al 100%.
 
 ---
 
