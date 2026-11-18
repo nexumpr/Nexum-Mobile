@@ -92,3 +92,70 @@ data class UpdateMovementRequest(
     @SerializedName("goalId") val goalId: String?,
     @SerializedName("occurredAt") val occurredAt: String?
 )
+
+// Units 330, 340: Recurring Payments DTOs
+data class RecurringPaymentDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("concept") val concept: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("type") val type: String,
+    @SerializedName("frequency") val frequency: String,
+    @SerializedName("fixedMonthlyEquivalent") val fixedMonthlyEquivalent: Double?,
+    @SerializedName("active") val active: Boolean
+)
+
+data class CreateRecurringPaymentRequest(
+    @SerializedName("concept") val concept: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("type") val type: String,
+    @SerializedName("frequency") val frequency: String
+)
+
+data class UpdateRecurringPaymentRequest(
+    @SerializedName("concept") val concept: String?,
+    @SerializedName("amount") val amount: Double?,
+    @SerializedName("categoryId") val categoryId: String?,
+    @SerializedName("type") val type: String?,
+    @SerializedName("frequency") val frequency: String?
+)
+
+data class RecordPaymentRequest(
+    @SerializedName("occurredAt") val occurredAt: String,
+    @SerializedName("amount") val amount: Double?
+)
+
+data class RecordPaymentResponse(
+    @SerializedName("movementId") val movementId: String,
+    @SerializedName("recurringPaymentId") val recurringPaymentId: String,
+    @SerializedName("updatedSummary") val updatedSummary: FinancialSummaryResponse?
+)
+
+// Unit 350: Savings Goals DTOs
+data class GoalDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("targetAmount") val targetAmount: Double,
+    @SerializedName("savedAmount") val savedAmount: Double,
+    @SerializedName("initialSaved") val initialSaved: Double,
+    @SerializedName("emoji") val emoji: String?,
+    @SerializedName("targetDate") val targetDate: String?,
+    @SerializedName("status") val status: String,
+    @SerializedName("progressPercent") val progressPercent: Double
+)
+
+data class CreateGoalRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("targetAmount") val targetAmount: Double,
+    @SerializedName("initialSaved") val initialSaved: Double,
+    @SerializedName("emoji") val emoji: String?,
+    @SerializedName("targetDate") val targetDate: String?
+)
+
+data class CreateGoalResponse(
+    @SerializedName("goalId") val goalId: String,
+    @SerializedName("savedAmount") val savedAmount: Double,
+    @SerializedName("remaining") val remaining: Double,
+    @SerializedName("progressPercent") val progressPercent: Double
+)
