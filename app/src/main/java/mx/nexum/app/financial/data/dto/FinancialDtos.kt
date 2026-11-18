@@ -60,3 +60,35 @@ data class FinancialSummaryResponse(
     @SerializedName("savings") val savings: Double,
     @SerializedName("available") val available: Double
 )
+
+// Units 390, 400, 410, 420, 320: Movements DTOs
+data class MovementDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("concept") val concept: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("type") val type: String,
+    @SerializedName("frequency") val frequency: String?,
+    @SerializedName("goalId") val goalId: String?,
+    @SerializedName("occurredAt") val occurredAt: String
+)
+
+data class CreateMovementRequest(
+    @SerializedName("concept") val concept: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("type") val type: String,
+    @SerializedName("frequency") val frequency: String?,
+    @SerializedName("goalId") val goalId: String?,
+    @SerializedName("occurredAt") val occurredAt: String
+)
+
+data class UpdateMovementRequest(
+    @SerializedName("concept") val concept: String?,
+    @SerializedName("amount") val amount: Double?,
+    @SerializedName("categoryId") val categoryId: String?,
+    @SerializedName("type") val type: String?,
+    @SerializedName("frequency") val frequency: String?,
+    @SerializedName("goalId") val goalId: String?,
+    @SerializedName("occurredAt") val occurredAt: String?
+)
