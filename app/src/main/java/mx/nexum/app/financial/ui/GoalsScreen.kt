@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.ui.theme.NexumTheme
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun GoalsScreen(
     state: GoalsUiState,
