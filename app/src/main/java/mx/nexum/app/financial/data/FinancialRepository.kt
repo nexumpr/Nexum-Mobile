@@ -16,13 +16,16 @@ import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
+import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
+import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
 import mx.nexum.app.financial.data.network.FinancialApiService
+import java.util.UUID
 
 interface FinancialRepository {
     suspend fun getCategories(locale: String? = null): AuthResult<List<CategoryDto>>
@@ -45,6 +48,8 @@ interface FinancialRepository {
     suspend fun getGoals(status: String? = null, page: Int? = null, limit: Int? = null): AuthResult<List<GoalDto>>
     suspend fun createGoal(request: CreateGoalRequest): AuthResult<CreateGoalResponse>
     suspend fun getGoalDetail(goalId: String): AuthResult<GoalDto>
+    suspend fun getOnboardingStatus(): AuthResult<OnboardingStatusResponse>
+    suspend fun completeOnboarding(limitedMode: Boolean): AuthResult<OnboardingStatusResponse>
 
     companion object {
         @Suppress("unused")
@@ -242,8 +247,28 @@ class FinancialRepositoryImpl(
             AuthResult.Failure(error.toFinancialError())
         }
 
+    override suspend fun getOnboardingStatus(): AuthResult<OnboardingStatusResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getOnboardingStatus("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun completeOnboarding(limitedMode: Boolean): AuthResult<OnboardingStatusResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = UpdateOnboardingRequest(completed = true, limitedMode = limitedMode)
+            val idempotencyKey = UUID.randomUUID().toString()
+            val response = api.updateOnboardingStatus("Bearer $token", request, idempotencyKey)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
     private fun Throwable.toFinancialError(): AuthError = when (this) {
         is CancellationException -> throw this
-        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar pagos recurrentes y metas.", retryable = true)
+        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar onboarding.", retryable = true)
     }
 }

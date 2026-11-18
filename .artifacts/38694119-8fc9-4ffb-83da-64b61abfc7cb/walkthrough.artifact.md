@@ -1,20 +1,20 @@
-# Walkthrough — Revitalización Visual "Aero-Futuristic / Cyberpunk High-End"
+# Walkthrough — Flujo de Onboarding Interactivo (Unidades 300 y 310)
 
-He completado la revitalización estética profunda de todas las pantallas financieras y de navegación en Nexum-Mobile, transformando la interfaz en una experiencia inmersiva tipo *Sci-Fi HUD / Cyberpunk Glassmorphism*.
+He implementado el flujo interactivo de **Onboarding** (Unidades 300 y 310, contratos NEXUM-E018 y NEXUM-E019) bajo la arquitectura MVI y el diseño **Aero-Futuristic**.
 
 ## Cambios Realizados
 
-### Módulo Financiero UI y Shell (`mx.nexum.app.financial.ui`)
+### Capa de Datos y Módulo Financiero UI (`mx.nexum.app.financial.ui`, `data`)
 
-#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Añadida una línea superior de gradiente neón (*Neon Top Glow Line*) sobre la barra de navegación inferior (*NavigationBar*).
+#### [MODIFY] [FinancialDtos.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt), [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt), [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
+- Añadidos DTOs `OnboardingStatusResponse` y `UpdateOnboardingRequest`.
+- Configurados endpoints GET y PATCH para `/users/me/onboarding` con autenticación Bearer e idempotencia.
 
-#### [MODIFY] [FinancialSummaryScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryScreen.kt)
-- Incorporados círculos con gradientes radiales ambientales (*Ambient Cyber Glows*) en las esquinas de fondo.
-- Tarjetas translúcidas mejoradas con mayor elevación tonal y tipografía espaciada.
+#### [NEW] [OnboardingViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/OnboardingViewModel.kt)
+- ViewModel MVI para consultar y completar el estado de onboarding.
 
-#### [MODIFY] [MovementsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MovementsScreen.kt), [RecurringPaymentsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsScreen.kt), [GoalsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsScreen.kt)
-- Aplicados fondos ambientales con iluminación radial y tarjetas de cristal (*Glassmorphism 2.0*) con desniveles y colores de acento vibrantes (Cian, Violeta y Verde).
+#### [NEW] [OnboardingScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/OnboardingScreen.kt)
+- Pantalla interactiva con diseño Aero-Futurista (*Glassmorphism*) que ofrece las dos acciones requeridas por spec: *"Continuar a Nexum"* y *"Continuar con funciones limitadas"* (respetando MO-PR09).
 
 ---
 
