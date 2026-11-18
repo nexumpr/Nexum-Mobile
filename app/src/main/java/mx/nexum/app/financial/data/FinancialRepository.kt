@@ -30,6 +30,11 @@ interface FinancialRepository {
     suspend fun deleteMovement(movementId: String, ifMatch: String? = null): AuthResult<Unit>
 }
 
+fun createFinancialRepository(
+    api: FinancialApiService,
+    tokenStorage: TokenStorage
+): FinancialRepository = FinancialRepositoryImpl(api, tokenStorage)
+
 class FinancialRepositoryImpl(
     private val api: FinancialApiService,
     private val tokenStorage: TokenStorage
