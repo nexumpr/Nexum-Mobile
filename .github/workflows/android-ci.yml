@@ -1,0 +1,71 @@
+name: Android CI - Quality & Verification
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-build:
+    name: Lint, Test & Assemble Debug
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository (Read-only)
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle & Dependency Cache
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Run Android Lint (Static Security & Quality Gate)
+        run: ./gradlew lintDebug
+
+      - name: Run Unit Tests & DevSecOps Verification
+        run: ./gradlew testDebugUnitTest
+
+      - name: Assemble Debug APK (Unsigned)
+        run: ./gradlew assembleDebug
+
+      - name: Upload Lint Inspection Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: app/build/reports/lint-results-debug.*
+          retention-days: 14
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: app/build/test-results/testDebugUnitTest/
+          retention-days: 14
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-unsigned
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 7

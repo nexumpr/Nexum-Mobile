@@ -58,11 +58,17 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `020-nucleo-mvi`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §36 y en `specs/020-nucleo-mvi/task.md`).
 - `030-di-navegacion-ui`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §37 y en `specs/030-di-navegacion-ui/task.md`).
 - `040-cliente-http-contratos`: **implementada y probada** el 2026-11-15 (evidencia en `memoria.md` §38 y en `specs/040-cliente-http-contratos/task.md`).
-- `050-*` a `120-*`: preparados, ninguna implementación acreditada por la mera existencia de archivos.
+- `050-sesion-credenciales`: abstracciones base creadas (`CredentialStorage`, `SessionManager`, 3 tests unitarios).
+- `060-cache-offline`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §39 y en `specs/060-cache-offline/task.md`).
+- `070-permisos-privacidad-accesibilidad`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §40 y en `specs/070-permisos-privacidad-accesibilidad/task.md`).
+- `080-pruebas-mvi-compose`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §41 y en `specs/080-pruebas-mvi-compose/task.md`).
+- `090-devsecops-android`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §42 y en `specs/090-devsecops-android/task.md`).
+- `100-ci-versiones-android`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §43 y en `specs/100-ci-versiones-android/task.md`).
+- `110-*` a `120-*`: preparados, ninguna implementación acreditada por la mera existencia de archivos.
 - `130-Registro-Usuario` y `140-Login`: **implementadas y probadas** el 2026-11-04 (evidencia en `memoria.md` §8 y en cada `task.md`); fuente mock sin Backend real.
 - `150-Refresh-Token` a `310-Completar-Onboarding`: **Fase A documental completada** (noviembre 2026); implementación técnica pendiente de mandato de Fase B.
 - `320-Eliminar-Movimiento`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
 - `330-Pagos-Recurrentes`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
 - `340-Registrar-Pago-Recurrente`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
 - `350-Metas-Ahorro`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
-- Estado de tests: **51 unitarios en verde** (2026-11-12); instrumentación **no ejecutada**.
+- Estado de tests: **115 unitarios en verde** (2026-11-17); instrumentación **preparada (sin emulador activo)**; Android Lint **0 errores (SARIF/HTML generados)**; Pipeline CI **configurado con permisos mínimos sin secretos de firma**.

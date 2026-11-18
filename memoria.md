@@ -22,6 +22,11 @@
 | M-D10 | Matriz de versiones Android ratificada: Java 21 (JBR), Gradle 9.5.0, AGP 9.3.3, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk 36, compileSdk 36 | Spec `010-base-android` (2026-11-15). |
 | M-D11 | Inyección de dependencias mediante `AppContainer` manual y navegación desacoplada mediante `AppNavigator` / `NexumAppShell` | Spec `030-di-navegacion-ui` (2026-11-15). |
 | M-D12 | Adaptador HTTP seguro (`safeApiCall`), serialización Gson, contrato canónico de errores (`ApiResult`/`HttpErrorType`) y forzado de TLS/HTTPS vía `network_security_config.xml` | Spec `040-cliente-http-contratos` (2026-11-15). |
+| M-D13 | Caché técnica en memoria con aislamiento por usuario (`userId`), TTL/expiración (`CONFIRMED`, `PENDING`, `STALE`), invalidación explícita y cola de operaciones offline con clave de idempotencia (`IdempotentOperation`) sin dependencias fuera de catálogo | Spec `060-cache-offline` (2026-11-17). |
+| M-D14 | Permisos mínimos en manifiesto (solo `INTERNET`, sin `RECORD_AUDIO` ni push prematuro), componentes accesibles Material 3 (48dp mínimo, TalkBack), degradación elegante `PermissionFallbackHandler` y protección TLS de dominio de privacidad `https://nexumpr.github.io/nexum-privacidad/` | Spec `070-permisos-privacidad-accesibilidad` (2026-11-17). |
+| M-D15 | Suite de pruebas de flujo MVI, fixtures sintéticas (`TestFixtures`, `FakeTokenStorage`, `FakeCredentialStorage`), no repetición de efectos efímeros (`replay = 0`), y separación de tests unitarios JVM frente a instrumentados Compose (`NexumAppShellComposeTest`) | Spec `080-pruebas-mvi-compose` (2026-11-17). |
+| M-D16 | Arquitectura DevSecOps: gobernanza de Android Lint (`app/lint.xml`), gates progresivos (Local/CI/Release), suite automatizada de seguridad estática (`DevSecOpsVerificationTest`), matriz de severidad (P0..P3) y SLAs de remediación sin dependencias externas | Spec `090-devsecops-android` (2026-11-17). |
+| M-D17 | Pipeline CI reproducible (`.github/workflows/android-ci.yml`) con permisos mínimos (`contents: read`), sin secretos de firma (`keystore`) ni publicación a tiendas, esquema de versionado determinista (`versionCode` incremental en CI y base local) y recolección de artefactos internos (SARIF, HTML, APK debug) | Spec `100-ci-versiones-android` (2026-11-17). |
 
 ## 3. Requerimientos docentes para la solución final
 - Fidelidad a la maqueta sin quitar funciones; Google Play como forma inicial de evaluación; pruebas, DevSecOps y CI/CD.
@@ -35,9 +40,9 @@
 | --- | --- | --- |
 | M-P01 | (Resuelta en M-D10) SDK target y compatibilidad versiones Kotlin/AGP/Compose; API min 26 ratificada | Equipo Mobile (cerrada en 010-base-android). |
 | M-P02 | (Resuelta en M-D11 y M-D12) DI, navegación, cliente HTTP y JSON ratificados | Equipo Mobile (cerrada en 040-cliente-http-contratos). |
-| M-P03 | Caché cliente, almacén seguro, SQLite/Room offline y limpieza | Equipo Mobile + Backend. |
+| M-P03 | (Parcialmente resuelta en M-D13 para arquitectura de caché técnica y sincronización; persistencia en disco SQLite/Room condicional a decisión futura) Caché cliente y cola offline con idempotencia | Equipo Mobile (cerrada base técnica en 060-cache-offline). |
 | M-P04 | JWT, renovación, expiración/revocación, logout y errores | Equipo Mobile + Backend. |
-| M-P05 | Push, ML/IA generativa, voz, permisos y privacidad de terceros | Equipo Mobile. |
+| M-P05 | (Parcialmente resuelta en M-D14 para permisos mínimos, accesibilidad y transporte de privacidad; voz/micrófono/push condicional a especificación autorizada futura) Push, ML/IA generativa, voz, permisos y privacidad de terceros | Equipo Mobile (cerrada base técnica en 070-permisos-privacidad-accesibilidad). |
 | M-P06 | Firmado de app, matriz de versiones, Play Console y CI | Responsable de release. |
 | M-P07 | Reglas de moderación, aviso/landing y eliminación de cuenta | Equipo + privacidad. |
 | M-P08 | Alcance de documentos SDD en GitHub | Equipo; por ahora local. |
@@ -508,3 +513,118 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
   - Sin pruebas instrumentadas/emulador.
   - `git push`: no ejecutado (requiere autorización explícita independiente).
   - Siguiente paso según dependencias: [`050-sesion-credenciales`](specs/050-sesion-credenciales/spec.md) (depende de `040-cliente-http-contratos`).
+
+## 39. Evidencia — Implementación y verificación de `060-cache-offline` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** autorización explícita para implementar y verificar `060-cache-offline`.
+- **Alcance:** modelado y contratos técnicos de caché local y sincronización offline (`SyncStatus`, `CacheEntry<T>`, `CacheResult<T>`, `IdempotentOperation<T>`, `CacheStorage<T>`) asegurando aislamiento estricto por usuario y respeto riguroso de TTL e invalidación (`M060-R01`); distinción explícita e inequívoca entre estados de sincronización (`CONFIRMED`, `PENDING`, `STALE`), evitando presentar operaciones pendientes como definitivas (`M060-R02`); cola de operaciones pendientes con clave de idempotencia (`idempotencyKey`), deduplicación garantizada, registro de reintentos y actualización de estado (`M060-R03`); integración desacoplada en `AppContainer` y `DefaultAppContainer` sin agregar librerías externas fuera de `libs.versions.toml`.
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 1m 39s · 88 tests unitarios ejecutados (10 nuevos de `OfflineCacheTest`, 2 actualizados en `AppContainerTest`) · 0 fallos · 100% éxito (`OfflineCacheTest` 10, `HttpClientAdapterTest` 11, `AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `SessionManagerTest` 3, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 49s · 36 tareas accionables (4 ejecutadas, 32 up-to-date) · APK debug generado.
+- **Archivos creados (4):**
+  - `app/src/main/java/mx/nexum/app/core/cache/CacheContracts.kt` (contratos `SyncStatus`, `CacheEntry`, `CacheResult`, `IdempotentOperation`, `CacheStorage`).
+  - `app/src/main/java/mx/nexum/app/core/cache/InMemoryCacheStorage.kt` (almacenamiento en memoria con particionado concurrente por `userId`).
+  - `app/src/main/java/mx/nexum/app/core/cache/OfflineCacheManager.kt` (gestor de caché, validación TTL, encolado idempotente y deduplicación).
+  - `app/src/test/java/mx/nexum/app/core/cache/OfflineCacheTest.kt` (10 pruebas unitarias de aislamiento, expiración, estados y reintentos idempotentes).
+- **Archivos modificados (4):**
+  - `app/src/main/java/mx/nexum/app/core/di/AppContainer.kt` (incorporación de `cacheManager: OfflineCacheManager` en `AppContainer` y `DefaultAppContainer`).
+  - `app/src/test/java/mx/nexum/app/core/di/AppContainerTest.kt` (pruebas de inyección y singleton de `cacheManager`).
+  - `specs/060-cache-offline/task.md` (3 tareas marcadas `[x]` con evidencia y cierre).
+  - `specs/README.md` (progreso actualizado para `060-cache-offline` y conteo de tests a 88 en verde).
+- **Decisiones ratificadas:** M-D13 (arquitectura de caché técnica y sincronización offline sin dependencias no aprobadas).
+- **Limitaciones y pendientes:**
+  - Sin pruebas instrumentadas/emulador.
+  - Persistencia física en SQLite/Room condicional a decisión futura cuando se requiera base de datos local en disco.
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`070-permisos-privacidad-accesibilidad`](specs/070-permisos-privacidad-accesibilidad/spec.md) (depende de `030-di-navegacion-ui`).
+
+## 40. Evidencia — Implementación y verificación de `070-permisos-privacidad-accesibilidad` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** autorización explícita para implementar y verificar `070-permisos-privacidad-accesibilidad`.
+- **Alcance:** auditoría y configuración de permisos mínimos en `AndroidManifest.xml` (únicamente `INTERNET`, sin solicitud de `RECORD_AUDIO` ni `POST_NOTIFICATIONS` prematuras) y transporte seguro en `network_security_config.xml` (texto claro deshabilitado por defecto y protección del dominio de la política de privacidad `nexumpr.github.io`) (`M070-R01`, `M070-R03`); diseño de componentes y utilidades accesibles en Material 3 (`AccessibilityConstants.MinTouchTargetSize = 48.dp`, `AccessibleButton`, `AccessibleIconButton`, `PermissionRationaleCard`, `PrivacyPolicyBanner`) con semántica y roles accesibles para lectores de pantalla (`M070-R02`); contratos y políticas de privacidad en `PrivacyContracts.kt` (`PermissionStatus`, `AlternativeInputMode`, `PermissionFallbackHandler`, `PrivacyPolicyConfig` con URL oficial `https://nexumpr.github.io/nexum-privacidad/` y sanitización de credenciales/tokens en registros) (`M070-R01`, `M070-R03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** in 2m 59s · 0 errores.
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 1m 24s · 95 tests unitarios ejecutados (7 nuevos de `PrivacyAndPermissionsTest`) · 0 fallos · 100% éxito (`PrivacyAndPermissionsTest` 7, `OfflineCacheTest` 10, `HttpClientAdapterTest` 11, `AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `SessionManagerTest` 3, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 24s · 36 tareas accionables (4 ejecutadas, 32 up-to-date) · APK debug generado.
+- **Archivos creados (3):**
+  - `app/src/main/java/mx/nexum/app/core/privacy/PrivacyContracts.kt` (contratos `PermissionStatus`, `AlternativeInputMode`, `PermissionFallbackHandler`, `PrivacyPolicyConfig`).
+  - `app/src/main/java/mx/nexum/app/core/ui/AccessibleComponents.kt` (componentes accesibles Material 3: `AccessibleButton`, `AccessibleIconButton`, `PermissionRationaleCard`, `PrivacyPolicyBanner`).
+  - `app/src/test/java/mx/nexum/app/core/privacy/PrivacyAndPermissionsTest.kt` (7 pruebas unitarias de fallback de permisos, accesibilidad 48dp, sanitización y auditoría de manifiesto / seguridad de red).
+- **Archivos modificados (4):**
+  - `app/src/main/res/xml/network_security_config.xml` (inclusión de dominio `nexumpr.github.io` con cleartext deshabilitado).
+  - `specs/070-permisos-privacidad-accesibilidad/task.md` (3 tareas marcadas `[x]` con evidencia y cierre).
+  - `specs/README.md` (progreso actualizado para `070-permisos-privacidad-accesibilidad` y conteo de tests a 95 en verde).
+  - `memoria.md` (decisión M-D14, actualización M-P05 y esta sección).
+- **Decisiones ratificadas:** M-D14 (permisos mínimos en manifiesto, accesibilidad 48dp y privacidad protegida).
+- **Limitaciones y pendientes:**
+  - Pruebas instrumentadas / emulador: no ejecutadas (sin dispositivo físico ni emulador conectado en sesión headless).
+  - Funcionalidad de voz/grabación de audio y notificaciones push pospuestas hasta autorización explícita de sus specs funcionales.
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`080-pruebas-mvi-compose`](specs/080-pruebas-mvi-compose/spec.md) (depende de `020-nucleo-mvi` y `030-di-navegacion-ui`).
+
+## 41. Evidencia — Implementación y verificación de `080-pruebas-mvi-compose` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** autorización explícita para implementar y verificar `080-pruebas-mvi-compose`.
+- **Alcance:** diseño e implementación de fixtures con datos estrictamente sintéticos sin tocar APIs remotas ni datos financieros (`TestFixtures.kt`, `FakeTokenStorage`, `FakeCredentialStorage`) (`M080-R01`, `M080-R02`); pruebas de integración de transiciones MVI (`Idle`, `Loading`, `Content`, `Empty`, `Error`, `Offline`) y efectos efímeros (`MviStateIntegrationTest.kt`) garantizando que eventos efímeros `replay = 0` no se dupliquen tras recomposición (`M080-R01`, `M080-R03`); suite de pruebas de UI instrumentadas en Compose (`NexumAppShellComposeTest.kt`) con `createComposeRule()` validando jerarquía de componentes accesibles y unívocos clics en Material 3 (`M080-R02`, `M080-R03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01 · compileSdk 36 · targetSdk 36 · minSdk 26.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 37s · 101 tests unitarios ejecutados (6 nuevos de `MviStateIntegrationTest`) · 0 fallos · 100% éxito (`MviStateIntegrationTest` 6, `PrivacyAndPermissionsTest` 7, `OfflineCacheTest` 10, `HttpClientAdapterTest` 11, `AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `SessionManagerTest` 3, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** in 37s · 0 errores.
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 6s · 36 tareas accionables (36 up-to-date) · APK debug generado.
+  - `connectedDebugAndroidTest` → `NO EJECUTADO` (documentado con causa: runner headless sin dispositivo físico ni emulador Android conectado según `adb devices`).
+- **Archivos creados (3):**
+  - `app/src/test/java/mx/nexum/app/core/testing/TestFixtures.kt` (fixtures sintéticos: `syntheticUser`, `syntheticSession`, `syntheticValidationErrorResponse`, `FakeTokenStorage`, `FakeCredentialStorage`).
+  - `app/src/test/java/mx/nexum/app/core/testing/MviStateIntegrationTest.kt` (6 pruebas unitarias de estados MVI: carga, contenido, vacío, error, offline y no repetición de efectos efímeros).
+  - `app/src/androidTest/java/mx/nexum/app/core/ui/NexumAppShellComposeTest.kt` (pruebas instrumentadas de Compose con `createComposeRule()` para accesibilidad y no duplicación en `NexumAppShell`).
+- **Archivos modificados (3):**
+  - `specs/080-pruebas-mvi-compose/task.md` (3 tareas marcadas `[x]` con evidencia real y cierre).
+  - `specs/README.md` (progreso actualizado para `080-pruebas-mvi-compose` y conteo de tests a 101 en verde).
+  - `memoria.md` (decisión M-D15 y esta sección).
+- **Decisiones ratificadas:** M-D15 (suite de pruebas MVI desacoplada, fixtures sintéticos y separación de suites de prueba).
+- **Limitaciones y pendientes:**
+  - Pruebas instrumentadas / emulador: `connectedDebugAndroidTest` queda en `NO EJECUTADO` por falta de dispositivo físico/emulador conectado.
+  - Sin medición de cobertura de código (no inventar porcentajes sin herramienta de cobertura aprobada en el proyecto).
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`090-devsecops-android`](specs/090-devsecops-android/spec.md) (depende de `010-base-android`) y [`100-ci-versiones-android`](specs/100-ci-versiones-android/spec.md).
+
+## 42. Evidencia — Implementación y verificación de `090-devsecops-android` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** autorización explícita para implementar y verificar `090-devsecops-android`.
+- **Alcance:** diseño e implementación de la estrategia de quality & security gates progresivos en 3 niveles (Local/Pre-commit, PR/CI, Release) (`M090-R01`, `N090-P01`); gobernanza de severidades de Android Lint vía `app/lint.xml` forzando reglas de seguridad críticas como `fatal` (`BadHostnameVerifier`, `NetworkSecurityConfig`, `HardcodedDebugMode`, `InsecureBaseConfiguration`, `TrustAllX509TrustManager`, etc.) (`M090-R02`, `N090-P02`); suite automatizada de seguridad estática `DevSecOpsVerificationTest.kt` evaluando cero secretos en código (regex AWS, claves privadas PEM, tokens), verificación de `network_security_config.xml` (tráfico en texto claro deshabilitado) y verificación de `AndroidManifest.xml` (únicamente `INTERNET`, sin permisos invasivos) con pruebas negativas explícitas (`M090-R01`, `M090-R02`); matriz de clasificación de hallazgos (P0..P3), SLAs de remediación y gobernanza de excepciones temporales (`M090-R03`, `N090-P03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01 · compileSdk 36 · targetSdk 36 · minSdk 26.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 59s · 109 tests unitarios ejecutados (8 nuevos de `DevSecOpsVerificationTest`) · 0 fallos · 100% éxito (`DevSecOpsVerificationTest` 8, `MviStateIntegrationTest` 6, `PrivacyAndPermissionsTest` 7, `OfflineCacheTest` 10, `HttpClientAdapterTest` 11, `AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `SessionManagerTest` 3, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** in 1m 36s · 0 errores (reportes SARIF y HTML generados en `app/build/reports/`).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 5s · 36 tareas accionables (36 up-to-date) · APK debug generado.
+  - `gitleaks` → `NO DISPONIBLE EN PATH LOCAL` (confirmado mediante `Get-Command gitleaks`, código 1; suplido de forma reproducible por la suite `DevSecOpsVerificationTest.kt` sin dependencias externas ni Docker).
+- **Archivos creados (2):**
+  - `app/lint.xml` (gobernanza de Android Lint forzando reglas críticas de seguridad como `fatal`).
+  - `app/src/test/java/mx/nexum/app/core/security/DevSecOpsVerificationTest.kt` (8 pruebas unitarias de auditoría estática de secretos, manifiesto, seguridad de red y escenarios negativos).
+- **Archivos modificados (3):**
+  - `specs/090-devsecops-android/task.md` (3 tareas marcadas `[x]` con evidencia real y cierre).
+  - `specs/README.md` (progreso actualizado para `090-devsecops-android` y conteo de tests a 109 en verde).
+  - `memoria.md` (decisión M-D16 y esta sección).
+- **Decisiones ratificadas:** M-D16 (arquitectura DevSecOps Android, gates progresivos, matriz de severidades y gobernanza de excepciones sin dependencias externas).
+- **Limitaciones y pendientes:**
+  - Herramientas externas (Detekt, CycloneDX) evaluadas y dejadas como propuestas formales sin modificar `libs.versions.toml`.
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`100-ci-versiones-android`](specs/100-ci-versiones-android/spec.md) (depende de `080-pruebas-mvi-compose` y `090-devsecops-android`).
+
+## 43. Evidencia — Implementación y verificación de `100-ci-versiones-android` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** autorización explícita para implementar y verificar `100-ci-versiones-android`.
+- **Alcance:** diseño e implementación del pipeline de CI reproducible en GitHub Actions (`.github/workflows/android-ci.yml`) con permisos mínimos de solo lectura (`permissions: contents: read`) (`M100-R01`, `N100-P02`); exclusión absoluta de secretos de firma de release (`keystore`, contraseñas) y de tareas de despliegue a Google Play o canales externos (`M100-R02`, `M100-R03`); formalización y verificación del esquema de versionado determinista (`versionCode = 2` local, `100 + GITHUB_RUN_NUMBER` en CI) y matriz SDK ratificada (`minSdk = 26`, `targetSdk = 36`, `compileSdk = 36`, JDK 21) (`M100-R01`, `N100-P01`); suite automatizada de pruebas `CiVersioningVerificationTest.kt` validando determinismo de versión, permisos mínimos del pipeline y escenarios negativos contra inyección de secretos o permisos excesivos (`M100-R01`, `M100-R02`); recolección y aislamiento de reportes de Lint (SARIF/HTML), tests JUnit y APK de depuración sin firma (`M100-R03`, `N100-P03`).
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01 · compileSdk 36 · targetSdk 36 · minSdk 26.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 40s · 115 tests unitarios ejecutados (6 nuevos de `CiVersioningVerificationTest`) · 0 fallos · 100% éxito (`CiVersioningVerificationTest` 6, `DevSecOpsVerificationTest` 8, `MviStateIntegrationTest` 6, `PrivacyAndPermissionsTest` 7, `OfflineCacheTest` 10, `HttpClientAdapterTest` 11, `AppContainerTest` 2, `AppNavigatorTest` 5, `MviCoreTest` 6, `SessionManagerTest` 3, `AuthValidatorTest` 19, `LoginViewModelTest` 9, `MockAuthApiTest` 11, `RegisterViewModelTest` 11, `ExampleUnitTest` 1).
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** in 1m 02s · 0 errores (reportes SARIF y HTML actualizados en `app/build/reports/`).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 7s · 36 tareas accionables (36 up-to-date) · APK debug generado limpiamente.
+- **Archivos creados (2):**
+  - `.github/workflows/android-ci.yml` (workflow de CI de solo lectura con JDK 21, `setup-gradle@v4`, ejecución de gates de Lint/Tests y generación de APK debug sin firma).
+  - `app/src/test/java/mx/nexum/app/core/ci/CiVersioningVerificationTest.kt` (6 pruebas unitarias de cálculo de versionado determinista, matriz SDK, auditoría de permisos de CI y escenarios negativos).
+- **Archivos modificados (3):**
+  - `specs/100-ci-versiones-android/task.md` (3 tareas marcadas `[x]` con evidencia real y cierre).
+  - `specs/README.md` (progreso actualizado para `100-ci-versiones-android` y conteo de tests a 115 en verde).
+  - `memoria.md` (decisión M-D17 y esta sección).
+- **Decisiones ratificadas:** M-D17 (pipeline CI de solo lectura, versionado determinista, sin secretos de firma embebidos).
+- **Limitaciones y pendientes:**
+  - Sin publicación externa a Google Play (pospuesta para `110-distribucion-google-play` / `151-github-actions` bajo autorización explícita independiente).
+  - `git push`: no ejecutado (requiere autorización explícita independiente).
+  - Siguiente paso según dependencias: [`110-distribucion-google-play`](specs/110-distribucion-google-play/spec.md) (depende de `100-ci-versiones-android`).
