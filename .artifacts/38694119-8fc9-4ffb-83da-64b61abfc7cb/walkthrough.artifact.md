@@ -1,20 +1,22 @@
-# Walkthrough — Rediseño Visual "Aero-Futuristic"
+# Walkthrough — Paso 1: Resumen e Ingresos Financieros
 
-He implementado la renovación visual completa de las pantallas principales de autenticación (**Login** y **Registro**) con el estilo **"Aero-Futuristic / Glassmorphic Cyber"** utilizando **Jetpack Compose y Material 3**.
+He implementado el **Paso 1** del módulo financiero de Nexum-Mobile, cubriendo la gestión de ingresos mensuales (Unidades 360 y 370) y el panel de resumen financiero consolidado (Unidad 380) con el diseño **Aero-Futuristic**.
 
 ## Cambios Realizados
 
-### Pantallas de Autenticación (`mx.nexum.app.auth.ui`)
+### Módulo Financiero UI (`mx.nexum.app.financial.ui`)
 
-#### [MODIFY] [LoginScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/LoginScreen.kt)
-- Fondo oscuro obsidiana (`ObsidianBackground`).
-- Contenedor flotante translúcido tipo *Glassmorphic* con esquinas redondeadas (`RoundedCornerShape(24.dp)`).
-- Campos de texto (`OutlinedTextField`) con bordes en cian neón (`AeroCyan`) al enfocar.
-- Botones de acción principales luminosos y tipografía futurista.
+#### [NEW] [IncomeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/IncomeViewModel.kt)
+- ViewModel MVI para consultar y actualizar el ingreso mensual del usuario utilizando `FinancialRepository`.
 
-#### [MODIFY] [RegisterScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/RegisterScreen.kt)
-- Estilo glassmorphism consistente con el Login para el formulario de registro y configuración financiera inicial.
-- Tarjetas de gastos recurrentes translúcidas (`ExpenseCard`) con diseño limpio y moderno.
+#### [NEW] [FinancialSummaryViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryViewModel.kt)
+- ViewModel MVI para cargar el resumen financiero consolidado.
+
+#### [NEW] [IncomeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/IncomeScreen.kt)
+- Pantalla con estilo Aero-Futurista (*Glassmorphism*) para actualizar el ingreso mensual.
+
+#### [NEW] [FinancialSummaryScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryScreen.kt)
+- Panel de resumen financiero con tarjetas translúcidas, tarjeta de saldo disponible con acento neón y desglose por categorías de gastos y ahorros.
 
 ---
 
