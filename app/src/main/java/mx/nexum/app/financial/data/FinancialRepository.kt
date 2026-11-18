@@ -28,8 +28,16 @@ interface FinancialRepository {
     suspend fun getMovementDetail(movementId: String): AuthResult<MovementDto>
     suspend fun updateMovement(movementId: String, request: UpdateMovementRequest): AuthResult<MovementDto>
     suspend fun deleteMovement(movementId: String, ifMatch: String? = null): AuthResult<Unit>
+
+    companion object {
+        fun create(
+            api: FinancialApiService,
+            tokenStorage: TokenStorage
+        ): FinancialRepository = FinancialRepositoryImpl(api, tokenStorage)
+    }
 }
 
+@Suppress("unused")
 class FinancialRepositoryImpl(
     private val api: FinancialApiService,
     private val tokenStorage: TokenStorage
