@@ -19,9 +19,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
 import mx.nexum.app.ui.theme.NexumTheme
 
@@ -34,15 +37,56 @@ fun FinancialSummaryScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp)
     ) {
+        // Ambient Cyber Glows
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.TopStart)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.BottomEnd)
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "RESUMEN FINANCIERO",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                text = "NEXUM HUD // SUMMARY",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                ),
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "PANEL FINANCIERO",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                ),
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(24.dp))
@@ -61,19 +105,26 @@ fun FinancialSummaryScreen(
                 // Available Balance Card (Neon Highlight)
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    tonalElevation = 4.dp
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                    tonalElevation = 8.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(28.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = "SALDO DISPONIBLE", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(
+                            text = "SALDO DISPONIBLE",
+                            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.5.sp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "$${summary.available}",
-                            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 38.sp
+                            ),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
@@ -87,13 +138,15 @@ fun FinancialSummaryScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     SummaryCard(
-                        title = "Ingresos",
+                        title = "INGRESOS",
                         amount = summary.income,
+                        accentColor = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f)
                     )
                     SummaryCard(
-                        title = "Ahorros",
+                        title = "AHORROS",
                         amount = summary.savings,
+                        accentColor = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -105,13 +158,15 @@ fun FinancialSummaryScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     SummaryCard(
-                        title = "Gastos Fijos",
+                        title = "GASTOS FIJOS",
                         amount = summary.fixedExpenses,
+                        accentColor = MaterialTheme.colorScheme.error,
                         modifier = Modifier.weight(1f)
                     )
                     SummaryCard(
-                        title = "Gastos Variables",
+                        title = "GASTOS VARIABLES",
                         amount = summary.variableExpenses,
+                        accentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -124,22 +179,34 @@ fun FinancialSummaryScreen(
 private fun SummaryCard(
     title: String,
     amount: Double,
+    accentColor: Color,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+        tonalElevation = 4.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(18.dp)
         ) {
-            Text(text = title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "$$amount",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                ),
+                color = accentColor
             )
         }
     }

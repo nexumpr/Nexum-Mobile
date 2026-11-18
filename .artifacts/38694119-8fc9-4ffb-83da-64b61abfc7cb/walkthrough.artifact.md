@@ -1,23 +1,20 @@
-# Walkthrough — Shell de Navegación Principal (Dashboard Post-Login)
+# Walkthrough — Revitalización Visual "Aero-Futuristic / Cyberpunk High-End"
 
-He implementado el shell de navegación principal para usuarios autenticados (`MainAppShell`), reemplazando el marcador de posición *"Sesión iniciada"* (`AppPlaceholder`) por una interfaz con pestañas (*Bottom Navigation*) que integra todas las pantallas financieras del sistema.
+He completado la revitalización estética profunda de todas las pantallas financieras y de navegación en Nexum-Mobile, transformando la interfaz en una experiencia inmersiva tipo *Sci-Fi HUD / Cyberpunk Glassmorphism*.
 
 ## Cambios Realizados
 
-### Módulo Financiero UI (`mx.nexum.app.financial.ui`)
+### Módulo Financiero UI y Shell (`mx.nexum.app.financial.ui`)
 
-#### [NEW] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Contenedor con `Scaffold` y barra de navegación inferior (*NavigationBar*) Material 3 que permite alternar fluidamente entre 4 pestañas principales:
-  1. **Resumen** (`FinancialSummaryScreen`)
-  2. **Movimientos** (`MovementsScreen`)
-  3. **Pagos** (`RecurringPaymentsScreen`)
-  4. **Metas** (`GoalsScreen`)
+#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
+- Añadida una línea superior de gradiente neón (*Neon Top Glow Line*) sobre la barra de navegación inferior (*NavigationBar*).
 
-#### [MODIFY] [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt)
-- Conectado `AuthScreen.App` para que invoque `MainAppShell()` al iniciar sesión o registrarse con éxito.
+#### [MODIFY] [FinancialSummaryScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryScreen.kt)
+- Incorporados círculos con gradientes radiales ambientales (*Ambient Cyber Glows*) en las esquinas de fondo.
+- Tarjetas translúcidas mejoradas con mayor elevación tonal y tipografía espaciada.
 
-#### [MODIFY] [app/build.gradle.kts](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/build.gradle.kts)
-- Añadida la dependencia `material-icons-extended` para los iconos de navegación inferior.
+#### [MODIFY] [MovementsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MovementsScreen.kt), [RecurringPaymentsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsScreen.kt), [GoalsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsScreen.kt)
+- Aplicados fondos ambientales con iluminación radial y tarjetas de cristal (*Glassmorphism 2.0*) con desniveles y colores de acento vibrantes (Cian, Violeta y Verde).
 
 ---
 
