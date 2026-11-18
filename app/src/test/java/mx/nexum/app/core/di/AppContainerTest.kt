@@ -13,6 +13,7 @@ import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.auth.data.dto.LoginRequest
 import mx.nexum.app.auth.data.dto.RegisterRequest
 import mx.nexum.app.auth.data.dto.User
+import mx.nexum.app.core.cache.OfflineCacheManager
 import mx.nexum.app.core.session.CredentialStorage
 import mx.nexum.app.core.session.InMemoryCredentialStorage
 import mx.nexum.app.core.session.SessionManager
@@ -56,7 +57,8 @@ class AppContainerTest {
         override val tokenStorage: TokenStorage = FakeTokenStorage(),
         override val authRepository: AuthRepository = FakeAuthRepository(),
         override val credentialStorage: CredentialStorage = InMemoryCredentialStorage(),
-        override val sessionManager: SessionManager = SessionManager(credentialStorage, RetrofitAuthApi())
+        override val sessionManager: SessionManager = SessionManager(credentialStorage, RetrofitAuthApi()),
+        override val cacheManager: OfflineCacheManager = OfflineCacheManager()
     ) : AppContainer
 
     @Test
@@ -70,6 +72,7 @@ class AppContainerTest {
 
         assertNotNull(container.tokenStorage)
         assertNotNull(container.authRepository)
+        assertNotNull(container.cacheManager)
 
         val testSession = Session(
             accessToken = "token_abc",
@@ -91,9 +94,14 @@ class AppContainerTest {
         val defaultContainer = DefaultAppContainer()
         assertNotNull(defaultContainer.tokenStorage)
         assertNotNull(defaultContainer.authRepository)
+        assertNotNull(defaultContainer.cacheManager)
 
         val storage1 = defaultContainer.tokenStorage
         val storage2 = defaultContainer.tokenStorage
         assertEquals(storage1, storage2)
+
+        val cache1 = defaultContainer.cacheManager
+        val cache2 = defaultContainer.cacheManager
+        assertEquals(cache1, cache2)
     }
 }
