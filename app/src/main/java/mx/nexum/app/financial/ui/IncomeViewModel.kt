@@ -24,10 +24,12 @@ sealed interface IncomeIntent : UiIntent {
     data object SubmitUpdate : IncomeIntent
 }
 
+@Suppress("unused")
 sealed interface IncomeEffect : UiEffect {
     data class ShowToast(val message: String) : IncomeEffect
 }
 
+@Suppress("unused")
 class IncomeViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<IncomeUiState, IncomeIntent, IncomeEffect>(IncomeUiState()) {

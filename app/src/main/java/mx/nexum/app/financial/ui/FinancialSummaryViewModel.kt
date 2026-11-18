@@ -20,10 +20,12 @@ sealed interface FinancialSummaryIntent : UiIntent {
     data object LoadSummary : FinancialSummaryIntent
 }
 
+@Suppress("unused")
 sealed interface FinancialSummaryEffect : UiEffect {
     data class ShowToast(val message: String) : FinancialSummaryEffect
 }
 
+@Suppress("unused")
 class FinancialSummaryViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<FinancialSummaryUiState, FinancialSummaryIntent, FinancialSummaryEffect>(FinancialSummaryUiState()) {
