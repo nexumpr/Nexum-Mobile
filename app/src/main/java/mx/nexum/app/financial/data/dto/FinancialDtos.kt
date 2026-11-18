@@ -40,3 +40,23 @@ data class BootstrapSummaryDto(
     @SerializedName("savings") val savings: Double,
     @SerializedName("available") val available: Double
 )
+
+// Units 360, 370, 380: Income & Financial Summary DTOs
+data class IncomeDto(
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("frequency") val frequency: String,
+    @SerializedName("updatedAt") val updatedAt: String?
+)
+
+data class UpdateIncomeRequest(
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("frequency") val frequency: String
+)
+
+data class FinancialSummaryResponse(
+    @SerializedName("income") val income: Double,
+    @SerializedName("fixedExpenses") val fixedExpenses: Double,
+    @SerializedName("variableExpenses") val variableExpenses: Double,
+    @SerializedName("savings") val savings: Double,
+    @SerializedName("available") val available: Double
+)
