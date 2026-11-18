@@ -64,11 +64,12 @@ Cada unidad tiene `spec.md` (qué/aceptación), `plan.md` (cómo/orden/riesgos) 
 - `080-pruebas-mvi-compose`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §41 y en `specs/080-pruebas-mvi-compose/task.md`).
 - `090-devsecops-android`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §42 y en `specs/090-devsecops-android/task.md`).
 - `100-ci-versiones-android`: **implementada y probada** el 2026-11-17 (evidencia en `memoria.md` §43 y en `specs/100-ci-versiones-android/task.md`).
-- `110-*` a `120-*`: preparados, ninguna implementación acreditada por la mera existencia de archivos.
+- `110-distribucion-google-play`: **documentación verificada** el 2026-11-17 (evidencia en `memoria.md` §44 y en `specs/110-distribucion-google-play/task.md`); decisiones humanas de cuenta Play, firma, `applicationId`, R8 y workflow de deploy preexistente permanecen pendientes; sin publicación.
+- `120-contratos-end-to-end`: **documentado y probado localmente** el 2026-11-17 (evidencia en `memoria.md` §45 y en `specs/120-contratos-end-to-end/task.md`); simulador HTTP en memoria y 16 tests sintéticos sin dependencias nuevas; aprobación de Backend Go y cambios productivos de reintentos/timeouts/DTOs siguen pendientes.
 - `130-Registro-Usuario` y `140-Login`: **implementadas y probadas** el 2026-11-04 (evidencia en `memoria.md` §8 y en cada `task.md`); fuente mock sin Backend real.
 - `150-Refresh-Token` a `310-Completar-Onboarding`: **Fase A documental completada** (noviembre 2026); implementación técnica pendiente de mandato de Fase B.
 - `320-Eliminar-Movimiento`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
 - `330-Pagos-Recurrentes`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
 - `340-Registrar-Pago-Recurrente`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
 - `350-Metas-Ahorro`: **Fase A documental completada** (2026-11-13); implementación técnica pendiente de mandato de Fase B.
-- Estado de tests: **115 unitarios en verde** (2026-11-17); instrumentación **preparada (sin emulador activo)**; Android Lint **0 errores (SARIF/HTML generados)**; Pipeline CI **configurado con permisos mínimos sin secretos de firma**.
+- Estado de tests: **131 unitarios en verde** (2026-11-17; regresión de `120` con `--rerun-tasks`: 18 suites, 0 fallos, 0 errores); instrumentación **preparada (sin emulador activo)**; Android Lint **0 errores (SARIF/HTML generados en la regresión de `110`)**; Pipeline CI **configurado con permisos mínimos sin secretos de firma**.

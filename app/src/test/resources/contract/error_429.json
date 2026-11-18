@@ -1,0 +1,1 @@
+{"error":{"code":"RATE_LIMITED","message":"Límite sintético excedido","details":{"retryAfter":"30"},"traceId":"tr_synthetic_429"}}

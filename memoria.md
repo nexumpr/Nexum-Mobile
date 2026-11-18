@@ -628,3 +628,55 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
   - Sin publicación externa a Google Play (pospuesta para `110-distribucion-google-play` / `151-github-actions` bajo autorización explícita independiente).
   - `git push`: no ejecutado (requiere autorización explícita independiente).
   - Siguiente paso según dependencias: [`110-distribucion-google-play`](specs/110-distribucion-google-play/spec.md) (depende de `100-ci-versiones-android`).
+
+## 44. Evidencia — Documentación y verificación de `110-distribucion-google-play` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** solicitud explícita de ejecutar `110-distribucion-google-play` con prohibición de publicar, firmar con llaves reales, pagar trámites, usar Docker, tocar otros repositorios o hacer push.
+- **Alcance ejecutado:** documentación de gobierno de cuenta/firma (`M110-R01`, `N110-P01`, `N110-T01`), checklist de privacidad y calidad (`M110-R02`, `N110-P02`, `N110-T02`) y diseño de release/rollback (`M110-R03`, `N110-P03`, `N110-T03`). No se modificaron Gradle, workflows, manifiesto ni dependencias.
+- **Entorno:** Windows/PowerShell 5.1 · Gradle Wrapper con caché de configuración reutilizada · sin compilación release · sin credenciales ni acceso a Play Console.
+- **Archivos creados (3):**
+  - `specs/110-distribucion-google-play/release-governance.md` (matriz de roles, registro administrativo/costos, política de firma y cinco decisiones pendientes `P110-D01…D05`).
+  - `specs/110-distribucion-google-play/play-prepublication-checklist.md` (controles `CHK-P01…P08`, `CHK-A01…A09` y `CHK-H01…H04` con estado real).
+  - `specs/110-distribucion-google-play/release-rollback-plan.md` (pipeline manual propuesto, compuertas, detención, promoción/retirada y reversibilidad).
+- **Archivos modificados (3):**
+  - `specs/110-distribucion-google-play/task.md` (tareas marcadas `[x]` solo por documentación y validación documental ejecutadas; ratificación humana sigue pendiente).
+  - `specs/README.md` (progreso de esta unidad).
+  - `memoria.md` (esta sección).
+- **Comandos y resultados reales:**
+  - `git status --short` → 3 archivos nuevos sin seguimiento; sin modificaciones previas en archivos versionados.
+  - `git diff --check` → sin salida, sin errores de whitespace en el diff versionado.
+  - `git grep -n -E 'r0adkll/upload-google-play|serviceAccountJsonPlainText|PLAY_SERVICE_ACCOUNT_JSON|ANDROID_KEYSTORE_BASE64' -- .github/workflows` → 7 coincidencias, todas en `.github/workflows/android-deploy.yml:42,48,49,53,100,102`; confirma riesgo preexistente. Archivo **no modificado ni ejecutado**.
+  - `git grep -n -I -E 'BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{36,255}' -- .` → 2 coincidencias sintéticas en `DevSecOpsVerificationTest.kt:124,131`; sin secretos reales detectados.
+  - `git check-ignore -v app/upload-key.jks app/release.pepk` → solo `.gitignore:16` ignora `*.jks`; `*.pepk` no aparece ignorado. `Test-Path app/proguard-rules.pro` → `False`.
+  - `git grep -n -E 'applicationId|optimization|enable = false|proguard|mapping' -- app/build.gradle.kts` → `applicationId = "com.nexum.nexum"` (`:24`) y `optimization { enable = false }` (`:64-65`); sin reglas ni `mapping.txt`.
+  - `git grep -n 'OFFICIAL_PRIVACY_URL' -- app/src/main` → `PrivacyContracts.kt:55` con `https://nexumpr.github.io/nexum-privacidad/`.
+  - `.\gradlew.bat testDebugUnitTest; .\gradlew.bat lintDebug; .\gradlew.bat assembleDebug` → tres `BUILD SUCCESSFUL`; primera pasada de tests `UP-TO-DATE`.
+  - `.\gradlew.bat testDebugUnitTest --rerun-tasks` → `BUILD SUCCESSFUL in 1m 57s`, 24 tareas ejecutadas; lectura de XML: 15 suites, 115 tests, 0 failures, 0 errors.
+- **No ejecutado:** `bundleRelease` con firma real, generación de llaves, *.pepk, service accounts, subida de AAB/APK, pistas internas/cerradas, revisión humana de firma/consentimiento, trámites/costos, push, merge ni despliegue.
+- **Pendientes materiales:** `P110-D01` workflow de deploy preexistente; `P110-D02` `applicationId` canónico; `P110-D03` responsables y aprobadores; `P110-D04` trámites/costos; `P110-D05` ignore de `*.pepk`. CHK-A03/A04 permanecen BLOQUEADOS hasta decidir R8/reglas de desofuscación.
+- **Reversibilidad:** eliminar los 3 documentos creados y revertir mediante diff inverso los bloques propios de `task.md`, `specs/README.md` y esta sección; sin reset, push ni rewrite de historial.
+
+## 45. Evidencia — Contratos end-to-end locales de `120-contratos-end-to-end` (2026-11-17)
+- **Fecha:** 2026-11-17 · **Mandato:** solicitud explícita de ejecutar `120-contratos-end-to-end`; confirmación de la opción mínima (simulador HTTP en memoria sin nueva dependencia). No se autorizó Backend real, dependencias de mock ni cambios productivos de red.
+- **Entorno:** Windows/PowerShell 5.1 · Gradle Wrapper con configuración cacheada · JDK 21 · datos 100% sintéticos · dominio reservado `contract.invalid` · sin red externa, credenciales ni secretos reales.
+- **Alcance ejecutado:** `M120-R01/R02/R03`, planes `N120-P01/P02/P03` y tareas `N120-T01/T02/T03`. Se documentó el contrato y se construyeron pruebas JVM deterministas; **no** se cablearon reintentos, timeouts, refresh automático ni DTOs nuevos en producción.
+- **Archivos creados (20):**
+  - `specs/120-contratos-end-to-end/rest-contract.md` (rutas versionadas, cabeceras, sobre canónico, matriz de responsabilidades y pendientes Backend).
+  - `specs/120-contratos-end-to-end/retry-and-fallback-matrix.md` (matriz propuesta de reintentos, `401`, fallback `STALE` e idempotencia).
+  - `specs/120-contratos-end-to-end/fixture-catalog.md` (15 fixtures sintéticas y reglas de datos).
+  - `app/src/test/java/mx/nexum/app/core/contract/FixtureHttpSimulator.kt` (interceptor OkHttp en memoria; registra método, ruta, cabeceras y `contentType` del cuerpo).
+  - `app/src/test/java/mx/nexum/app/core/contract/RestContractTest.kt` (6 pruebas).
+  - `app/src/test/java/mx/nexum/app/core/contract/RetryAndFallbackContractTest.kt` (6 pruebas).
+  - `app/src/test/java/mx/nexum/app/core/contract/NoSensitiveDataContractTest.kt` (4 pruebas).
+  - `app/src/test/resources/contract/` con `health_success.json`, `session_refresh_success.json`, `metadata_success.json`, `unknown_fields_success.json`, `register_success.json`, `error_400.json`, `error_401.json`, `error_403.json`, `error_404.json`, `error_409.json`, `error_422.json`, `error_429.json`, `error_500.json`, `error_503.json` y `malformed.json`.
+- **Archivos modificados (3):** `specs/120-contratos-end-to-end/task.md`, `specs/README.md` y esta sección de `memoria.md`. Sin tocar `app/src/main`, Gradle, workflows ni specs de otras unidades.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest --rerun-tasks` (primera pasada) → `BUILD FAILED`: 131 tests, 4 fallos por fixtures incorrectas y por `Content-Type` ausente en la capa de interceptor de aplicación.
+  - Correcciones aplicadas: `unknown_fields_success.json` pasó a incluir `version`/`generatedAt`; `malformed.json` pasó a tener tipos incompatibles para disparar `JsonSyntaxException`; `RecordedRequest` incorporó `contentType = request.body?.contentType()?.toString()`; se eliminó el warning de `javaClass.classLoader` usando `FixtureHttpSimulator::class.java.classLoader?`.
+  - `.\gradlew.bat testDebugUnitTest --rerun-tasks` (final) → `BUILD SUCCESSFUL in 1m 15s`, 24 tareas ejecutadas, sin warnings de compilación.
+  - Lectura de XML con PowerShell → `ARCHIVOS=18 TESTS=131 FAILURES=0 ERRORS=0`.
+  - `git diff --check` → sin errores de whitespace; único aviso: `specs/110-distribucion-google-play/task.md` convertirá LF a CRLF en el próximo `git add` (heredado de la unidad 110).
+  - `git status --short` → cambios pendientes de `110` más los 7 archivos nuevos de `120` (3 documentos, 4 fuentes de test) y `app/src/test/resources/contract/`.
+- **Decisiones registradas:** interceptor en memoria en lugar de `MockWebServer`; sin nueva dependencia; `Retry-After` se respeta cuando existe; `401` decide refresh, no reintento directo; sin conectividad decide fallback a caché `STALE`; `400/403/404/409/422`, TLS y JSON inválido se abortan; la cola de idempotencia reutiliza clave y conserva `retryCount`.
+- **Riesgos y pendientes materiales:** Backend Go debe ratificar forma de `details` (mapa vs lista), `traceId`/`X-Request-ID`, catálogo de `code`, campos obligatorios, semántica de `409`, `Retry-After`, timeouts y `BASE_URL` por entorno. Existe divergencia real entre `HttpContracts.kt` y `AuthDtos.kt`. No existe `RetryPolicy` productiva: la matriz es solo una tabla de decisión probada. `050` sigue con `task.md` pendiente en el repo aunque se asumió como dependencia previa.
+- **No ejecutado:** `MockWebServer`, llamadas a Backend Go, cambios en repositorio Go, `bundleRelease`, firma, publicación, Docker, push, merge ni despliegue.
+- **Reversibilidad:** eliminar los 7 archivos nuevos de código/documentos y el directorio de fixtures, y revertir los bloques propios de `task.md`, `specs/README.md` y esta sección; sin reset, push ni rewrite de historial.
