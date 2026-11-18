@@ -1,22 +1,22 @@
-# Walkthrough — Paso 1: Resumen e Ingresos Financieros
+# Walkthrough — Paso 2: Movimientos Financieros
 
-He implementado el **Paso 1** del módulo financiero de Nexum-Mobile, cubriendo la gestión de ingresos mensuales (Unidades 360 y 370) y el panel de resumen financiero consolidado (Unidad 380) con el diseño **Aero-Futuristic**.
+He implementado el **Paso 2** del módulo financiero de Nexum-Mobile, cubriendo la gestión de movimientos financieros (listado, registro de transacciones y eliminación con reversión atómica de metas bajo el contrato NEXUM-E031) con el diseño **Aero-Futuristic**.
 
 ## Cambios Realizados
 
 ### Módulo Financiero UI (`mx.nexum.app.financial.ui`)
 
-#### [NEW] [IncomeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/IncomeViewModel.kt)
-- ViewModel MVI para consultar y actualizar el ingreso mensual del usuario utilizando `FinancialRepository`.
+#### [NEW] [MovementsListViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MovementsListViewModel.kt)
+- ViewModel MVI para listar el historial de movimientos y ejecutar la eliminación (NEXUM-E031).
 
-#### [NEW] [FinancialSummaryViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryViewModel.kt)
-- ViewModel MVI para cargar el resumen financiero consolidado.
+#### [NEW] [RegisterMovementViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RegisterMovementViewModel.kt)
+- ViewModel MVI para registrar nuevas transacciones financieras.
 
-#### [NEW] [IncomeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/IncomeScreen.kt)
-- Pantalla con estilo Aero-Futurista (*Glassmorphism*) para actualizar el ingreso mensual.
+#### [NEW] [MovementsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MovementsScreen.kt)
+- Pantalla con estilo Aero-Futurista (*Glassmorphism*) para visualizar el listado de movimientos con tarjetas translúcidas e icono de borrado (`×`).
 
-#### [NEW] [FinancialSummaryScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryScreen.kt)
-- Panel de resumen financiero con tarjetas translúcidas, tarjeta de saldo disponible con acento neón y desglose por categorías de gastos y ahorros.
+#### [NEW] [RegisterMovementScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RegisterMovementScreen.kt)
+- Formulario translúcido estilizado para registrar nuevas transacciones.
 
 ---
 
