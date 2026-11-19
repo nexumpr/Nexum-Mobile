@@ -50,9 +50,7 @@ class LoginViewModel(
 
             LoginIntent.NavigateToRegister -> mutableEffects.tryEmit(AuthEffect.NavigateToRegister)
 
-            LoginIntent.NavigateToForgotPassword -> mutableEffects.tryEmit(
-                AuthEffect.ShowSnackbar("La recuperación de contraseña aún no está disponible")
-            )
+            LoginIntent.NavigateToForgotPassword -> mutableEffects.tryEmit(AuthEffect.NavigateToForgotPassword)
         }
     }
 

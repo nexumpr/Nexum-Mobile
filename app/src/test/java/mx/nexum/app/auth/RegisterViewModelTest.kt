@@ -8,10 +8,18 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import mx.nexum.app.auth.data.dto.ChangePasswordRequestDto
+import mx.nexum.app.auth.data.dto.ChangePasswordResponseDto
+import mx.nexum.app.auth.data.dto.ForgotPasswordRequestDto
+import mx.nexum.app.auth.data.dto.ForgotPasswordResponseDto
 import mx.nexum.app.auth.data.dto.LoginRequestDto
 import mx.nexum.app.auth.data.dto.LoginResponseDto
+import mx.nexum.app.auth.data.dto.RefreshRequestDto
+import mx.nexum.app.auth.data.dto.RefreshResponseDto
 import mx.nexum.app.auth.data.dto.RegisterRequestDto
 import mx.nexum.app.auth.data.dto.RegisterResponseDto
+import mx.nexum.app.auth.data.dto.ResetPasswordRequestDto
+import mx.nexum.app.auth.data.dto.ResetPasswordResponseDto
 import mx.nexum.app.auth.data.network.AuthApiService
 import mx.nexum.app.auth.ui.AuthEffect
 import mx.nexum.app.auth.ui.ExpenseDraft
@@ -51,6 +59,29 @@ class RegisterViewModelTest {
         }
 
         override suspend fun login(request: LoginRequestDto): Response<LoginResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun refresh(request: RefreshRequestDto): Response<RefreshResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun logout(authorization: String): Response<Unit> {
+            return Response.success(Unit)
+        }
+
+        override suspend fun forgotPassword(request: ForgotPasswordRequestDto): Response<ForgotPasswordResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun resetPassword(request: ResetPasswordRequestDto): Response<ResetPasswordResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun changePassword(
+            authorization: String,
+            request: ChangePasswordRequestDto
+        ): Response<ChangePasswordResponseDto> {
             throw NotImplementedError("Not needed in RegisterViewModelTest")
         }
     }

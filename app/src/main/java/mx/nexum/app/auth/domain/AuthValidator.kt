@@ -22,6 +22,12 @@ object AuthValidator {
         else -> null
     }
 
+    fun isStrongPassword(password: String): Boolean {
+        if (password.length !in 12..128) return false
+        val isAllSame = password.toSet().size <= 1
+        return !isAllSame
+    }
+
     fun confirmationError(password: String, confirmation: String): String? = when {
         confirmation.isBlank() -> "Confirma tu contraseña"
         password != confirmation -> "Las contraseñas no coinciden"
