@@ -386,19 +386,19 @@ class MockAuthApi(
                 )
             }
 
-            if (request.newPassword.length < 12) {
-                throw AuthApiException(
-                    kind = AuthErrorKind.VALIDATION,
-                    message = "La nueva contraseña debe tener al menos 12 caracteres.",
-                    statusCode = 422
-                )
-            }
-
             if (request.newPassword == request.currentPassword) {
                 throw AuthApiException(
                     kind = AuthErrorKind.CONFLICT,
                     message = "La nueva contraseña no puede ser igual a la actual.",
                     statusCode = 409
+                )
+            }
+
+            if (request.newPassword.length < 12) {
+                throw AuthApiException(
+                    kind = AuthErrorKind.VALIDATION,
+                    message = "La nueva contraseña debe tener al menos 12 caracteres.",
+                    statusCode = 422
                 )
             }
 

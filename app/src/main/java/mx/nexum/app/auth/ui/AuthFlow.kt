@@ -73,6 +73,7 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     AuthEffect.NavigateToLogin -> screenName = AuthScreen.Login.name
                     AuthEffect.NavigateToRegister -> screenName = AuthScreen.Register.name
                     AuthEffect.NavigateToForgotPassword -> screenName = AuthScreen.ForgotPassword.name
+                    AuthEffect.NavigateToChangePassword -> screenName = AuthScreen.ChangePassword.name
                     is AuthEffect.NavigateToResetPassword -> {
                         resetPasswordViewModel.setUserEmail(effect.email)
                         screenName = AuthScreen.ResetPassword.name
@@ -156,6 +157,7 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     AuthEffect.NavigateToLogin -> screenName = AuthScreen.Login.name
                     AuthEffect.NavigateToRegister -> screenName = AuthScreen.Register.name
                     AuthEffect.NavigateToForgotPassword -> screenName = AuthScreen.ForgotPassword.name
+                    AuthEffect.NavigateToChangePassword -> screenName = AuthScreen.ChangePassword.name
                     AuthEffect.NavigateToApp -> screenName = AuthScreen.App.name
                     is AuthEffect.NavigateToResetPassword -> {}
                     is AuthEffect.ShowSnackbar -> {
@@ -177,6 +179,7 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     AuthEffect.NavigateToLogin -> screenName = AuthScreen.Login.name
                     AuthEffect.NavigateToRegister -> screenName = AuthScreen.Register.name
                     AuthEffect.NavigateToForgotPassword -> screenName = AuthScreen.ForgotPassword.name
+                    AuthEffect.NavigateToChangePassword -> screenName = AuthScreen.ChangePassword.name
                     AuthEffect.NavigateToApp -> screenName = AuthScreen.App.name
                     is AuthEffect.NavigateToResetPassword -> {}
                     is AuthEffect.ShowSnackbar -> {
