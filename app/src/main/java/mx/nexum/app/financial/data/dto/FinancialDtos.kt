@@ -170,3 +170,59 @@ data class UpdateOnboardingRequest(
     @SerializedName("completed") val completed: Boolean = true,
     @SerializedName("limitedMode") val limitedMode: Boolean = false
 )
+
+// Oleada 1 DTOs (E012, E013, E015, E016, E017, E068, E069, E070, E071)
+data class UserProfileDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("displayName") val displayName: String,
+    @SerializedName("emailVerified") val emailVerified: Boolean,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("version") val version: Int
+)
+
+data class UpdateProfileRequest(
+    @SerializedName("displayName") val displayName: String
+)
+
+data class PrivacyNoticeDto(
+    @SerializedName("version") val version: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("body") val body: String,
+    @SerializedName("publishedAt") val publishedAt: String
+)
+
+data class ConsentItemDto(
+    @SerializedName("noticeVersion") val noticeVersion: String,
+    @SerializedName("acceptedAt") val acceptedAt: String,
+    @SerializedName("source") val source: String
+)
+
+data class RecordConsentRequest(
+    @SerializedName("noticeVersion") val noticeVersion: String,
+    @SerializedName("accepted") val accepted: Boolean = true
+)
+
+data class PreferencesDto(
+    @SerializedName("language") val language: String,
+    @SerializedName("timezone") val timezone: String,
+    @SerializedName("version") val version: Int
+)
+
+data class UpdatePreferencesRequest(
+    @SerializedName("language") val language: String?,
+    @SerializedName("timezone") val timezone: String?
+)
+
+data class FaqItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("question") val question: String,
+    @SerializedName("answer") val answer: String
+)
+
+data class EducationTipDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("content") val content: String,
+    @SerializedName("category") val category: String?
+)

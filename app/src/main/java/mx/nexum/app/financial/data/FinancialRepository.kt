@@ -7,23 +7,32 @@ import mx.nexum.app.auth.data.AuthResult
 import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.financial.data.dto.BootstrapResponse
 import mx.nexum.app.financial.data.dto.CategoryDto
+import mx.nexum.app.financial.data.dto.ConsentItemDto
 import mx.nexum.app.financial.data.dto.CreateGoalRequest
 import mx.nexum.app.financial.data.dto.CreateGoalResponse
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.EducationTipDto
+import mx.nexum.app.financial.data.dto.FaqItemDto
 import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
 import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
+import mx.nexum.app.financial.data.dto.PreferencesDto
+import mx.nexum.app.financial.data.dto.PrivacyNoticeDto
+import mx.nexum.app.financial.data.dto.RecordConsentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
 import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
+import mx.nexum.app.financial.data.dto.UpdatePreferencesRequest
+import mx.nexum.app.financial.data.dto.UpdateProfileRequest
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.UserProfileDto
 import mx.nexum.app.financial.data.network.FinancialApiService
 import java.util.UUID
 
@@ -50,6 +59,17 @@ interface FinancialRepository {
     suspend fun getGoalDetail(goalId: String): AuthResult<GoalDto>
     suspend fun getOnboardingStatus(): AuthResult<OnboardingStatusResponse>
     suspend fun completeOnboarding(limitedMode: Boolean): AuthResult<OnboardingStatusResponse>
+
+    // Oleada 1 Methods (E012, E013, E015, E016, E017, E068, E069, E070, E071)
+    suspend fun getUserProfile(): AuthResult<UserProfileDto>
+    suspend fun updateProfile(displayName: String, ifMatch: String? = null): AuthResult<UserProfileDto>
+    suspend fun getCurrentPrivacyNotice(locale: String? = null): AuthResult<PrivacyNoticeDto>
+    suspend fun getUserConsents(): AuthResult<List<ConsentItemDto>>
+    suspend fun recordConsent(noticeVersion: String, idempotencyKey: String? = null): AuthResult<ConsentItemDto>
+    suspend fun getPreferences(): AuthResult<PreferencesDto>
+    suspend fun updatePreferences(language: String?, timezone: String?, ifMatch: String? = null): AuthResult<PreferencesDto>
+    suspend fun getFaq(locale: String? = null): AuthResult<List<FaqItemDto>>
+    suspend fun getEducationTips(locale: String? = null): AuthResult<List<EducationTipDto>>
 
     companion object {
         @Suppress("unused")
@@ -267,8 +287,90 @@ class FinancialRepositoryImpl(
             AuthResult.Failure(error.toFinancialError())
         }
 
+    override suspend fun getUserProfile(): AuthResult<UserProfileDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getUserProfile("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun updateProfile(displayName: String, ifMatch: String?): AuthResult<UserProfileDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = UpdateProfileRequest(displayName)
+            val response = api.updateámaraProfile("Bearer $token", ifMatch, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getCurrentPrivacyNotice(locale: String?): AuthResult<PrivacyNoticeDto> =
+        try {
+            val response = api.getCurrentPrivacyNotice(locale)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getUserConsents(): AuthResult<List<ConsentItemDto>> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getUserConsents("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun recordConsent(noticeVersion: String, idempotencyKey: String?): AuthResult<ConsentItemDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = RecordConsentRequest(noticeVersion, accepted = true)
+            val key = idempotencyKey ?: UUID.randomUUID().toString()
+            val response = api.recordConsent("Bearer $token", request, key)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getPreferences(): AuthResult<PreferencesDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getPreferences("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun updatePreferences(language: String?, timezone: String?, ifMatch: String?): AuthResult<PreferencesDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = UpdatePreferencesRequest(language, timezone)
+            val response = api.updatePreferences("Bearer $token", ifMatch, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getFaq(locale: String?): AuthResult<List<FaqItemDto>> =
+        try {
+            val response = api.getFaq(locale)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getEducationTips(locale: String?): AuthResult<List<EducationTipDto>> =
+        try {
+            val response = api.getEducationTips(locale)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
     private fun Throwable.toFinancialError(): AuthError = when (this) {
         is CancellationException -> throw this
-        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar onboarding.", retryable = true)
+        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar integración Oleada 1.", retryable = true)
     }
 }
