@@ -3,12 +3,10 @@ package mx.nexum.app.auth.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,7 +15,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,6 +23,7 @@ import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.AuthRepositoryImpl
 import mx.nexum.app.auth.data.InMemoryTokenStorage
 import androidx.compose.ui.tooling.preview.Preview
+import mx.nexum.app.financial.ui.MainAppShell
 import mx.nexum.app.ui.theme.NexumTheme
 
 enum class AuthScreen { Login, Register, App }
@@ -112,19 +110,9 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     onIntent = registerViewModel::onIntent
                 )
 
-                AuthScreen.App -> mx.nexum.app.financial.ui.MainAppShell()
+                AuthScreen.App -> MainAppShell()
             }
         }
-    }
-}
-
-@Composable
-private fun AppPlaceholder(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
-            text = "Sesión iniciada",
-            style = MaterialTheme.typography.headlineSmall
-        )
     }
 }
 
@@ -133,13 +121,5 @@ private fun AppPlaceholder(modifier: Modifier = Modifier) {
 private fun AuthFlowPreview() {
     NexumTheme {
         AuthFlow()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun AppPlaceholderPreview() {
-    NexumTheme {
-        AppPlaceholder()
     }
 }
