@@ -300,7 +300,7 @@ class FinancialRepositoryImpl(
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
             val request = UpdateProfileRequest(displayName)
-            val response = api.updateámaraProfile("Bearer $token", ifMatch, request)
+            val response = api.updateProfile("Bearer $token", ifMatch, request)
             AuthResult.Success(response)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())

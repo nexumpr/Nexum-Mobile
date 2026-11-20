@@ -67,13 +67,6 @@ interface FinancialApiService {
         @Body request: UpdateIncomeRequest
     ): IncomeDto
 
-    @PUT("income")
-    suspend fun putIncome(
-        @Header("Authorization") authorization: String,
-        @Header("If-Match") ifMatch: String?,
-        @Body request: UpdateIncomeRequest
-    ): IncomeDto
-
     @GET("summary")
     suspend fun getFinancialSummary(
         @Header("Authorization") authorization: String
@@ -192,7 +185,7 @@ interface FinancialApiService {
     ): UserProfileDto
 
     @PATCH("users/me")
-    suspend fun updateámaraProfile(
+    suspend fun updateProfile(
         @Header("Authorization") authorization: String,
         @Header("If-Match") ifMatch: String?,
         @Body request: UpdateProfileRequest
