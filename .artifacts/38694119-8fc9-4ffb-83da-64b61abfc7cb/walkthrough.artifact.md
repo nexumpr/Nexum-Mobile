@@ -1,23 +1,24 @@
-# Walkthrough — Integración de Cerrar Sesión y Cambio de Contraseña
+# Walkthrough — Selector de Tema Claro / Oscuro (Estética Aero-Futurista)
 
-He integrado los botones y flujos funcionales de **Cerrar Sesión** (NEXUM-E004) y **Cambio de Contraseña** (NEXUM-E007) dentro de una nueva pestaña de **Ajustes** en el panel de control principal, utilizando la arquitectura MVI y el diseño **Aero-Futuristic**.
+He implementado un **Selector de Tema Claro / Oscuro** que mantiene la estética inmersiva **Aero-Futuristic** (con superficies translúcidas y acentos neón adaptados tanto para modo oscuro como luminoso).
 
 ## Cambios Realizados
 
-### Módulo Financiero / Ajustes UI (`mx.nexum.app.financial.ui`)
+### Sistema de Diseño y UI (`mx.nexum.app.ui.theme`, `mx.nexum.app.financial.ui`, `mx.nexum.app`)
 
-#### [NEW] [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt)
-- ViewModel MVI que gestiona el cambio de contraseña con validación local y la acción de cierre de sesión con purga incondicional de credenciales en `TokenStorage`.
+#### [MODIFY] [Color.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/ui/theme/Color.kt), [Theme.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/ui/theme/Theme.kt)
+- Definida la paleta clara aero-futurista (`LightBackground`, `LightSurface`, `LightGlassCard`, `AeroCyanDark`, `AeroPurpleDark`).
+- Configurado `AeroLightColorScheme` y actualizado `NexumTheme` para conmutar dinámicamente entre modo oscuro y claro.
 
-#### [NEW] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)
-- Pantalla con estilo Aero-Futurista (*Glassmorphism* y brillo ambiental) con formularios para actualizar la contraseña y botón de cierre de sesión.
+#### [MODIFY] [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt), [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)
+- Añadida tarjeta con un interruptor (*Switch*) de **"Apariencia Aero"** (Modo Oscuro Cyber vs. Modo Claro Luminoso).
 
-#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Añadida la 5ª pestaña de **Ajustes** con icono de engranaje a la barra de navegación inferior (*Bottom Navigation*), conectando la acción de logout para regresar al flujo de autenticación.
+#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt), [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt), [MainActivity.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/MainActivity.kt)
+- Propagado el estado de tema (`isDarkTheme`) desde la raíz de la actividad para actualizar el tema de toda la aplicación en tiempo real al accionar el interruptor.
 
 ---
 
 ## Resultados de Verificación
 
 - **Compilación:** `./gradlew assembleDebug` → **BUILD SUCCESSFUL**.
-- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **131 tests pasados en verde (0 fallos)**.
+- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **240 tests pasados en verde (0 fallos)**.
