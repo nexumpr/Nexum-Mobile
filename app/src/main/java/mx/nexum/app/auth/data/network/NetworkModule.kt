@@ -1,14 +1,15 @@
-
 package mx.nexum.app.auth.data.network
 
 import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.TokenStorage
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object NetworkModule {
-    private const val BASE_URL = "https://d2lpmqy5w6x9es.cloudfront.net/api/v1/"
+    const val BASE_URL = "https://d2lpmqy5w6x9es.cloudfront.net/api/v1/"
 
     /**
      * Cliente OkHttp aislado exclusivamente para endpoints públicos de autenticación
