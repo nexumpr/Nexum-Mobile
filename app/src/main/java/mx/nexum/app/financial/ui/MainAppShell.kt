@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,6 +44,7 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
     object Movements : MainTab("Movimientos", Icons.Default.List)
     object Recurring : MainTab("Pagos", Icons.Default.CheckCircle)
     object Goals : MainTab("Metas", Icons.Default.Star)
+    object Profile : MainTab("Perfil", Icons.Default.Person)
     object Settings : MainTab("Ajustes", Icons.Default.Settings)
 }
 
@@ -64,12 +66,14 @@ fun MainAppShell(
     val movementsViewModel: MovementsListViewModel = viewModel { MovementsListViewModel(financialRepository) }
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
+    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
     val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel() }
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
     val recurringState by recurringViewModel.uiState.collectAsState()
     val goalsState by goalsViewModel.uiState.collectAsState()
+    val profileState by profileViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
 
     LaunchedEffect(settingsViewModel) {
@@ -105,7 +109,7 @@ fun MainAppShell(
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
-                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Settings)
+                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Profile, MainTab.Settings)
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
@@ -135,6 +139,7 @@ fun MainAppShell(
                 MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
+                MainTab.Profile -> ProfileScreen(state = profileState, onIntent = profileViewModel::onIntent)
                 MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
             }
         }

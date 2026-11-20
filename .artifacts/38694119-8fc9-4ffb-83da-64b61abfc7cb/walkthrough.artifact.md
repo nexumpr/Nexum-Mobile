@@ -1,19 +1,16 @@
-# Walkthrough — Integración de la Guía Oleada 1 (Endpoints E012 a E071)
+# Walkthrough — Pantallas de Perfil y Preferencias (Oleada 1)
 
-He integrado exitosamente los **15 endpoints de la Oleada 1** especificados en `Nexum_Oleada1_Guia_Integracion_Android_E012_E071.md` dentro de la capa de datos financiera y de usuario de Nexum-Mobile.
+He implementado las pantallas y ViewModels de **Perfil y Preferencias de Usuario** (Unidades correspondientes a la Guía Oleada 1: E012, E013, E068, E069) bajo la arquitectura MVI y el diseño **Aero-Futuristic**.
 
 ## Cambios Realizados
 
-### Capa de Datos Financiera / Usuario (`mx.nexum.app.financial.data`)
+### Módulo Financiero / Perfil UI (`mx.nexum.app.financial.ui`)
 
-#### [MODIFY] [FinancialDtos.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt)
-- Añadidos DTOs robustos con anotaciones `@SerializedName` para Perfil (`UserProfileDto`, `UpdateProfileRequest`), Aviso de Privacidad (`PrivacyNoticeDto`), Consentimientos (`ConsentItemDto`, `RecordConsentRequest`), Preferencias (`PreferencesDto`, `UpdatePreferencesRequest`), Preguntas Frecuentes (`FaqItemDto`) y Consejos Educativos (`EducationTipDto`).
+#### [NEW] [ProfileViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileViewModel.kt)
+- ViewModel MVI para consultar la información del perfil (`getUserProfile`) y las preferencias (`getPreferences`), así como actualizar ambos recursos con los endpoints de la Oleada 1.
 
-#### [MODIFY] [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt)
-- Configurados los 15 endpoints de la Oleada 1 con soporte para autenticación Bearer JWT, consultas públicas y cabeceras de concurrencia optimista (`If-Match`).
-
-#### [MODIFY] [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
-- Implementados todos los métodos correspondientes en `FinancialRepositoryImpl` envueltos en `AuthResult`.
+#### [NEW] [ProfileScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileScreen.kt)
+- Pantalla con estilo Aero-Futurista (*Glassmorphism* y brillo ambiental) para visualizar el correo electrónico (no editable), nombre mostrado editable, idioma y zona horaria.
 
 ---
 
