@@ -66,6 +66,7 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                             loginViewModel.onIntent(LoginIntent.Submit)
                         }
                     }
+                    else -> {}
                 }
             }
         }
@@ -85,6 +86,7 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                             registerViewModel.onIntent(RegisterIntent.Submit)
                         }
                     }
+                    else -> {}
                 }
             }
         }
