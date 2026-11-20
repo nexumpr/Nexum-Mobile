@@ -26,6 +26,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -636,6 +637,115 @@ class MockAuthApiTest {
                     currentPassword = "Demo1234",
                     newPassword = "NuevaClaveEjemplo#2026"
                 )
+            )
+            fail("Se esperaba error de red")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.NETWORK, e.kind)
+            assertTrue(e.retryable)
+        }
+    }
+
+    @Test
+    fun getSessionsExitosoRetornaPrimeraPaginaConSesionActualYCursor() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+        val response = api.getSessions(accessToken = login.accessToken, limit = 25, cursor = null)
+
+        assertNotNull(response)
+        assertEquals(2, response.items.size)
+        assertTrue(response.items[0].current)
+        assertFalse(response.items[0].revoked)
+        assertNotNull(response.items[0].id)
+        assertNotNull(response.items[0].createdAt)
+        assertNotNull(response.items[0].lastSeenAt)
+        assertEquals(MockAuthApi.PAGE_2_CURSOR, response.nextCursor)
+    }
+
+    @Test
+    fun getSessionsExitosoSegundaPaginaRetornaItemsYCursorNulo() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+        val response = api.getSessions(
+            accessToken = login.accessToken,
+            limit = 25,
+            cursor = MockAuthApi.PAGE_2_CURSOR
+        )
+
+        assertNotNull(response)
+        assertEquals(2, response.items.size)
+        assertFalse(response.items[0].current)
+        assertTrue(response.items[0].revoked)
+        assertNull(response.nextCursor)
+    }
+
+    @Test
+    fun getSessionsRechazaLimitFueraDeRangoCon400() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.getSessions(accessToken = login.accessToken, limit = 0, cursor = null)
+            fail("Se esperaba 400 por limit = 0")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+
+        try {
+            api.getSessions(accessToken = login.accessToken, limit = 101, cursor = null)
+            fail("Se esperaba 400 por limit = 101")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+    }
+
+    @Test
+    fun getSessionsRechazaCursorInvalidoCon400() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.getSessions(accessToken = login.accessToken, limit = 25, cursor = "short")
+            fail("Se esperaba 400 por cursor menor a 8 caracteres")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+
+        try {
+            api.getSessions(
+                accessToken = login.accessToken,
+                limit = 25,
+                cursor = MockAuthApi.INVALID_CURSOR
+            )
+            fail("Se esperaba 400 por cursor centinela inválido")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+    }
+
+    @Test
+    fun getSessionsConTokenInvalidoORevocadoFallaCon401() = runTest {
+        val api = MockAuthApi()
+        try {
+            api.getSessions(accessToken = MockAuthApi.EXPIRED_TOKEN, limit = 25, cursor = null)
+            fail("Se esperaba 401 por token expirado")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.INVALID_CREDENTIALS, e.kind)
+            assertEquals(401, e.statusCode)
+        }
+    }
+
+    @Test
+    fun getSessionsConTokenDeRedLanzaExcepcionReintentable() = runTest {
+        val api = MockAuthApi()
+        try {
+            api.getSessions(
+                accessToken = MockAuthApi.NETWORK_ERROR_TOKEN,
+                limit = 25,
+                cursor = null
             )
             fail("Se esperaba error de red")
         } catch (e: AuthApiException) {

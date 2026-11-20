@@ -12,6 +12,7 @@ import mx.nexum.app.auth.data.dto.RegisterRequest
 import mx.nexum.app.auth.data.dto.RegisterResponse
 import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.ResetPasswordResponse
+import mx.nexum.app.auth.data.dto.SessionsPageResponse
 
 class AuthApiException(
     val kind: AuthErrorKind,
@@ -41,5 +42,12 @@ interface AuthApi {
         accessToken: String,
         request: ChangePasswordRequest
     ): ChangePasswordResponse =
+        throw UnsupportedOperationException("No implementado")
+
+    suspend fun getSessions(
+        accessToken: String,
+        limit: Int? = 25,
+        cursor: String? = null
+    ): SessionsPageResponse =
         throw UnsupportedOperationException("No implementado")
 }

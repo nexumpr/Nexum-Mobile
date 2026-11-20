@@ -20,6 +20,7 @@ import mx.nexum.app.auth.data.dto.RegisterRequestDto
 import mx.nexum.app.auth.data.dto.RegisterResponseDto
 import mx.nexum.app.auth.data.dto.ResetPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ResetPasswordResponseDto
+import mx.nexum.app.auth.data.dto.SessionsPageResponseDto
 import mx.nexum.app.auth.data.network.AuthApiService
 import mx.nexum.app.auth.ui.AuthEffect
 import mx.nexum.app.auth.ui.ExpenseDraft
@@ -82,6 +83,14 @@ class RegisterViewModelTest {
             authorization: String,
             request: ChangePasswordRequestDto
         ): Response<ChangePasswordResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun getSessions(
+            authorization: String,
+            limit: Int?,
+            cursor: String?
+        ): Response<SessionsPageResponseDto> {
             throw NotImplementedError("Not needed in RegisterViewModelTest")
         }
     }

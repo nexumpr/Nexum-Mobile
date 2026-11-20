@@ -99,6 +99,19 @@ data class ChangePasswordResponse(
     val requestId: String
 )
 
+data class SessionsPageResponse(
+    val items: List<SessionItemResponse>,
+    val nextCursor: String? = null
+)
+
+data class SessionItemResponse(
+    val id: String,
+    val createdAt: String,
+    val lastSeenAt: String,
+    val current: Boolean,
+    val revoked: Boolean
+)
+
 data class RefreshResponse(
     val accessToken: String,
     val refreshToken: String,
@@ -187,6 +200,19 @@ data class ChangePasswordRequestDto(
 data class ChangePasswordResponseDto(
     @SerializedName("status") val status: String? = "accepted",
     @SerializedName("requestId") val requestId: String? = null
+)
+
+data class SessionsPageResponseDto(
+    @SerializedName("items") val items: List<SessionItemResponseDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+data class SessionItemResponseDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("lastSeenAt") val lastSeenAt: String,
+    @SerializedName("current") val current: Boolean,
+    @SerializedName("revoked") val revoked: Boolean
 )
 
 data class ApiErrorDetail(

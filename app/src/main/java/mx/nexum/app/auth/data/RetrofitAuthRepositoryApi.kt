@@ -24,6 +24,8 @@ import mx.nexum.app.auth.data.dto.RegisterResponse
 import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.ResetPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ResetPasswordResponse
+import mx.nexum.app.auth.data.dto.SessionItemResponse
+import mx.nexum.app.auth.data.dto.SessionsPageResponse
 import mx.nexum.app.auth.data.dto.User
 import mx.nexum.app.auth.data.network.AuthApiService
 import mx.nexum.app.auth.data.network.ClientInfoProvider
@@ -289,6 +291,54 @@ class RetrofitAuthRepositoryApi(
         return ChangePasswordResponse(
             status = body?.status ?: "accepted",
             requestId = body?.requestId ?: UUID.randomUUID().toString()
+        )
+    }
+
+    override suspend fun getSessions(
+        accessToken: String,
+        limit: Int?,
+        cursor: String?
+    ): SessionsPageResponse {
+        val authHeader = if (accessToken.startsWith("Bearer ")) accessToken else "Bearer $accessToken"
+        val response = service.getSessions(
+            authorization = authHeader,
+            limit = limit,
+            cursor = cursor
+        )
+        if (!response.isSuccessful) {
+            val code = response.code()
+            throw when (code) {
+                400 -> AuthApiException(
+                    kind = AuthErrorKind.VALIDATION,
+                    message = "Cursor o parámetros de paginación inválidos.",
+                    statusCode = 400
+                )
+                401 -> AuthApiException(
+                    kind = AuthErrorKind.INVALID_CREDENTIALS,
+                    message = "Sesión expirada o no autorizada.",
+                    statusCode = 401
+                )
+                else -> AuthApiException(
+                    kind = if (code >= 500) AuthErrorKind.SERVER_UNAVAILABLE else AuthErrorKind.UNKNOWN,
+                    message = "Error al consultar sesiones ($code)",
+                    retryable = code >= 500,
+                    statusCode = code
+                )
+            }
+        }
+        val body = response.body()
+        val items = body?.items?.map { dto ->
+            SessionItemResponse(
+                id = dto.id,
+                createdAt = dto.createdAt,
+                lastSeenAt = dto.lastSeenAt,
+                current = dto.current,
+                revoked = dto.revoked
+            )
+        } ?: emptyList()
+        return SessionsPageResponse(
+            items = items,
+            nextCursor = body?.nextCursor
         )
     }
 }

@@ -25,10 +25,12 @@ sealed interface SettingsIntent : UiIntent {
     data class ConfirmPasswordChanged(val v: String) : SettingsIntent
     data object SubmitChangePassword : SettingsIntent
     data object Logout : SettingsIntent
+    data object NavigateToActiveSessions : SettingsIntent
 }
 
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
+    data object NavigateToActiveSessions : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
 }
 
@@ -44,6 +46,11 @@ class SettingsViewModel(
             is SettingsIntent.ConfirmPasswordChanged -> setState { copy(confirmPassword = intent.v, errorMessage = null) }
             SettingsIntent.SubmitChangePassword -> changePassword()
             SettingsIntent.Logout -> logout()
+            SettingsIntent.NavigateToActiveSessions -> {
+                viewModelScope.launch {
+                    emitEffect(SettingsEffect.NavigateToActiveSessions)
+                }
+            }
         }
     }
 

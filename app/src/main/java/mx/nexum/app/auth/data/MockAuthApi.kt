@@ -15,6 +15,8 @@ import mx.nexum.app.auth.data.dto.RegisterResponse
 import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.ResetPasswordResponse
 import mx.nexum.app.auth.data.dto.SessionIdDto
+import mx.nexum.app.auth.data.dto.SessionItemResponse
+import mx.nexum.app.auth.data.dto.SessionsPageResponse
 import mx.nexum.app.auth.data.dto.User
 
 class MockAuthApi(
@@ -420,6 +422,102 @@ class MockAuthApi(
         }
     }
 
+    override suspend fun getSessions(
+        accessToken: String,
+        limit: Int?,
+        cursor: String?
+    ): SessionsPageResponse {
+        val delayMs = (400L..800L).random()
+        delay(delayMs)
+
+        if (accessToken == NETWORK_ERROR_TOKEN || accessToken.contains(NETWORK_ERROR_TOKEN) ||
+            accessToken == NETWORK_ERROR_LOGOUT_TOKEN || accessToken == NETWORK_ERROR_EMAIL
+        ) {
+            throw AuthApiException(
+                kind = AuthErrorKind.NETWORK,
+                message = "Error de red al consultar sesiones.",
+                retryable = true
+            )
+        }
+
+        if (accessToken == EXPIRED_TOKEN || revokedAccessTokens.contains(accessToken)) {
+            throw AuthApiException(
+                kind = AuthErrorKind.INVALID_CREDENTIALS,
+                message = "Sesión inválida o expirada (401).",
+                statusCode = 401
+            )
+        }
+
+        val effectiveLimit = limit ?: 25
+        if (effectiveLimit !in 1..100) {
+            throw AuthApiException(
+                kind = AuthErrorKind.VALIDATION,
+                message = "El parámetro limit debe estar entre 1 y 100",
+                statusCode = 400
+            )
+        }
+
+        if (cursor != null && (cursor.length !in 8..2048 || cursor == INVALID_CURSOR)) {
+            throw AuthApiException(
+                kind = AuthErrorKind.VALIDATION,
+                message = "Cursor de paginación inválido o expirado",
+                statusCode = 400
+            )
+        }
+
+        synchronized(lock) {
+            return if (cursor == null) {
+                // Página 1: incluye sesión actual al inicio y cursor para página 2
+                SessionsPageResponse(
+                    items = listOf(
+                        SessionItemResponse(
+                            id = "sess_current_mock_99",
+                            createdAt = "2026-11-19T10:00:00Z",
+                            lastSeenAt = "2026-11-19T20:00:00Z",
+                            current = true,
+                            revoked = false
+                        ),
+                        SessionItemResponse(
+                            id = "sess_mock_other_01",
+                            createdAt = "2026-11-15T08:30:00Z",
+                            lastSeenAt = "2026-11-18T14:20:00Z",
+                            current = false,
+                            revoked = false
+                        )
+                    ),
+                    nextCursor = PAGE_2_CURSOR
+                )
+            } else if (cursor == PAGE_2_CURSOR) {
+                // Página 2: ítems finales, nextCursor es null
+                SessionsPageResponse(
+                    items = listOf(
+                        SessionItemResponse(
+                            id = "sess_mock_revoked_02",
+                            createdAt = "2026-11-01T12:00:00Z",
+                            lastSeenAt = "2026-11-05T09:15:00Z",
+                            current = false,
+                            revoked = true
+                        ),
+                        SessionItemResponse(
+                            id = "sess_mock_other_03",
+                            createdAt = "2026-10-20T16:45:00Z",
+                            lastSeenAt = "2026-10-25T11:00:00Z",
+                            current = false,
+                            revoked = false
+                        )
+                    ),
+                    nextCursor = null
+                )
+            } else {
+                // Cualquier otro cursor válido
+                SessionsPageResponse(
+                    items = emptyList(),
+                    nextCursor = null
+                )
+            }
+        }
+    }
+
     fun isAccessTokenRevoked(accessToken: String): Boolean = synchronized(lock) {
         revokedAccessTokens.contains(accessToken)
     }
@@ -440,5 +538,8 @@ class MockAuthApi(
         const val NETWORK_ERROR_TOKEN = "net_error_token"
         const val SERVICE_UNAVAILABLE_TOKEN = "service_unavailable_token"
         const val NETWORK_ERROR_LOGOUT_TOKEN = "net_error_logout"
+
+        const val INVALID_CURSOR = "invalid-cursor"
+        const val PAGE_2_CURSOR = "cursor_page_2_xyz12345"
     }
 }

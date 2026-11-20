@@ -12,11 +12,14 @@ import mx.nexum.app.auth.data.dto.RegisterRequestDto
 import mx.nexum.app.auth.data.dto.RegisterResponseDto
 import mx.nexum.app.auth.data.dto.ResetPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ResetPasswordResponseDto
+import mx.nexum.app.auth.data.dto.SessionsPageResponseDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface AuthApiService {
 
@@ -81,4 +84,12 @@ interface AuthApiService {
         @Header("Authorization") authorization: String,
         @Body request: ChangePasswordRequestDto
     ): Response<ChangePasswordResponseDto>
+
+    @Headers("Accept: application/json")
+    @GET("auth/sessions")
+    suspend fun getSessions(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = 25,
+        @Query("cursor") cursor: String? = null
+    ): Response<SessionsPageResponseDto>
 }

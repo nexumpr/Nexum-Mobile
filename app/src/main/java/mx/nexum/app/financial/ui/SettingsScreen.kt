@@ -190,6 +190,18 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    Button(
+                        onClick = { onIntent(SettingsIntent.NavigateToActiveSessions) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("Dispositivos y Sesiones Activas", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     OutlinedButton(
                         onClick = { onIntent(SettingsIntent.Logout) },
                         shape = RoundedCornerShape(12.dp),

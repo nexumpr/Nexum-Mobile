@@ -49,6 +49,8 @@ sealed interface AuthEffect {
 
     data object NavigateToChangePassword : AuthEffect
 
+    data object NavigateToActiveSessions : AuthEffect
+
     data class NavigateToResetPassword(val email: String) : AuthEffect
 
     data class ShowSnackbar(val message: String, val retry: Boolean = false) : AuthEffect

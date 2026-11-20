@@ -63,6 +63,20 @@ data class ResetPasswordOutcome(
     val requestId: String? = null
 )
 
+data class UserSession(
+    val id: String,
+    val shortId: String,
+    val formattedCreatedAt: String,
+    val formattedLastSeenAt: String,
+    val isCurrent: Boolean,
+    val isRevoked: Boolean
+)
+
+data class SessionsPage(
+    val items: List<UserSession>,
+    val nextCursor: String?
+)
+
 interface AuthRepository {
     val sessionEffects: SharedFlow<AuthEffect>
         get() = MutableSharedFlow()
@@ -85,6 +99,12 @@ interface AuthRepository {
         currentPassword: String,
         newPassword: String
     ): AuthResult<ChangePasswordResponse> =
+        AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
+
+    suspend fun getSessions(
+        limit: Int = 25,
+        cursor: String? = null
+    ): AuthResult<SessionsPage> =
         AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
 }
 
@@ -206,6 +226,73 @@ class AuthRepositoryImpl(
             AuthResult.Success(response)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toAuthError())
+        }
+    }
+
+    override suspend fun getSessions(
+        limit: Int,
+        cursor: String?
+    ): AuthResult<SessionsPage> {
+        val currentSession = tokenStorage.current()
+            ?: return AuthResult.Failure(
+                AuthError(
+                    kind = AuthErrorKind.INVALID_CREDENTIALS,
+                    message = "No hay sesión activa.",
+                    statusCode = 401
+                )
+            )
+
+        return try {
+            val response = api.getSessions(
+                accessToken = currentSession.accessToken,
+                limit = limit,
+                cursor = cursor
+            )
+            val domainItems = response.items.map { item ->
+                UserSession(
+                    id = item.id,
+                    shortId = "Sesión #" + (if (item.id.length >= 8) item.id.take(8) else item.id),
+                    formattedCreatedAt = formatSessionTimestamp(item.createdAt, isCreatedAt = true),
+                    formattedLastSeenAt = formatSessionTimestamp(item.lastSeenAt, isCreatedAt = false),
+                    isCurrent = item.current,
+                    isRevoked = item.revoked
+                )
+            }
+            // En la primera página (cursor == null), asegurar que la sesión actual encabece la lista
+            val sortedItems = if (cursor == null) {
+                domainItems.sortedByDescending { it.isCurrent }
+            } else {
+                domainItems
+            }
+            AuthResult.Success(
+                SessionsPage(
+                    items = sortedItems,
+                    nextCursor = response.nextCursor
+                )
+            )
+        } catch (error: Throwable) {
+            val authError = error.toAuthError()
+            if (authError.statusCode == 401) {
+                tokenStorage.clear()
+                _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
+            }
+            AuthResult.Failure(authError)
+        }
+    }
+
+    private fun formatSessionTimestamp(isoTimestamp: String, isCreatedAt: Boolean): String {
+        return try {
+            val instant = java.time.Instant.parse(isoTimestamp)
+            val zonedDateTime = instant.atZone(java.time.ZoneId.systemDefault())
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+            val formattedDate = zonedDateTime.format(formatter)
+            if (isCreatedAt) {
+                "Iniciada: $formattedDate"
+            } else {
+                "Última actividad: $formattedDate"
+            }
+        } catch (_: Exception) {
+            if (isCreatedAt) "Iniciada: $isoTimestamp" else "Última actividad: $isoTimestamp"
         }
     }
 

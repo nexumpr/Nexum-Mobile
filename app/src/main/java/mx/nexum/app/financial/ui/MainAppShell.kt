@@ -49,7 +49,8 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
 @Composable
 fun MainAppShell(
     modifier: Modifier = Modifier,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onNavigateToActiveSessions: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
 
@@ -76,6 +77,7 @@ fun MainAppShell(
         settingsViewModel.effects.collect { effect ->
             when (effect) {
                 SettingsEffect.NavigateToLogin -> onLogout()
+                SettingsEffect.NavigateToActiveSessions -> onNavigateToActiveSessions()
                 is SettingsEffect.ShowToast -> {}
             }
         }
