@@ -6,6 +6,7 @@ import mx.nexum.app.auth.data.AuthErrorKind
 import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.AuthResult
 import mx.nexum.app.auth.data.LoginOutcome
+import mx.nexum.app.auth.data.RefreshOutcome
 import mx.nexum.app.auth.data.RegisterOutcome
 import mx.nexum.app.auth.data.RetrofitAuthApi
 import mx.nexum.app.auth.data.Session
@@ -51,6 +52,12 @@ class AppContainerTest {
             loginAttempts++
             return AuthResult.Failure(AuthError(AuthErrorKind.INVALID_CREDENTIALS, "fake creds"))
         }
+
+        override suspend fun refreshSession(): AuthResult<RefreshOutcome> =
+            AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "fake refresh"))
+
+        override suspend fun logout(): AuthResult<Unit> =
+            AuthResult.Success(Unit)
     }
 
     private class TestContainer(

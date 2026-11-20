@@ -11,38 +11,40 @@ implementation: only_on_explicit_request
 
 ## Estrategia técnica
 Implementar el flujo de cierre de sesión bajo el contrato **NEXUM-E004** respetando la arquitectura MVI y el patrón Repositorio establecido en el paquete `auth`:
-1. **Contratos DTO:** Definición de `LogoutRequest(val refreshToken: String)`.
-2. **Ampliación de interfaces:**
-   - En `AuthApi`: `suspend fun logout(accessToken: String, request: LogoutRequest)`
+1. **Contrato de red (E004):** `POST /api/v1/auth/logout` con header `Authorization: Bearer <accessToken>` y **sin body**. Manejo de `204 No Content` con `Response<Unit>` en Retrofit sin deserializar JSON.
+2. **Ampliación de interfaces y aislamiento OkHttp:**
+   - En `AuthApi`: `suspend fun logout(accessToken: String)`
    - En `AuthRepository`: `suspend fun logout(): AuthResult<Unit>`
+   - Aislamiento en cliente OkHttp: ejecución en cliente sin `TokenAuthenticator` (o exclusión explícita de `auth/logout`) para no reintentar jamás ante un `401`.
 3. **Mecanismo Fail-Secure (Purga Local Incondicional):**
-   - El repositorio obtiene el token actual de `TokenStorage`.
-   - Si no hay sesión, se retorna éxito inmediato limpiando cualquier remanente.
-   - Si hay sesión, se intenta notificar al backend (`api.logout`).
-   - Independientemente de si la llamada HTTP tiene éxito (`204`) o falla (`NetworkException`, `401`, `500`), el bloque `finally` o de manejo de error ejecuta obligatoriamente `tokenStorage.clear()`.
-   - Esto garantiza que en ningún escenario un usuario quede atrapado con una sesión abierta en el dispositivo al haber solicitado salir.
+   - El repositorio obtiene la sesión de `TokenStorage`.
+   - Si no hay sesión, purga local y retorna éxito inmediato.
+   - Si hay sesión, invoca `api.logout(currentSession.accessToken)`.
+   - En el bloque `finally` obligatorio, ejecuta `tokenStorage.clear()` y emite `AuthEffect.NavigateToLogin`.
+   - Retorna siempre `AuthResult.Success(Unit)`, garantizando que el usuario jamás quede atrapado con sesión local abierta ante caídas de red o `401`.
 4. **Estados MVI y UI:**
-   - Modelado de `LogoutUiState(val isConfirmDialogOpen: Boolean, val isLoading: Boolean, val userMessage: String?)`.
+   - Modelado de `LogoutUiState(val isConfirmDialogOpen: Boolean = false, val isLoading: Boolean = false, val userMessage: String? = null)`.
    - Intenciones: `LogoutIntent.RequestLogout`, `LogoutIntent.ConfirmLogout`, `LogoutIntent.DismissDialog`.
-   - Diálogo Material 3 de confirmación (`AlertDialog`) con botón de confirmación destructivo y botón de cancelación.
+   - Diálogo Material 3 de confirmación (`AlertDialog`) con botón destructivo "Cerrar sesión" y botón "Cancelar", deshabilitando controles mientras `isLoading == true`.
    - Emisión del efecto `AuthEffect.NavigateToLogin` tras la confirmación y purga.
 5. **Simulación en `MockAuthApi`:**
    - Retardo simulado de 300–800 ms.
-   - Marca el token de sesión como revocado en memoria.
+   - Marca de forma durable tanto el `accessToken` como el `refreshToken` de la sesión como revocados.
+   - Responde `204 No Content`. Si el token ya estaba revocado, responde `401` (que el cliente resuelve con éxito local).
    - Maneja caso de fallo de red con token centinela `net_error_logout`.
 
 ## Contratos y modelos de datos (NEXUM-E004)
 
 ```kotlin
-// DTO de red (contrato NEXUM-E004)
-data class LogoutRequest(
-    val refreshToken: String
-)
+// Interfaz en AuthApiService (Retrofit)
+@Headers("Accept: application/json")
+@POST("auth/logout")
+suspend fun logout(@Header("Authorization") authorization: String): Response<Unit>
 
 // Interfaz ampliada en AuthApi
 interface AuthApi {
     // Métodos previos: register, login, refresh
-    suspend fun logout(accessToken: String, request: LogoutRequest)
+    suspend fun logout(accessToken: String)
 }
 
 // Interfaz ampliada en AuthRepository
@@ -64,14 +66,12 @@ class AuthRepositoryImpl(
         val currentSession = tokenStorage.current()
         if (currentSession == null) {
             tokenStorage.clear()
+            _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
             return AuthResult.Success(Unit)
         }
 
         return try {
-            api.logout(
-                accessToken = currentSession.accessToken,
-                request = LogoutRequest(refreshToken = currentSession.refreshToken)
-            )
+            api.logout(currentSession.accessToken)
             AuthResult.Success(Unit)
         } catch (error: Throwable) {
             // Incluso ante error de red o de servidor, la salida local es obligatoria
@@ -79,6 +79,7 @@ class AuthRepositoryImpl(
         } finally {
             // Purga garantizada de credenciales locales
             tokenStorage.clear()
+            _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
         }
     }
 }
@@ -89,7 +90,8 @@ class AuthRepositoryImpl(
 ```kotlin
 data class LogoutUiState(
     val isConfirmDialogOpen: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val userMessage: String? = null
 )
 
 sealed interface LogoutIntent {
@@ -102,11 +104,11 @@ sealed interface LogoutIntent {
 ## Orden de trabajo
 | Paso | Acción | Requisito rector |
 | --- | --- | --- |
-| **N160-P01** | Definir modelo DTO de NEXUM-E004 (`LogoutRequest`). | M160-R02 |
-| **N160-P02** | Ampliar contratos `AuthApi` y `AuthRepository` con la operación de logout. | M160-R02, M160-R03 |
-| **N160-P03** | Implementar la simulación en `MockAuthApi` con revocación en servidor y retardo. | M160-R05 |
-| **N160-P04** | Implementar `AuthRepositoryImpl.logout()` con garantía de purga incondicional de `TokenStorage`. | M160-R03 |
-| **N160-P05** | Diseñar el diálogo de confirmación Composable en Compose y coordinar la emisión de `AuthEffect.NavigateToLogin` en `AuthFlow`. | M160-R01, M160-R04 |
+| **N160-P01** | Ajustar contratos en `AuthApi` y `AuthRepository` (`logout` sin body, compatible con 204 y sin Authenticator recursivo). | M160-R02, M160-R03 |
+| **N160-P02** | Implementar `logout` en `RetrofitAuthRepositoryApi` y `AuthApiService` manejando cabecera Bearer y respuesta 204. | M160-R02 |
+| **N160-P03** | Actualizar `MockAuthApi` con retardo, revocación durable de access/refresh tokens y centinela `net_error_logout`. | M160-R05 |
+| **N160-P04** | Implementar `AuthRepositoryImpl.logout()` con `tokenStorage.clear()` garantizado en `finally` y retorno `Success(Unit)`. | M160-R03 |
+| **N160-P05** | Implementar ViewModel/estado MVI (`LogoutViewModel`), diálogo Material 3 y navegación con `AuthEffect.NavigateToLogin` en `AuthFlow`. | M160-R01, M160-R04 |
 | **N160-P06** | Desarrollar pruebas unitarias completas de logout (`MockAuthApiTest`, `AuthRepositoryLogoutTest`, `LogoutViewModelTest`) con `kotlinx-coroutines-test`. | M160-R01…M160-R05 |
 
 ## Dependencias y decisiones técnicas

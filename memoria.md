@@ -27,6 +27,7 @@
 | M-D15 | Suite de pruebas de flujo MVI, fixtures sintéticas (`TestFixtures`, `FakeTokenStorage`, `FakeCredentialStorage`), no repetición de efectos efímeros (`replay = 0`), y separación de tests unitarios JVM frente a instrumentados Compose (`NexumAppShellComposeTest`) | Spec `080-pruebas-mvi-compose` (2026-11-17). |
 | M-D16 | Arquitectura DevSecOps: gobernanza de Android Lint (`app/lint.xml`), gates progresivos (Local/CI/Release), suite automatizada de seguridad estática (`DevSecOpsVerificationTest`), matriz de severidad (P0..P3) y SLAs de remediación sin dependencias externas | Spec `090-devsecops-android` (2026-11-17). |
 | M-D17 | Pipeline CI reproducible (`.github/workflows/android-ci.yml`) con permisos mínimos (`contents: read`), sin secretos de firma (`keystore`) ni publicación a tiendas, esquema de versionado determinista (`versionCode` incremental en CI y base local) y recolección de artefactos internos (SARIF, HTML, APK debug) | Spec `100-ci-versiones-android` (2026-11-17). |
+| M-D18 | Renovación y rotación de tokens (NEXUM-E003): Single-Flight real vía `CompletableDeferred` + `Mutex`, sustitución atómica de tokens en `TokenStorage`, revocación de familia ante replay (`409`) con invalidación fail-secure a Login (`401`), errores de transporte/`503` temporales no destructivos de sesión, cliente OkHttp dedicado para auth pública y `TokenAuthenticator` con límite de 1 reintento para peticiones protegidas | Spec `150-Refresh-Token` (2026-11-19). |
 
 ## 3. Requerimientos docentes para la solución final
 - Fidelidad a la maqueta sin quitar funciones; Google Play como forma inicial de evaluación; pruebas, DevSecOps y CI/CD.
@@ -680,3 +681,130 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
 - **Riesgos y pendientes materiales:** Backend Go debe ratificar forma de `details` (mapa vs lista), `traceId`/`X-Request-ID`, catálogo de `code`, campos obligatorios, semántica de `409`, `Retry-After`, timeouts y `BASE_URL` por entorno. Existe divergencia real entre `HttpContracts.kt` y `AuthDtos.kt`. No existe `RetryPolicy` productiva: la matriz es solo una tabla de decisión probada. `050` sigue con `task.md` pendiente en el repo aunque se asumió como dependencia previa.
 - **No ejecutado:** `MockWebServer`, llamadas a Backend Go, cambios en repositorio Go, `bundleRelease`, firma, publicación, Docker, push, merge ni despliegue.
 - **Reversibilidad:** eliminar los 7 archivos nuevos de código/documentos y el directorio de fixtures, y revertir los bloques propios de `task.md`, `specs/README.md` y esta sección; sin reset, push ni rewrite de historial.
+
+## 46. Evidencia — Implementación y verificación de `150-Refresh-Token` (2026-11-19)
+- **Fecha:** 2026-11-19 · **Mandato:** autorización explícita para implementar y verificar `150-Refresh-Token` integrando las especificaciones de la guía `specs/Nexum_Guia_Integracion_Android_E001_E011.md` (§5. E003).
+- **Alcance ejecutado:**
+  - **DTOs y contratos E003 (`M150-R01`, `N150-P01`, `N150-T01`):** Modelos `RefreshRequest` (`refreshToken` obligatorio, `deviceId` opcional), `RefreshResponse` (`accessToken`, `refreshToken`, `tokenType`, `expiresIn`, `sessionId`, `session: SessionIdDto`), DTOs de red (`RefreshRequestDto`, `RefreshResponseDto`), propiedad de conveniencia `resolvedSessionId` soportando payload dual plano y anidado, y `RefreshOutcome(session: Session)`.
+  - **Ampliación de interfaces y red (`M150-R01`, `M150-R02`, `M150-R05`, `N150-P02`, `N150-T02`):** `AuthApi.refresh(request: RefreshRequest): RefreshResponse`, `AuthRepository.refreshSession(): AuthResult<RefreshOutcome>`, `AuthApiService.refresh(@Body request: RefreshRequestDto): Response<RefreshResponseDto>`, `RetrofitAuthRepositoryApi.refresh`. Cliente OkHttp dedicado `NetworkModule.authOkHttpClient` para auth pública (sin recursión de autenticación), y `TokenAuthenticator` para peticiones protegidas limitando reintentos a máximo 1 vez y reutilizando tokens ya renovados concurrentemente.
+  - **Simulación en `MockAuthApi` (`M150-R02`, `M150-R03`, `M150-R04`, `N150-P03`, `N150-T03`):** Gestión de familias de tokens (`TokenFamily`) y tokens consumidos. Rotación estricta de versión por refresh (`mock-access-vX`, `mock-refresh-vX`), detección de reuso/replay retornando `409 Conflict` e invalidando la familia entera, rechazo con `401 Unauthorized` ante token expirado (`expired_token`) o familia revocada, `503 Service Unavailable` (`service_unavailable_token`) como error temporal reintentable y error de red (`net_error_token`). Validación de `deviceId` consistente.
+  - **Lógica de repositorio con Single-Flight Real (`M150-R02`, `M150-R04`, `M150-R05`, `N150-P04`, `N150-T04`):** `AuthRepositoryImpl.refreshSession()` gestionado mediante `CompletableDeferred<AuthResult<RefreshOutcome>>` protegido por `Mutex`. Múltiples corrutinas concurrentes comparten la misma llamada de red en vuelo, evitando replays accidentales por rotación en servidor. Reemplazo atómico de sesión en `TokenStorage` ante `200 OK`. Purga inmediata de `TokenStorage` ante `401` o `409` mapeados a `AuthErrorKind.INVALID_CREDENTIALS` (no reintentable). Errores temporales (`503`, red) preservan la sesión en `TokenStorage` con `retryable = true`.
+  - **Navegación de seguridad (`M150-R03`, `N150-P05`, `N150-T05`):** Emisión de `AuthEffect.NavigateToLogin` mediante `AuthRepository.sessionEffects` ante expiración o revocación definitiva de sesión (401/409). Suscripción reactiva en `AuthFlow.kt` para redirigir a `AuthScreen.Login`.
+  - **Suite de pruebas unitarias (`M150-R01…R05`, `N150-P06`, `N150-T06`):** 20 nuevas pruebas automatizadas cubriendo contrato DTO, rotación, replay 409, revocación de familia 401, error 503 sin purga, concurrencia real single-flight (5 corrutinas simultáneas = 1 llamada HTTP) y `TokenAuthenticator` OkHttp.
+- **Entorno:** Windows 11 · JAVA_HOME = `C:\Users\demon\AppData\Local\Programs\Android Studio\jbr` (OpenJDK 21.0.10) · Gradle Wrapper 9.5.0 · AGP 9.3.3 · Kotlin 2.2.10 · Compose BOM 2026.02.01 · compileSdk 36 · targetSdk 36 · minSdk 26.
+- **Comandos y resultados reales:**
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL** in 1m 36s · 20 suites · **151 tests unitarios ejecutados (20 nuevos atribuibles a esta unidad)** · 0 fallos · 0 errores · 100% éxito (`AuthRepositoryRefreshTest` 8, `TokenAuthenticatorTest` 5, `MockAuthApiTest` 18 [7 nuevos], `LoginViewModelTest` 9, `RegisterViewModelTest` 11, `AuthValidatorTest` 19, `HttpClientAdapterTest` 11, `OfflineCacheTest` 10, `RestContractTest` 6, `RetryAndFallbackContractTest` 6, `NoSensitiveDataContractTest` 4, `DevSecOpsVerificationTest` 8, `CiVersioningVerificationTest` 6, `MviStateIntegrationTest` 6, `PrivacyAndPermissionsTest` 7, `AppNavigatorTest` 5, `MviCoreTest` 6, `SessionManagerTest` 3, `AppContainerTest` 2, `ExampleUnitTest` 1).
+  - `.\gradlew.bat lintDebug` → **BUILD SUCCESSFUL** in 3m 09s · 0 errores (reportes SARIF y HTML actualizados en `app/build/reports/`).
+  - `.\gradlew.bat assembleDebug` → **BUILD SUCCESSFUL** in 50s · 36 tareas accionables (32 up-to-date, 4 executed) · APK de depuración generado limpiamente.
+- **Archivos creados (3):**
+  - `app/src/main/java/mx/nexum/app/auth/data/network/TokenAuthenticator.kt` (`Authenticator` OkHttp para peticiones protegidas con límite de 1 reintento y reutilización de token ya rotado).
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryRefreshTest.kt` (8 pruebas unitarias de repositorio: actualización atómica, fail-secure 401/409, 503/red no destructivos, concurrencia single-flight real y serialización dual de `sessionId`).
+  - `app/src/test/java/mx/nexum/app/auth/TokenAuthenticatorTest.kt` (5 pruebas unitarias de autenticador OkHttp).
+- **Archivos modificados (12):**
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt` (DTOs `RefreshRequest`, `RefreshResponse`, `RefreshRequestDto`, `RefreshResponseDto`, propiedad `resolvedSessionId`).
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt` (método `refresh`, código de estado en `AuthApiException`).
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt` (`SERVER_UNAVAILABLE`, `sessionId` en `Session`, `RefreshOutcome`, `sessionEffects`, `refreshSession`, Single-Flight con `CompletableDeferred` + `Mutex`).
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt` (rotación, familias de tokens, detección de replay 409, revocación de familia 401, centinelas 503 y red).
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt` (endpoint `POST auth/refresh`).
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt` (implementación de `refresh` mapeando DTOs y códigos HTTP).
+  - `app/src/main/java/mx/nexum/app/auth/data/network/NetworkModule.kt` (cliente `authOkHttpClient` aislado y constructor `createAuthenticatedOkHttpClient`).
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt` (observador de `sessionEffects` para navegación a Login).
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt` (7 nuevos tests de rotación y errores HTTP).
+  - `app/src/test/java/mx/nexum/app/auth/LoginViewModelTest.kt`, `RegisterViewModelTest.kt`, `AppContainerTest.kt` (compatibilidad con nuevos miembros de interfaz).
+  - `specs/150-Refresh-Token/spec.md`, `plan.md`, `task.md` (especificación alineada a E003, tareas marcadas `[x]` con evidencia y cierre de unidad).
+  - `specs/README.md` (progreso actualizado para `150-Refresh-Token` y conteo de tests a 151 en verde).
+- **Decisiones ratificadas:** M-D18 (Single-Flight real, rotación estricta, fail-secure ante replay/revocación, 503 no destructivo y aislamiento OkHttp).
+- **No ejecutado:** `git push`, `git merge`, llamadas a backend real en la nube, alteración de flujos de otras unidades ni servicios con costo.
+- **Reversibilidad:** eliminar los 3 archivos nuevos y revertir mediante diff inverso los 12 archivos modificados; sin reset, push ni rewrite de historial.
+
+## 47. Evidencia — Implementación y verificación de `170-Recuperar-Contrasena` (2026-11-19)
+- **Fecha:** 2026-11-19 · **Mandato:** autorización explícita para implementar la unidad `170-Recuperar-Contrasena` alineada estrictamente al contrato de producción NEXUM-E005 (`specs/Nexum_Guia_Integracion_Android_E001_E011.md`, §7).
+- **Alcance ejecutado:**
+  - **DTOs y modelos de datos (`M170-R02`, `N170-P01`, `N170-T01`):** `ForgotPasswordRequest(email)`, `ForgotPasswordResponse(status, requestId, message)`, DTOs de red `@SerializedName` (`ForgotPasswordRequestDto`, `ForgotPasswordResponseDto`) y `ForgotPasswordOutcome(requestId, message)` garantizando el mensaje neutral exacto: `"Si la dirección puede recibir correos, revisa tu bandeja de entrada"`.
+  - **Contratos `AuthApi` y `AuthRepository` (`M170-R02`, `M170-R03`, `N170-P02`, `N170-T02`):** `AuthApi.forgotPassword`, `AuthRepository.requestPasswordReset`, normalización de correo (`trim().lowercase()`) en `AuthRepositoryImpl`, mapeo de `429 Too Many Requests` extrayendo el encabezado `Retry-After` hacia `AuthApiException` y `AuthError` (`retryAfterSeconds`), y mapeo de `IOException` a `AuthErrorKind.NETWORK`.
+  - **Simulación en `MockAuthApi` (`M170-R03`, `M170-R05`, `N170-P03`, `N170-T03`):** Simulación de latencia 800–1200 ms, respuesta `202 Accepted` (`status = "accepted"`, `requestId = "mock-req-${UUID.randomUUID()}"`) idéntica e indistinguible entre correos registrados y no registrados (anti-enumeración), centinela `rate_limited@error.test` devolviendo 429 con `retryAfterSeconds = 60` y centinela `net@error.test` como error de red.
+  - **MVI ViewModel y Control Antispam (`M170-R01`, `M170-R03`, `M170-R04`, `N170-P04`, `N170-T04`):** `ForgotPasswordUiState`, `ForgotPasswordIntent` (`EmailChanged`, `Submit`, `NavigateToLogin`, `NavigateToResetPassword`), validación previa de correo con `AuthValidator.emailError` (bloqueo local sin llamadas HTTP si es inválido o blanco), cuenta regresiva reactiva de `cooldownSeconds` deshabilitando envíos concurrentes y emisión de efectos `NavigateToLogin`, `NavigateToResetPassword` y `ShowSnackbar`.
+  - **UI Compose y Navegación (`M170-R01`, `M170-R04`, `N170-P05`, `N170-T05`):** `ForgotPasswordScreen` en Material 3 con campo de correo, botón con contador de cooldown o spinner de carga, tarjeta de confirmación con mensaje neutral y advertencia de 30 minutos de vigencia del código, botón para continuar a `E006` y retorno a Login. Conexión de `AuthScreen.ForgotPassword` en `AuthFlow` y desde `"Olvidé mi contraseña"` en `LoginScreen`.
+  - **Suite de pruebas unitarias (`M170-R01…R05`, `N170-P06`, `N170-T06`):** 18 nuevas pruebas automatizadas (`ForgotPasswordViewModelTest` 9, `AuthRepositoryForgotPasswordTest` 5, `MockAuthApiTest` 4) cubriendo anti-enumeración, validación local, rate limiting 429 con cooldown, errores de red y efectos de navegación.
+- **Entorno:** Windows 11 · Kotlin 2.2.10 · Jetpack Compose Material 3 · Coroutines Test.
+- **Archivos creados (4):**
+  - `app/src/main/java/mx/nexum/app/auth/ui/ForgotPasswordUiState.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ForgotPasswordViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ForgotPasswordScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryForgotPasswordTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/ForgotPasswordViewModelTest.kt`
+- **Archivos modificados (9):**
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthIntent.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/LoginViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/LoginViewModelTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `specs/170-Recuperar-Contrasena/task.md`
+- **No ejecutado:** `git push`, `git merge`, llamadas externas a backend real. Todos los cambios se mantienen en el entorno local.
+
+## 48. Evidencia — Implementación y verificación de `180-Restablecer-Contrasena` (2026-11-19)
+- **Fecha:** 2026-11-19 · **Mandato:** autorización explícita para implementar la unidad `180-Restablecer-Contrasena` alineada estrictamente al contrato de producción NEXUM-E006 (`specs/Nexum_Guia_Integracion_Android_E001_E011.md`, §8).
+- **Alcance ejecutado:**
+  - **DTOs y modelos de datos (`M180-R02`, `N180-P01`, `N180-T01`):** `ResetPasswordRequest(token, newPassword)`, `ResetPasswordResponse(status, requestId)`, DTOs de red `@SerializedName` (`ResetPasswordRequestDto`, `ResetPasswordResponseDto`) y `ResetPasswordOutcome(requestId)` compatibles con el endpoint `POST /api/v1/auth/password/reset` (pública, sin `Authorization`, `200 OK`).
+  - **Contratos y repositorio (`M180-R02`, `M180-R03`, `N180-P02`, `N180-T02`):** `AuthApi.resetPassword`, endpoint `POST auth/password/reset` en `AuthApiService`, mapeo de respuestas HTTP (400, 409, 422, red) en `RetrofitAuthRepositoryApi`, y `AuthRepository.resetPassword(token, newPassword)` en `AuthRepositoryImpl` que normaliza el token con `trim()`, ejecuta la petición y purga incondicionalmente el almacenamiento de credenciales locales (`tokenStorage.clear()`) en éxito debido al cambio de época de sesión en backend.
+  - **Simulación en `MockAuthApi` (`M180-R04`, `M180-R05`, `N180-P03`, `N180-T03`):** Validación de longitud mínima de token (>= 10 caracteres, lanza 400), token centinela `expired_reset_token` (lanza 400), registro de token de un solo uso en `usedResetTokens` (rechazo con 409 CONFLICT ante reuso), validación de contraseña de 12 a 128 caracteres (422), revocación de familias de sesión en memoria al restablecer exitosamente, y retorno de respuesta 200 con `requestId`.
+  - **MVI ViewModel (`M180-R01`, `M180-R03`, `M180-R04`, `N180-P04`, `N180-T04`):** `ResetPasswordUiState`, `ResetPasswordIntent` (`TokenChanged`, `PasswordChanged`, `ConfirmPasswordChanged`, `TogglePasswordVisibility`, `Submit`, `NavigateToLogin`, `NavigateToForgotPassword`), validación local previa (token >= 10, contraseña 12..128, confirmación coincidente), manejo de errores de backend (400 -> `isTokenExpiredOrInvalid = true`, 409 -> `isTokenExpiredOrInvalid = true` con mensaje de reuso, 422 -> `passwordError`, red -> snackbar con reintento), y emisión de efectos `ShowSnackbar` y `NavigateToLogin` tras éxito.
+  - **UI Compose y Navegación (`M180-R01`, `M180-R03`, `N180-P05`, `N180-T05`):** `ResetPasswordScreen` en Material 3 con campo de código (con aviso de vigencia de 30 minutos), banner de código expirado/utilizado con botón de solicitud de nuevo código, campos de contraseña con toggle de visibilidad, botón de restablecimiento con indicador de carga, enlaces a ForgotPassword y Login. Integración en `AuthFlow` (`AuthScreen.ResetPassword`) con soporte para precarga del correo proveniente de `ForgotPasswordScreen`.
+  - **Suite de pruebas unitarias (`M180-R01…R05`, `N180-P06`, `N180-T06`):** 27 pruebas unitarias nuevas distribuidas entre `ResetPasswordViewModelTest` (15), `AuthRepositoryResetPasswordTest` (6) y `MockAuthApiTest` (6).
+- **Entorno:** Windows 11 · Kotlin 2.2.10 · Jetpack Compose Material 3 · Coroutines Test.
+- **Archivos creados (5):**
+  - `app/src/main/java/mx/nexum/app/auth/ui/ResetPasswordUiState.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ResetPasswordViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ResetPasswordScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryResetPasswordTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/ResetPasswordViewModelTest.kt`
+- **Archivos modificados (9):**
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `specs/180-Restablecer-Contrasena/task.md`
+- **No ejecutado:** `git push`, `git merge`, llamadas externas a backend real. Todos los cambios se mantienen en el entorno local.
+
+## 49. Evidencia — Implementación y verificación de `190-Cambiar-Contrasena` (2026-11-19)
+- **Fecha:** 2026-11-19 · **Mandato:** autorización explícita para implementar la unidad `190-Cambiar-Contrasena` alineada estrictamente al contrato de producción NEXUM-E007 (`specs/Nexum_Guia_Integracion_Android_E001_E011.md`, §9 y `plan.md` v1.1.0).
+- **Alcance ejecutado:**
+  - **DTOs y modelos de datos (`M190-R03`, `N190-P01`, `N190-T01`):** Modelos `ChangePasswordRequest(currentPassword, newPassword)`, `ChangePasswordResponse(status, requestId)` con `200 OK`, y DTOs de red `@SerializedName` (`ChangePasswordRequestDto`, `ChangePasswordResponseDto`).
+  - **Contratos y repositorio (`M190-R03`, `M190-R04`, `N190-P02`, `N190-T02`):** `AuthApi.changePassword`, endpoint `POST /api/v1/auth/password/change` con header `Authorization: Bearer <accessToken>` en `AuthApiService`, mapeo de respuestas HTTP (400/401, 409, 422, red) en `RetrofitAuthRepositoryApi`, y `AuthRepository.changePassword(currentPassword, newPassword)` en `AuthRepositoryImpl` que extrae el `accessToken` actual de `TokenStorage` (o 401 si no hay sesión), envía la solicitud y purga incondicionalmente el almacenamiento de credenciales locales (`tokenStorage.clear()`) en éxito debido al cambio de época de sesión en backend.
+  - **Simulación en `MockAuthApi` (`M190-R04`, `M190-R05`, `N190-P03`, `N190-T03`):** Validación de contraseña actual simulada contra credenciales activas del usuario (401 si no coincide), validación de nueva contraseña de al menos 12 caracteres (422), rechazo si la nueva es idéntica a la actual (409), invalidación del `accessToken` previo agregándolo a `revokedAccessTokens` y marcando la familia de tokens revocada (`isRevoked = true`), asegurando que llamadas subsecuentes con ese token devuelvan `401`.
+  - **MVI ViewModel y Seguridad de Memoria (`M190-R01`, `M190-R02`, `M190-R04`, `N190-P04`, `N190-T04`):** `ChangePasswordUiState`, `ChangePasswordIntent` (`CurrentPasswordChanged`, `NewPasswordChanged`, `ConfirmNewPasswordChanged`, alternadores de visibilidad independientes, `Submit` y `NavigateBack`). Validaciones locales previas al envío: `currentPassword` no vacía, `newPassword` con mínimo 12 caracteres y fortaleza (`AuthValidator.isStrongPassword`), `newPassword != currentPassword` y `newPassword == confirmNewPassword`. En éxito: purga inmediata de contraseñas de la memoria del ViewModel (`currentPassword = ""`, `newPassword = ""`, `confirmNewPassword = ""`), emisión de `AuthEffect.ShowSnackbar` y redirección obligatoria a `AuthEffect.NavigateToLogin`. Manejo de errores 401, 409, 422 y red con reintento.
+  - **UI Compose y Navegación (`M190-R01`, `M190-R04`, `N190-P05`, `N190-T05`):** `ChangePasswordScreen` en Material 3 con 3 campos de contraseña con alternadores independientes de visibilidad, indicador de progreso en botón durante carga, mensajes de error contextuales y botón para cancelar y volver. Integración en `AuthFlow` (`AuthScreen.ChangePassword`) accesible desde `AppPlaceholder` y con redirección limpia al stack de Login tras éxito.
+  - **Suite de pruebas unitarias (`M190-R01…R05`, `N190-P06`, `N190-T06`):** 27 pruebas unitarias nuevas distribuidas entre `ChangePasswordViewModelTest` (15), `AuthRepositoryChangePasswordTest` (6) y `MockAuthApiTest` (6).
+- **Entorno:** Windows 11 · Kotlin 2.2.10 · Jetpack Compose Material 3 · Coroutines Test.
+- **Archivos creados (5):**
+  - `app/src/main/java/mx/nexum/app/auth/ui/ChangePasswordUiState.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ChangePasswordViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ChangePasswordScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryChangePasswordTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/ChangePasswordViewModelTest.kt`
+- **Archivos modificados (12):**
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/domain/AuthValidator.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthIntent.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `specs/190-Cambiar-Contrasena/task.md`
+- **No ejecutado:** Acciones Git/GitHub (`git add`, `git commit`, `git push`, PRs, ramas), llamadas a backend real en la nube ni servicios con costo. Todos los cambios se mantienen estrictamente en el entorno local.
