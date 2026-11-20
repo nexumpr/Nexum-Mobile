@@ -13,6 +13,7 @@ import mx.nexum.app.auth.data.AuthErrorKind
 import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.AuthResult
 import mx.nexum.app.auth.data.LoginOutcome
+import mx.nexum.app.auth.data.RefreshOutcome
 import mx.nexum.app.auth.data.RegisterOutcome
 import mx.nexum.app.auth.data.Session
 import mx.nexum.app.auth.data.dto.LoginRequest
@@ -47,6 +48,12 @@ class LoginViewModelTest {
             lastRequest = request
             return loginResult
         }
+
+        override suspend fun refreshSession(): AuthResult<RefreshOutcome> =
+            AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "no usado"))
+
+        override suspend fun logout(): AuthResult<Unit> =
+            AuthResult.Success(Unit)
     }
 
     private fun session() = Session(
@@ -216,7 +223,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun enlaceOlvidePasswordEmiteAvisoInformativo() = runTest {
+    fun enlaceOlvidePasswordEmiteNavegacionAForgotPassword() = runTest {
         val viewModel = LoginViewModel(repository = successRepository())
         val effects = mutableListOf<AuthEffect>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effects.collect { effects += it } }
@@ -224,9 +231,7 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginIntent.NavigateToForgotPassword)
         advanceUntilIdle()
 
-        assertEquals(1, effects.size)
-        assertTrue(effects[0] is AuthEffect.ShowSnackbar)
-        assertFalse((effects[0] as AuthEffect.ShowSnackbar).retry)
+        assertEquals(listOf(AuthEffect.NavigateToForgotPassword), effects)
     }
 
     @Test

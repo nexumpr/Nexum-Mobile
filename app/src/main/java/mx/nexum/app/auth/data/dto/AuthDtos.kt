@@ -64,6 +64,53 @@ data class LoginResponse(
     val onboarding: OnboardingConfigDto? = null
 )
 
+data class RefreshRequest(
+    val refreshToken: String,
+    val deviceId: String? = null
+)
+
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+data class ForgotPasswordResponse(
+    val status: String? = "accepted",
+    val requestId: String? = null,
+    val message: String? = null
+)
+
+data class ResetPasswordRequest(
+    val token: String,
+    val newPassword: String
+)
+
+data class ResetPasswordResponse(
+    val status: String? = "accepted",
+    val requestId: String? = null
+)
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
+)
+
+data class ChangePasswordResponse(
+    val status: String = "accepted",
+    val requestId: String
+)
+
+data class RefreshResponse(
+    val accessToken: String,
+    val refreshToken: String,
+    val tokenType: String = "Bearer",
+    val expiresIn: Long,
+    val sessionId: String? = null,
+    val session: SessionIdDto? = null
+) {
+    val resolvedSessionId: String?
+        get() = sessionId ?: session?.id
+}
+
 data class SessionIdDto(
     @SerializedName("id") val id: String
 )
@@ -96,6 +143,50 @@ data class LoginResponseDto(
     @SerializedName("session") val session: SessionIdDto?,
     @SerializedName("user") val user: LoginUserDto,
     @SerializedName("onboarding") val onboarding: OnboardingConfigDto?
+)
+
+data class RefreshRequestDto(
+    @SerializedName("refreshToken") val refreshToken: String,
+    @SerializedName("deviceId") val deviceId: String? = null
+)
+
+data class RefreshResponseDto(
+    @SerializedName("accessToken") val accessToken: String,
+    @SerializedName("refreshToken") val refreshToken: String,
+    @SerializedName("tokenType") val tokenType: String? = "Bearer",
+    @SerializedName("expiresIn") val expiresIn: Long,
+    @SerializedName("sessionId") val sessionId: String? = null,
+    @SerializedName("session") val session: SessionIdDto? = null
+)
+
+data class ForgotPasswordRequestDto(
+    @SerializedName("email") val email: String
+)
+
+data class ForgotPasswordResponseDto(
+    @SerializedName("status") val status: String? = "accepted",
+    @SerializedName("requestId") val requestId: String? = null,
+    @SerializedName("message") val message: String? = null
+)
+
+data class ResetPasswordRequestDto(
+    @SerializedName("token") val token: String,
+    @SerializedName("newPassword") val newPassword: String
+)
+
+data class ResetPasswordResponseDto(
+    @SerializedName("status") val status: String? = "accepted",
+    @SerializedName("requestId") val requestId: String? = null
+)
+
+data class ChangePasswordRequestDto(
+    @SerializedName("currentPassword") val currentPassword: String,
+    @SerializedName("newPassword") val newPassword: String
+)
+
+data class ChangePasswordResponseDto(
+    @SerializedName("status") val status: String? = "accepted",
+    @SerializedName("requestId") val requestId: String? = null
 )
 
 data class ApiErrorDetail(
