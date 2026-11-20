@@ -12,13 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -239,7 +239,11 @@ fun ActiveSessionsScreen(
                         }
 
                         items(state.sessions, key = { it.id }) { session ->
-                            SessionCard(session = session)
+                            SessionCard(
+                                session = session,
+                                isRevoking = state.revokingSessionId == session.id,
+                                onRevokeClick = { onIntent(SessionsIntent.RequestRevoke(session)) }
+                            )
                         }
 
                         if (state.nextCursor != null) {
@@ -279,6 +283,46 @@ fun ActiveSessionsScreen(
                     }
                 }
             }
+
+            // Diálogo de confirmación de revocación
+            state.sessionToRevoke?.let { session ->
+                AlertDialog(
+                    onDismissRequest = { onIntent(SessionsIntent.DismissRevokeDialog) },
+                    title = {
+                        Text(
+                            text = if (session.isCurrent) "Cerrar sesión actual" else "Cerrar sesión remota",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = if (session.isCurrent) {
+                                "¿Deseas cerrar tu sesión actual? Se cerrará la sesión en este dispositivo y tendrás que volver a iniciar sesión."
+                            } else {
+                                "¿Deseas cerrar la sesión ${session.shortId}? Se revocará el acceso en ese dispositivo."
+                            },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { onIntent(SessionsIntent.ConfirmRevoke) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Text("Cerrar sesión")
+                        }
+                    },
+                    dismissButton = {
+                        OutlinedButton(
+                            onClick = { onIntent(SessionsIntent.DismissRevokeDialog) }
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -286,6 +330,8 @@ fun ActiveSessionsScreen(
 @Composable
 private fun SessionCard(
     session: UserSession,
+    isRevoking: Boolean,
+    onRevokeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -374,6 +420,36 @@ private fun SessionCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
+
+            if (!session.isRevoked) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    OutlinedButton(
+                        onClick = onRevokeClick,
+                        enabled = !isRevoking,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        modifier = Modifier.semantics {
+                            contentDescription = "Cerrar sesión ${session.shortId}"
+                        }
+                    ) {
+                        if (isRevoking) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        } else {
+                            Text("Cerrar sesión", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
         }
     }
 }

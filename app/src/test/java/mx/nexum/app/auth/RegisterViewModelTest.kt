@@ -10,6 +10,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import mx.nexum.app.auth.data.dto.ChangePasswordRequestDto
 import mx.nexum.app.auth.data.dto.ChangePasswordResponseDto
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationResponse
+import mx.nexum.app.auth.data.dto.EmailVerificationResponse
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ForgotPasswordResponseDto
 import mx.nexum.app.auth.data.dto.LoginRequestDto
@@ -91,6 +94,23 @@ class RegisterViewModelTest {
             limit: Int?,
             cursor: String?
         ): Response<SessionsPageResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun revokeSession(
+            authorization: String,
+            sessionId: String
+        ): Response<Unit> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun requestEmailVerification(authorization: String): Response<EmailVerificationResponse> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun confirmEmailVerification(
+            request: ConfirmEmailVerificationRequest
+        ): Response<ConfirmEmailVerificationResponse> {
             throw NotImplementedError("Not needed in RegisterViewModelTest")
         }
     }

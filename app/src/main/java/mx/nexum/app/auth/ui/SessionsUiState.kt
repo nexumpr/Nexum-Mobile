@@ -1,5 +1,6 @@
 package mx.nexum.app.auth.ui
 
+import mx.nexum.app.auth.data.ActiveSession
 import mx.nexum.app.auth.data.UserSession
 
 data class SessionsUiState(
@@ -8,7 +9,9 @@ data class SessionsUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val sessionToRevoke: ActiveSession? = null,
+    val revokingSessionId: String? = null
 )
 
 sealed interface SessionsIntent {
@@ -17,4 +20,7 @@ sealed interface SessionsIntent {
     data object LoadMore : SessionsIntent
     data object DismissError : SessionsIntent
     data object NavigateBack : SessionsIntent
+    data class RequestRevoke(val session: ActiveSession) : SessionsIntent
+    data object ConfirmRevoke : SessionsIntent
+    data object DismissRevokeDialog : SessionsIntent
 }

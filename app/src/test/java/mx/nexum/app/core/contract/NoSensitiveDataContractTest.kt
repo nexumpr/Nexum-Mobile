@@ -38,7 +38,7 @@ class NoSensitiveDataContractTest {
             ?.sorted()
             ?: emptyList()
 
-        assertEquals(15, names.size)
+        assertEquals(16, names.size)
         assertTrue(names.containsAll(listOf("health_success.json", "session_refresh_success.json", "malformed.json")))
     }
 

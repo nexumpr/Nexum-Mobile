@@ -2,6 +2,9 @@ package mx.nexum.app.auth.data.network
 
 import mx.nexum.app.auth.data.dto.ChangePasswordRequestDto
 import mx.nexum.app.auth.data.dto.ChangePasswordResponseDto
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationResponse
+import mx.nexum.app.auth.data.dto.EmailVerificationResponse
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ForgotPasswordResponseDto
 import mx.nexum.app.auth.data.dto.LoginRequestDto
@@ -15,9 +18,11 @@ import mx.nexum.app.auth.data.dto.ResetPasswordResponseDto
 import mx.nexum.app.auth.data.dto.SessionsPageResponseDto
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
+import retrofit2.http.Path
 import retrofit2.http.POST
 import retrofit2.http.Query
 
@@ -92,4 +97,23 @@ interface AuthApiService {
         @Query("limit") limit: Int? = 25,
         @Query("cursor") cursor: String? = null
     ): Response<SessionsPageResponseDto>
+
+    @Headers("Accept: application/json")
+    @DELETE("auth/sessions/{sessionId}")
+    suspend fun revokeSession(
+        @Header("Authorization") authorization: String,
+        @Path("sessionId") sessionId: String
+    ): Response<Unit>
+
+    @Headers("Accept: application/json")
+    @POST("auth/email-verification/request")
+    suspend fun requestEmailVerification(
+        @Header("Authorization") authorization: String
+    ): Response<EmailVerificationResponse>
+
+    @Headers("Accept: application/json", "Content-Type: application/json")
+    @POST("auth/email-verification/confirm")
+    suspend fun confirmEmailVerification(
+        @Body request: ConfirmEmailVerificationRequest
+    ): Response<ConfirmEmailVerificationResponse>
 }

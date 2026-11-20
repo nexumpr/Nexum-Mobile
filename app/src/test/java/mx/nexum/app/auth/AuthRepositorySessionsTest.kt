@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import mx.nexum.app.auth.data.AuthApi
@@ -177,9 +178,9 @@ class AuthRepositorySessionsTest {
             statusCode = 401
         )
 
-        var emittedEffect: AuthEffect? = null
-        val job = launch {
-            emittedEffect = repository.sessionEffects.first()
+        val emittedEffects = mutableListOf<AuthEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            repository.sessionEffects.collect { emittedEffects.add(it) }
         }
 
         val result = repository.getSessions(limit = 25, cursor = null)
@@ -187,8 +188,7 @@ class AuthRepositorySessionsTest {
 
         assertTrue(result is AuthResult.Failure)
         assertNull(tokenStorage.current())
-        assertEquals(AuthEffect.NavigateToLogin, emittedEffect)
-        job.cancel()
+        assertTrue(emittedEffects.contains(AuthEffect.NavigateToLogin))
     }
 
     @Test

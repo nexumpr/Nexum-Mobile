@@ -99,6 +99,20 @@ data class ChangePasswordResponse(
     val requestId: String
 )
 
+data class EmailVerificationResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("requestId") val requestId: String
+)
+
+data class ConfirmEmailVerificationRequest(
+    @SerializedName("token") val token: String
+)
+
+data class ConfirmEmailVerificationResponse(
+    @SerializedName("status") val status: String,
+    @SerializedName("requestId") val requestId: String
+)
+
 data class SessionsPageResponse(
     val items: List<SessionItemResponse>,
     val nextCursor: String? = null

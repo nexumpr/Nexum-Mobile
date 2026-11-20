@@ -808,3 +808,151 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
   - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
   - `specs/190-Cambiar-Contrasena/task.md`
 - **No ejecutado:** Acciones Git/GitHub (`git add`, `git commit`, `git push`, PRs, ramas), llamadas a backend real en la nube ni servicios con costo. Todos los cambios se mantienen estrictamente en el entorno local.
+
+## 50. Evidencia — Implementación y verificación de `200-Sesiones-Activas` (2026-11-20)
+- **Fecha:** 2026-11-20 · **Mandato:** autorización explícita para implementar la unidad `200-Sesiones-Activas` alineada estrictamente al contrato de producción NEXUM-E008 (`specs/Nexum_Guia_Integracion_Android_E001_E011.md`, §10 y `plan.md` v1.1.0).
+- **Alcance ejecutado:**
+  - **DTOs y modelos de datos (`M200-R02`, `M200-R03`, `N200-P01`, `N200-T01`):** DTOs de contrato estricto de 5 campos `SessionItemResponse(id, createdAt, lastSeenAt, current, revoked)` y wrapper `SessionsPageResponse(items, nextCursor)` (sin campos de hardware, IP, ubicación ni tokens criptográficos); DTOs de red con anotaciones Gson `@SerializedName` (`SessionItemResponseDto`, `SessionsPageResponseDto`); modelos de dominio UI desacoplados `UserSession(id, shortId, formattedCreatedAt, formattedLastSeenAt, isCurrent, isRevoked)` y `SessionsPage(items, nextCursor)`.
+  - **Contratos y repositorio (`M200-R02`, `N200-P02`, `N200-T02`):** Declaración de `AuthApi.getSessions(accessToken, limit, cursor)` con valores por defecto; endpoint `GET auth/sessions` en `AuthApiService`; implementación en `RetrofitAuthRepositoryApi` con mapeo de errores HTTP (400, 401, 5xx); y método `getSessions(limit, cursor)` en `AuthRepository` / `AuthRepositoryImpl` que ordena prioritariamente la sesión actual (`isCurrent == true`) al inicio de la lista en la primera página (`cursor == null`), formatea timestamps UTC a hora local legible y purga incondicionalmente el almacenamiento de credenciales locales (`tokenStorage.clear()`) con emisión de `AuthEffect.NavigateToLogin` ante error 401.
+  - **Simulación en `MockAuthApi` (`M200-R03`, `M200-R05`, `N200-P03`, `N200-T03`):** Retardo determinista de 400–800 ms, simulación de paginación de 2 páginas de sesiones sintéticas (página 1 con sesión actual y cursor opaco `PAGE_2_CURSOR`, página 2 con ítems adicionales y `nextCursor = null`); validación estricta de `limit in 1..100` (400), validación de longitud de cursor `8..2048` y centinela `"invalid-cursor"` (400), rechazo 401 si el token es revocado/expirado y fallo reintentable ante token de red.
+  - **MVI ViewModel (`M200-R01`, `M200-R04`, `N200-P04`, `N200-T04`):** `SessionsUiState` (`sessions`, `nextCursor`, `isLoading`, `isRefreshing`, `isLoadingMore`, `errorMessage`), `SessionsIntent` (`LoadSessions`, `Refresh`, `LoadMore`, `DismissError`, `NavigateBack`), gestión de ciclo de vida con carga inicial automática, recarga con `isRefreshing`, paginación incremental concatenando ítems en `LoadMore`, descarte de errores y emisión del efecto `AuthEffect.NavigateToApp`.
+  - **UI Compose y Navegación (`M200-R01`, `M200-R04`, `N200-P05`, `N200-T05`):** `ActiveSessionsScreen` en Jetpack Compose Material 3 con diseño Aero-Futuristic, TopAppBar accesible con acciones de regreso y refresco, tarjetas de sesión con `shortId`, badge "Sesión actual" (acento primario), badge "Revocada" (acento de error) o "Activa", fechas legibles, botón "Cargar más sesiones" cuando existe cursor siguiente, y estados vacíos/carga/error con reintento. Cableado con `AuthFlow` (`AuthScreen.ActiveSessions`), `MainAppShell` (`onNavigateToActiveSessions`) y botón de acceso "Dispositivos y Sesiones Activas" en `SettingsScreen`.
+  - **Suite de pruebas unitarias (`M200-R01…R05`, `N200-P06`, `N200-T06`):** 18 nuevas pruebas automatizadas distribuidas entre `SessionsViewModelTest` (7), `AuthRepositorySessionsTest` (5) y `MockAuthApiTest` (6). Conteo total del proyecto elevado a 258 tests unitarios con 100% de éxito.
+- **Entorno:** Windows 11 · Kotlin 2.2.10 · Jetpack Compose Material 3 · Coroutines Test.
+- **Archivos creados (5):**
+  - `app/src/main/java/mx/nexum/app/auth/ui/SessionsUiState.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/SessionsViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ActiveSessionsScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositorySessionsTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/SessionsViewModelTest.kt`
+- **Archivos modificados (14):**
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthIntent.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `specs/200-Sesiones-Activas/task.md`
+  - `specs/README.md`
+- **Resultados de validación:**
+  - `.\gradlew.bat testDebugUnitTest assembleDebug --no-daemon` → **BUILD SUCCESSFUL in 1m 52s** · 258/258 tests unitarios pasados (0 fallos, 0 errores, 100% éxito) · APK debug generado correctamente.
+- **No ejecutado:** Acciones Git/GitHub remotas (`git push`, PRs), llamadas a backend real en la nube ni activación de servicios con costo. Todos los cambios se mantienen estrictamente en el entorno local.
+
+## 51. Evidencia — Implementación y verificación de `210-Revocar-Sesion` (2026-11-20)
+- **Fecha:** 2026-11-20 · **Mandato:** autorización explícita para implementar la unidad `210-Revocar-Sesion` alineada estrictamente al contrato de producción NEXUM-E009 (`specs/Nexum_Guia_Integracion_Android_E001_E011.md`, §11 y `plan.md` v1.1.0).
+- **Alcance ejecutado:**
+  - **Contratos de red y endpoint (`M210-R02`, `N210-P01`, `N210-T01`):** Declaración de `AuthApi.revokeSession(accessToken, sessionId)` y endpoint Retrofit `@DELETE("auth/sessions/{sessionId}")` con `@Header("Authorization")` y `@Path("sessionId")` sin body. Manejo de respuesta HTTP `204 No Content` mediante `Response<Unit>` en `RetrofitAuthRepositoryApi` garantizando no intentar deserializar JSON vacío (`EOFException`). Mapeo estricto de códigos: 204 éxito, 404 a `AuthErrorKind.NOT_FOUND`, 409 a `AuthErrorKind.CONFLICT` (reintentable), 401 a `INVALID_CREDENTIALS` y 5xx a `SERVER_UNAVAILABLE`.
+  - **Lógica de repositorio y validación UUID (`M210-R03`, `M210-R04`, `N210-P03`, `N210-T03`):** `AuthRepository.revokeSession(sessionId, isCurrent)` implementado en `AuthRepositoryImpl` con validación previa de formato UUID para `sessionId` (rechazando con 400 VALIDATION si no cumple). Branching estricto: si `isCurrent == true` purga incondicionalmente las credenciales locales (`tokenStorage.clear()`) y emite `AuthEffect.NavigateToLogin`; si `isCurrent == false` mantiene la sesión local activa.
+  - **Simulación en `MockAuthApi` (`M210-R03`, `M210-R05`, `N210-P02`, `N210-T02`):** Retardo determinista de 400–800 ms, remoción inmediata de la sesión con `id == sessionId` de la lista interna `mockSessionsList` para que la subsiguiente llamada a `getSessions()` (E008) ya no la devuelva; idempotencia garantizada devolviendo 204 sin excepción ante re-revocaciones; centinelas de prueba `not_found_session` (404), `conflict_session` (409) y `net_error_session` (error de red reintentable).
+  - **MVI ViewModel (`M210-R01`, `M210-R04`, `N210-P04`, `N210-T04`):** `SessionsUiState` ampliado con `sessionToRevoke: ActiveSession?` y `revokingSessionId: String?`; `SessionsIntent` ampliado con `RequestRevoke(session)`, `ConfirmRevoke` y `DismissRevokeDialog`. Flujo reactivo tras confirmación: si `session.isCurrent == true` navega a Login de inmediato sin llamar a E008; si `session.isCurrent == false` emite Snackbar de éxito y recarga automáticamente E008 (`getSessions()`); si responde 404 recarga E008 e informa al usuario; si responde 409 expone mensaje de conflicto concurrente permitiendo reintentar.
+  - **UI Compose Material 3 (`M210-R01`, `M210-R05`, `N210-P05`, `N210-T05`):** Botón "Cerrar sesión" en cada tarjeta de sesión activa dentro de `ActiveSessionsScreen`, deshabilitado y con `CircularProgressIndicator` durante la petición; diálogo de confirmación Material 3 (`AlertDialog`) advirtiendo expresamente si se cerrará la sesión actual en el dispositivo en uso o si se revocará el acceso en un dispositivo remoto.
+  - **Suite de pruebas unitarias (`M210-R01…R05`, `N210-P06`, `N210-T06`):** 17 pruebas unitarias nuevas distribuidas entre `AuthRepositoryRevokeTest` (6), `SessionsViewModelRevokeTest` (6) y `MockAuthApiTest` (5). Conteo total del proyecto elevado a 275 tests unitarios con 100% de éxito.
+- **Entorno:** Windows 11 · Kotlin 2.2.10 · Jetpack Compose Material 3 · Coroutines Test.
+- **Archivos creados (2):**
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryRevokeTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/SessionsViewModelRevokeTest.kt`
+- **Archivos modificados (10):**
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/SessionsUiState.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/SessionsViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ActiveSessionsScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `specs/210-Revocar-Sesion/spec.md`
+  - `specs/210-Revocar-Sesion/task.md`
+  - `specs/README.md`
+- **Resultados de validación:**
+  - `.\gradlew.bat testDebugUnitTest assembleDebug --no-daemon` → **BUILD SUCCESSFUL in 6m 36s** · 275/275 tests unitarios pasados (0 fallos, 0 errores, 100% éxito) · APK debug generado correctamente.
+- **No ejecutado:** Acciones Git/GitHub remotas (`git push`, PRs), llamadas a backend real en la nube ni activación de servicios con costo. Todos los cambios se mantienen estrictamente en el entorno local.
+
+## 52. Evidencia — Implementación y verificación de `220-Solicitud-Verificacion-Email` (2026-11-20)
+- **Fecha:** 2026-11-20 · **Mandato:** «Implementa el plan técnico de la unidad 220-Solicitud-Verificacion-Email (contrato NEXUM-E010)» con confirmación explícita para salir de plan mode.
+- **Decisiones aplicadas:** endpoint anotado de forma relativa (`auth/email-verification/request`, la URL final es `/api/v1/auth/email-verification/request` porque `baseUrl` ya incluye `/api/v1/`); nuevo valor `AuthErrorKind.SERVICE_UNAVAILABLE` para el `503 DEPENDENCY_UNAVAILABLE` conservando `SERVER_UNAVAILABLE` para los flujos previos; verificación del body vacío mediante extensión de `FixtureHttpSimulator` (sin nueva dependencia Gradle); `TokenStorage` de `AuthFlow` compartido con `MainAppShell` para que Ajustes use la sesión activa.
+- **Alcance ejecutado:**
+  - **Documentación (`N220-T01…T06`):** `spec.md` y `task.md` actualizados a `v1.1.0`, eliminando el soporte dual con payload `email` y la respuesta neutra antigua; `plan.md` permaneció en `v1.1.0`; tareas marcadas `[x]` solo tras verificación.
+  - **Contrato y dominio (`M220-R02`, `M220-R03`, `M220-R04`):** DTO `EmailVerificationResponse(status, requestId)` y modelo `EmailVerificationOutcome`; `AuthApiService.requestEmailVerification` con `@Header("Authorization")` y sin `@Body`; `AuthApi`/`AuthRepository`/`AuthRepositoryImpl` ampliados con defaults que preservan los fakes previos; mapeo estricto `202`→Success, `409`→`CONFLICT` (no reintentable), `429`→`RATE_LIMITED` (con `Retry-After`), `503`→`SERVICE_UNAVAILABLE` (mensaje real con `DEPENDENCY_UNAVAILABLE`, nunca éxito), `401`→limpieza de sesión y `NavigateToLogin`, sin sesión→fallo local sin red.
+  - **Simulación (`M220-R05`):** `MockAuthApi` con latencia por defecto 600–1000 ms, `202` con UUID, cuota de 3 solicitudes por token (4.º → `RATE_LIMITED`) y centinelas `already_verified_token`, `ses_sandbox_503_token` y `net_error_token`.
+  - **MVI y UI (`M220-R01`, `M220-R04`):** `EmailVerificationViewModel` con banner de "Verificar mi correo", `cooldown` de 60 s solo tras `202`, `isEmailVerified` tras `409`, aviso de cuota en `429`, error real y reintento permitido en `503`; `EmailVerificationRequestScreen` Material 3 integrada en la pestaña Ajustes.
+  - **Pruebas:** 30 pruebas nuevas (7 en `AuthRepositoryEmailVerificationTest`, 8 en `EmailVerificationViewModelTest`, 9 en `EmailVerificationHttpContractTest` y 6 en `MockAuthApiTest`), incluyendo `contentLength == 0`, ausencia de JSON con `email`, parsing de `202`, cuenta regresiva y los tres branches de error.
+- **Entorno:** Windows 11 · PowerShell · Kotlin 2.2.10 · AGP 9.3.3 · Compose Material 3 · `kotlinx-coroutines-test` 1.10.1 · Retrofit 2.11.0 · OkHttp 4.12.0.
+- **Archivos creados (6):**
+  - `app/src/main/java/mx/nexum/app/auth/ui/EmailVerificationViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/EmailVerificationRequestScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryEmailVerificationTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/EmailVerificationViewModelTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/EmailVerificationHttpContractTest.kt`
+  - `app/src/test/resources/contract/email_verification_202.json`
+- **Archivos modificados (16):**
+  - `specs/220-Solicitud-Verificacion-Email/spec.md`
+  - `specs/220-Solicitud-Verificacion-Email/task.md`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `app/src/test/java/mx/nexum/app/core/contract/FixtureHttpSimulator.kt`
+  - `app/src/test/java/mx/nexum/app/core/contract/NoSensitiveDataContractTest.kt`
+  - `memoria.md` (esta evidencia)
+- **Resultados de validación reales:**
+  - `.\gradlew.bat testDebugUnitTest assembleDebug --no-daemon` → **BUILD SUCCESSFUL in 1m 37s** · 305/305 tests unitarios (0 fallos, 0 errores, 0 omitidos) · APK debug generado.
+  - `.\gradlew.bat lintDebug --no-daemon` → **BUILD SUCCESSFUL in 4m 36s** · reporte `app/build/reports/lint-results-debug.html`.
+  - Dos ejecuciones intermedias fallaron y fueron corregidas: import accidental de `ChangePasswordResponseDto` y fakes de test sin los nuevos métodos; ningún resultado se registró como exitoso antes de la ejecución final.
+- **Riesgos y pendientes:** la entrega real del correo depende del backend/AWS SES y no se probó contra producción; la simulación usa tokens centinela y datos sintéticos; `230-Confirmar-Verificacion-Email` quedó implementada y probada en §53; no se realizaron push, merge, despliegue ni llamadas a servicios externos.
+
+## 53. Evidencia — Implementación y verificación de `230-Confirmar-Verificacion-Email` (2026-11-20)
+- **Fecha:** 2026-11-20 · **Mandato:** implementación explícita de la unidad `230-Confirmar-Verificacion-Email` con el plan técnico NEXUM-E011; el humano confirmó alinear `spec.md`/`task.md` a `v1.1.0`, añadir `INVALID_TOKEN`, trabajar sobre el árbol sucio preexistente (E010/E220) y excluir deep link.
+- **Decisiones aplicadas:** endpoint relativo `auth/email-verification/confirm` (URL final `/api/v1/auth/email-verification/confirm`, porque `baseUrl` ya incluye `/api/v1/`); petición pública sin `Authorization`; campo estricto `token` con mínimo 10 caracteres y conservación literal de espacios/mayúsculas (sin `trim()`/`lowercase()`); `200 OK` con `status`/`requestId` reutilizando la fixture sintética `email_verification_202.json` (no se añadió un 17.º JSON, preservando el catálogo de 16 fixtures); `400` → `INVALID_TOKEN`, `409` → `CONFLICT`, red/5xx reintentables; actualización visual de `emailVerified` solo si existe sesión, sin inventar `GET /me` y dejando la consolidación definitiva para E002.
+- **Alcance ejecutado:**
+  - **Documentación (`N230-T01…T06`):** `spec.md` y `task.md` alineados a `v1.1.0` y al §13 de `specs/Nexum_Guia_Integracion_Android_E001_E011.md`; `plan.md` permaneció en `v1.1.0`; tareas marcadas `[x]` únicamente después de la ejecución real; `specs/README.md` actualizado con la nueva dependencia y el progreso.
+  - **Contrato y dominio (`M230-R02`, `M230-R03`, `M230-R04`):** DTOs `ConfirmEmailVerificationRequest`/`ConfirmEmailVerificationResponse` y `ConfirmEmailVerificationOutcome`; `AuthApiService.confirmEmailVerification` con `@POST`, `@Body` y sin cabecera Bearer; `AuthApi` y `AuthRepository` ampliados con defaults que preservan fakes previos; `RetrofitAuthRepositoryApi` parsea `200`, mapea `400`/`409`/5xx y nunca incluye el token en mensajes; `AuthRepositoryImpl` valida longitud antes de red y actualiza la sesión local solo tras éxito.
+  - **Simulación (`M230-R05`):** `MockAuthApi` con `usedVerificationTokens`, latencia 600–1000 ms, `status = "accepted"` y UUID, reuso → `409`, centinelas `expired_verification_token`, `invalid_verification_token` → `400` y `net_error_token` → `NETWORK`; se comprobó que `NETWORK_ERROR_TOKEN == "net_error_token"`.
+  - **MVI y UI (`M230-R01`, `M230-R04`):** `ConfirmEmailVerificationViewModel` con los siete campos de estado, intents literal/no transformadores, branching `NavigateToApp`/`NavigateToLogin`, estados diferenciados para expirado e ya usado, y Snackbar reintentable; `ConfirmEmailVerificationScreen` Material 3 con botón desde E010 ("Ya tengo un código de verificación"), `AuthScreen.ConfirmEmailVerification`, `AuthEffect.NavigateToRequestVerification` y `EmailVerificationIntent.RefreshStatus` en `MainAppShell`. Sin deep link.
+  - **Pruebas:** 24 pruebas nuevas (5 en `ConfirmEmailVerificationHttpContractTest`, 6 en `AuthRepositoryConfirmEmailTest`, 8 en `ConfirmEmailVerificationViewModelTest` y 5 en `MockAuthApiTest`) más el ajuste del fake `RegisterViewModelTest.FakeAuthApiService` requerido por la nueva función del servicio Retrofit. El total del proyecto pasó de 305 a 329 tests unitarios.
+- **Entorno:** Windows 11 · PowerShell · Kotlin 2.2.10 · AGP 9.3.3 · Compose Material 3 · `kotlinx-coroutines-test` 1.10.1 · Retrofit 2.11.0 · OkHttp 4.12.0.
+- **Archivos creados (5):**
+  - `app/src/main/java/mx/nexum/app/auth/ui/ConfirmEmailVerificationViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/ConfirmEmailVerificationScreen.kt`
+  - `app/src/test/java/mx/nexum/app/auth/ConfirmEmailVerificationHttpContractTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/AuthRepositoryConfirmEmailTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/ConfirmEmailVerificationViewModelTest.kt`
+- **Archivos modificados (17):**
+  - `specs/230-Confirmar-Verificacion-Email/spec.md`
+  - `specs/230-Confirmar-Verificacion-Email/task.md`
+  - `specs/README.md`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/AuthRepository.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthRepositoryApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/data/MockAuthApi.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthIntent.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/EmailVerificationViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/auth/ui/EmailVerificationRequestScreen.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt`
+  - `app/src/test/java/mx/nexum/app/auth/MockAuthApiTest.kt`
+  - `app/src/test/java/mx/nexum/app/auth/RegisterViewModelTest.kt`
+  - `memoria.md` (esta evidencia)
+- **Resultados de validación reales:**
+  - `.\gradlew.bat testDebugUnitTest --no-daemon` → **BUILD SUCCESSFUL in 1m 20s** · 329/329 tests unitarios (0 fallos, 0 errores, 0 omitidos).
+  - `.\gradlew.bat testDebugUnitTest assembleDebug --no-daemon` → **BUILD SUCCESSFUL in 29s** · 42 tareas UP-TO-DATE · APK debug disponible.
+  - `.\gradlew.bat lintDebug --no-daemon` → **BUILD SUCCESSFUL in 4m 5s** · reportes `app/build/reports/lint-results-debug.html` y `.sarif`.
+  - Dos ejecuciones intermedias fallaron y fueron corregidas antes de registrar éxito: (1) compilación con `Unresolved reference 'launch'` y fake `AuthApiService` sin `confirmEmailVerification`; (2) 4 pruebas con `UncompletedCoroutinesError` porque el colector de `effects` se lanzó en `TestScope` en lugar de `backgroundScope`. Ningún resultado fallido se documentó como válido.
+- **Riesgos y pendientes:** la invalidación atómica y la persistencia del cambio de correo verificado dependen del backend Go y se consolidan en el siguiente login E002; no se probó contra producción; los tokens y sesiones usados son sintéticos; no se realizaron push, merge, despliegue, llamadas a backend real ni activación de servicios con costo.

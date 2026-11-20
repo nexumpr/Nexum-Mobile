@@ -33,13 +33,15 @@ enum class AuthScreen {
     ResetPassword,
     ChangePassword,
     ActiveSessions,
+    ConfirmEmailVerification,
     App
 }
 
 class AuthFlowViewModel : ViewModel() {
+    val tokenStorage: InMemoryTokenStorage = InMemoryTokenStorage()
     val repository: AuthRepository = AuthRepositoryImpl(
         mx.nexum.app.auth.data.RetrofitAuthRepositoryApi(),
-        InMemoryTokenStorage()
+        tokenStorage
     )
 }
 
@@ -53,6 +55,9 @@ fun AuthFlow(modifier: Modifier = Modifier) {
     val resetPasswordViewModel: ResetPasswordViewModel = viewModel { ResetPasswordViewModel(repository) }
     val changePasswordViewModel: ChangePasswordViewModel = viewModel { ChangePasswordViewModel(repository) }
     val sessionsViewModel: SessionsViewModel = viewModel { SessionsViewModel(repository) }
+    val confirmEmailVerificationViewModel: ConfirmEmailVerificationViewModel = viewModel {
+        ConfirmEmailVerificationViewModel(repository, flowViewModel.tokenStorage)
+    }
 
     var screenName by rememberSaveable { mutableStateOf(AuthScreen.Login.name) }
     val screen = remember(screenName) { runCatching { AuthScreen.valueOf(screenName) }.getOrDefault(AuthScreen.Login) }
@@ -63,9 +68,10 @@ fun AuthFlow(modifier: Modifier = Modifier) {
     val resetPasswordState by resetPasswordViewModel.state.collectAsState()
     val changePasswordState by changePasswordViewModel.state.collectAsState()
     val sessionsState by sessionsViewModel.state.collectAsState()
+    val confirmEmailVerificationState by confirmEmailVerificationViewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(loginViewModel, registerViewModel, forgotPasswordViewModel, resetPasswordViewModel, changePasswordViewModel, sessionsViewModel, repository, snackbarHostState) {
+    LaunchedEffect(loginViewModel, registerViewModel, forgotPasswordViewModel, resetPasswordViewModel, changePasswordViewModel, sessionsViewModel, confirmEmailVerificationViewModel, repository, snackbarHostState) {
         launch {
             repository.sessionEffects.collect { effect ->
                 when (effect) {
@@ -177,6 +183,22 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                 }
             }
         }
+        launch {
+            confirmEmailVerificationViewModel.effects.collect { effect ->
+                when (effect) {
+                    AuthEffect.NavigateToApp,
+                    AuthEffect.NavigateToRequestVerification -> screenName = AuthScreen.App.name
+                    AuthEffect.NavigateToLogin -> screenName = AuthScreen.Login.name
+                    is AuthEffect.ShowSnackbar -> {
+                        snackbarHostState.showSnackbar(
+                            message = effect.message,
+                            withDismissAction = true
+                        )
+                    }
+                    else -> {}
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -219,9 +241,19 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     onIntent = sessionsViewModel::onIntent
                 )
 
+                AuthScreen.ConfirmEmailVerification -> ConfirmEmailVerificationScreen(
+                    state = confirmEmailVerificationState,
+                    onIntent = confirmEmailVerificationViewModel::onIntent
+                )
+
                 AuthScreen.App -> MainAppShell(
+                    tokenStorage = flowViewModel.tokenStorage,
+                    authRepository = repository,
                     onLogout = { screenName = AuthScreen.Login.name },
-                    onNavigateToActiveSessions = { screenName = AuthScreen.ActiveSessions.name }
+                    onNavigateToActiveSessions = { screenName = AuthScreen.ActiveSessions.name },
+                    onNavigateToConfirmVerification = {
+                        screenName = AuthScreen.ConfirmEmailVerification.name
+                    }
                 )
             }
         }

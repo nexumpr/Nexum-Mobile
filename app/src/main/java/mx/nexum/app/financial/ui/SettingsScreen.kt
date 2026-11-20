@@ -37,7 +37,8 @@ import mx.nexum.app.ui.theme.NexumTheme
 fun SettingsScreen(
     state: SettingsUiState,
     onIntent: (SettingsIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    verificationContent: @Composable () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -66,6 +67,8 @@ fun SettingsScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            verificationContent()
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "CONFIGURACIÓN Y SEGURIDAD",
                 style = MaterialTheme.typography.titleLarge.copy(

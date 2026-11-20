@@ -32,7 +32,11 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.viewmodel.compose.viewModel
-import mx.nexum.app.auth.data.InMemoryTokenStorage
+import mx.nexum.app.auth.data.AuthRepository
+import mx.nexum.app.auth.data.TokenStorage
+import mx.nexum.app.auth.ui.EmailVerificationIntent
+import mx.nexum.app.auth.ui.EmailVerificationRequestScreen
+import mx.nexum.app.auth.ui.EmailVerificationViewModel
 import mx.nexum.app.auth.data.network.NetworkModule
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
@@ -48,16 +52,19 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
 
 @Composable
 fun MainAppShell(
+    tokenStorage: TokenStorage,
+    authRepository: AuthRepository,
     modifier: Modifier = Modifier,
     onLogout: () -> Unit = {},
-    onNavigateToActiveSessions: () -> Unit = {}
+    onNavigateToActiveSessions: () -> Unit = {},
+    onNavigateToConfirmVerification: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
 
-    val financialRepository = remember {
+    val financialRepository = remember(tokenStorage) {
         FinancialRepository.create(
             NetworkModule.retrofit.create(FinancialApiService::class.java),
-            InMemoryTokenStorage()
+            tokenStorage
         )
     }
 
@@ -65,13 +72,21 @@ fun MainAppShell(
     val movementsViewModel: MovementsListViewModel = viewModel { MovementsListViewModel(financialRepository) }
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel() }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(tokenStorage) }
+    val emailVerificationViewModel: EmailVerificationViewModel = viewModel {
+        EmailVerificationViewModel(authRepository, tokenStorage)
+    }
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
     val recurringState by recurringViewModel.uiState.collectAsState()
     val goalsState by goalsViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
+    val emailVerificationState by emailVerificationViewModel.uiState.collectAsState()
+
+    LaunchedEffect(emailVerificationViewModel) {
+        emailVerificationViewModel.onIntent(EmailVerificationIntent.RefreshStatus)
+    }
 
     LaunchedEffect(settingsViewModel) {
         settingsViewModel.effects.collect { effect ->
@@ -137,7 +152,17 @@ fun MainAppShell(
                 MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
-                MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
+                MainTab.Settings -> SettingsScreen(
+                    state = settingsState,
+                    onIntent = settingsViewModel::onIntent,
+                    verificationContent = {
+                        EmailVerificationRequestScreen(
+                            state = emailVerificationState,
+                            onIntent = emailVerificationViewModel::onIntent,
+                            onNavigateToConfirmVerification = onNavigateToConfirmVerification
+                        )
+                    }
+                )
             }
         }
     }
