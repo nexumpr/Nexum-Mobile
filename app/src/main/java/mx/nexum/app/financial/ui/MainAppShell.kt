@@ -15,6 +15,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mx.nexum.app.auth.data.InMemoryTokenStorage
@@ -41,10 +43,14 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
     object Movements : MainTab("Movimientos", Icons.Default.List)
     object Recurring : MainTab("Pagos", Icons.Default.CheckCircle)
     object Goals : MainTab("Metas", Icons.Default.Star)
+    object Settings : MainTab("Ajustes", Icons.Default.Settings)
 }
 
 @Composable
-fun MainAppShell(modifier: Modifier = Modifier) {
+fun MainAppShell(
+    modifier: Modifier = Modifier,
+    onLogout: () -> Unit = {}
+) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
 
     val financialRepository = remember {
@@ -58,11 +64,22 @@ fun MainAppShell(modifier: Modifier = Modifier) {
     val movementsViewModel: MovementsListViewModel = viewModel { MovementsListViewModel(financialRepository) }
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel() }
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
     val recurringState by recurringViewModel.uiState.collectAsState()
     val goalsState by goalsViewModel.uiState.collectAsState()
+    val settingsState by settingsViewModel.uiState.collectAsState()
+
+    LaunchedEffect(settingsViewModel) {
+        settingsViewModel.effects.collect { effect ->
+            when (effect) {
+                SettingsEffect.NavigateToLogin -> onLogout()
+                is SettingsEffect.ShowToast -> {}
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -88,7 +105,7 @@ fun MainAppShell(modifier: Modifier = Modifier) {
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
-                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals)
+                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Settings)
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
@@ -118,6 +135,7 @@ fun MainAppShell(modifier: Modifier = Modifier) {
                 MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
+                MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
             }
         }
     }
