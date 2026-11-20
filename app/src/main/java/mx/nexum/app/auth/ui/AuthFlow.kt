@@ -36,7 +36,11 @@ class AuthFlowViewModel : ViewModel() {
 }
 
 @Composable
-fun AuthFlow(modifier: Modifier = Modifier) {
+fun AuthFlow(
+    modifier: Modifier = Modifier,
+    isDarkTheme: Boolean = true,
+    onThemeChanged: (Boolean) -> Unit = {}
+) {
     val flowViewModel: AuthFlowViewModel = viewModel()
     val repository = flowViewModel.repository
     val registerViewModel: RegisterViewModel = viewModel { RegisterViewModel() }
@@ -112,7 +116,11 @@ fun AuthFlow(modifier: Modifier = Modifier) {
                     onIntent = registerViewModel::onIntent
                 )
 
-                AuthScreen.App -> MainAppShell()
+                AuthScreen.App -> MainAppShell(
+                    isDarkTheme = isDarkTheme,
+                    onThemeChanged = onThemeChanged,
+                    onLogout = { screenName = AuthScreen.Login.name }
+                )
             }
         }
     }

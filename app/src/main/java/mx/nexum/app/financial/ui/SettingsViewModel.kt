@@ -13,6 +13,7 @@ data class SettingsUiState(
     val currentPassword: String = "",
     val newPassword: String = "",
     val confirmPassword: String = "",
+    val isDarkTheme: Boolean = true,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null,
@@ -23,10 +24,12 @@ sealed interface SettingsIntent : UiIntent {
     data class CurrentPasswordChanged(val v: String) : SettingsIntent
     data class NewPasswordChanged(val v: String) : SettingsIntent
     data class ConfirmPasswordChanged(val v: String) : SettingsIntent
+    data class ToggleTheme(val isDark: Boolean) : SettingsIntent
     data object SubmitChangePassword : SettingsIntent
     data object Logout : SettingsIntent
 }
 
+@Suppress("unused")
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
@@ -34,7 +37,8 @@ sealed interface SettingsEffect : UiEffect {
 
 @Suppress("unused")
 class SettingsViewModel(
-    private val tokenStorage: TokenStorage = InMemoryTokenStorage()
+    private val tokenStorage: TokenStorage = InMemoryTokenStorage(),
+    private val onThemeChanged: (Boolean) -> Unit = {}
 ) : MviViewModel<SettingsUiState, SettingsIntent, SettingsEffect>(SettingsUiState()) {
 
     override fun onIntent(intent: SettingsIntent) {
@@ -42,6 +46,10 @@ class SettingsViewModel(
             is SettingsIntent.CurrentPasswordChanged -> setState { copy(currentPassword = intent.v, errorMessage = null) }
             is SettingsIntent.NewPasswordChanged -> setState { copy(newPassword = intent.v, errorMessage = null) }
             is SettingsIntent.ConfirmPasswordChanged -> setState { copy(confirmPassword = intent.v, errorMessage = null) }
+            is SettingsIntent.ToggleTheme -> {
+                setState { copy(isDarkTheme = intent.isDark) }
+                onThemeChanged(intent.isDark)
+            }
             SettingsIntent.SubmitChangePassword -> changePassword()
             SettingsIntent.Logout -> logout()
         }

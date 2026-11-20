@@ -51,6 +51,8 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
 @Composable
 fun MainAppShell(
     modifier: Modifier = Modifier,
+    isDarkTheme: Boolean = true,
+    onThemeChanged: (Boolean) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
@@ -67,7 +69,7 @@ fun MainAppShell(
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
     val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel() }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(InMemoryTokenStorage(), onThemeChanged) }
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
@@ -75,6 +77,11 @@ fun MainAppShell(
     val goalsState by goalsViewModel.uiState.collectAsState()
     val profileState by profileViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
+
+    // Initialize switch state
+    LaunchedEffect(isDarkTheme) {
+        settingsViewModel.onIntent(SettingsIntent.ToggleTheme(isDarkTheme))
+    }
 
     LaunchedEffect(settingsViewModel) {
         settingsViewModel.effects.collect { effect ->
