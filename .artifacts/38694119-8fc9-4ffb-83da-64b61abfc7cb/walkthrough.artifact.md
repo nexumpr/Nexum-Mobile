@@ -1,16 +1,19 @@
-# Walkthrough — Pantallas de Privacidad, Consentimientos y Ayuda/FAQ (Oleada 1)
+# Walkthrough — Integración de Privacidad, Consentimientos y Ayuda/FAQ (Oleada 1)
 
-He implementado los módulos UI y ViewModels MVI restantes de la **Guía Oleada 1** (Aviso de Privacidad E015, Consentimientos E016/E017, FAQ E070 y Consejos Educativos E071) bajo la arquitectura MVI y el diseño **Aero-Futuristic**.
+He integrado las pantallas de **Aviso de Privacidad y Consentimientos** (E015, E016, E017) y **Ayuda / FAQ y Consejos Educativos** (E070, E071) conectándolas directamente desde la pestaña de **Ajustes** en el panel de control principal.
 
 ## Cambios Realizados
 
-### Módulo Financiero / Privacidad y Ayuda UI (`mx.nexum.app.financial.ui`)
+### Módulo Financiero / Ajustes y Ayuda UI (`mx.nexum.app.financial.ui`)
 
 #### [NEW] [PrivacyNoticeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt), [PrivacyNoticeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeScreen.kt)
-- ViewModel MVI y pantalla para consultar el aviso legal vigente y registrar la aceptación de términos con diseño *Glassmorphism*.
+- Consulta del aviso legal vigente y registro de aceptación de términos con diseño *Glassmorphism*.
 
 #### [NEW] [HelpEducationViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt), [HelpEducationScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationScreen.kt)
-- ViewModel MVI y pantalla para listar preguntas frecuentes (FAQ) y consejos de educación financiera.
+- Listado interactivo de preguntas frecuentes (FAQ) y consejos de educación financiera.
+
+#### [MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
+- Añadidos botones de acceso directo en la pantalla de Ajustes para abrir en formato modal el **Aviso de Privacidad** y la **Ayuda y FAQ**.
 
 ---
 
