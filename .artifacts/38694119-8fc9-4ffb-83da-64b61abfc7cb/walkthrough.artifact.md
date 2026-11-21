@@ -1,20 +1,16 @@
-# Walkthrough — Selector de Tema Claro / Oscuro (Estética Aero-Futurista)
+# Walkthrough — Pantallas de Privacidad, Consentimientos y Ayuda/FAQ (Oleada 1)
 
-He implementado un **Selector de Tema Claro / Oscuro** que mantiene la estética inmersiva **Aero-Futuristic** (con superficies translúcidas y acentos neón adaptados tanto para modo oscuro como luminoso).
+He implementado los módulos UI y ViewModels MVI restantes de la **Guía Oleada 1** (Aviso de Privacidad E015, Consentimientos E016/E017, FAQ E070 y Consejos Educativos E071) bajo la arquitectura MVI y el diseño **Aero-Futuristic**.
 
 ## Cambios Realizados
 
-### Sistema de Diseño y UI (`mx.nexum.app.ui.theme`, `mx.nexum.app.financial.ui`, `mx.nexum.app`)
+### Módulo Financiero / Privacidad y Ayuda UI (`mx.nexum.app.financial.ui`)
 
-#### [MODIFY] [Color.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/ui/theme/Color.kt), [Theme.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/ui/theme/Theme.kt)
-- Definida la paleta clara aero-futurista (`LightBackground`, `LightSurface`, `LightGlassCard`, `AeroCyanDark`, `AeroPurpleDark`).
-- Configurado `AeroLightColorScheme` y actualizado `NexumTheme` para conmutar dinámicamente entre modo oscuro y claro.
+#### [NEW] [PrivacyNoticeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt), [PrivacyNoticeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeScreen.kt)
+- ViewModel MVI y pantalla para consultar el aviso legal vigente y registrar la aceptación de términos con diseño *Glassmorphism*.
 
-#### [MODIFY] [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt), [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)
-- Añadida tarjeta con un interruptor (*Switch*) de **"Apariencia Aero"** (Modo Oscuro Cyber vs. Modo Claro Luminoso).
-
-#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt), [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt), [MainActivity.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/MainActivity.kt)
-- Propagado el estado de tema (`isDarkTheme`) desde la raíz de la actividad para actualizar el tema de toda la aplicación en tiempo real al accionar el interruptor.
+#### [NEW] [HelpEducationViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt), [HelpEducationScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationScreen.kt)
+- ViewModel MVI y pantalla para listar preguntas frecuentes (FAQ) y consejos de educación financiera.
 
 ---
 
