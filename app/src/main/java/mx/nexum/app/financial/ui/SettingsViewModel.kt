@@ -26,12 +26,17 @@ sealed interface SettingsIntent : UiIntent {
     data class ConfirmPasswordChanged(val v: String) : SettingsIntent
     data class ToggleTheme(val isDark: Boolean) : SettingsIntent
     data object SubmitChangePassword : SettingsIntent
+    data object OpenPrivacy : SettingsIntent
+    data object OpenHelp : SettingsIntent
     data object Logout : SettingsIntent
+    data object NavigateToActiveSessions : SettingsIntent
 }
 
-@Suppress("unused")
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
+    data object NavigateToPrivacy : SettingsEffect
+    data object NavigateToHelp : SettingsEffect
+    data object NavigateToActiveSessions : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
 }
 
@@ -51,7 +56,14 @@ class SettingsViewModel(
                 onThemeChanged(intent.isDark)
             }
             SettingsIntent.SubmitChangePassword -> changePassword()
+            SettingsIntent.OpenPrivacy -> emitEffect(SettingsEffect.NavigateToPrivacy)
+            SettingsIntent.OpenHelp -> emitEffect(SettingsEffect.NavigateToHelp)
             SettingsIntent.Logout -> logout()
+            SettingsIntent.NavigateToActiveSessions -> {
+                viewModelScope.launch {
+                    emitEffect(SettingsEffect.NavigateToActiveSessions)
+                }
+            }
         }
     }
 

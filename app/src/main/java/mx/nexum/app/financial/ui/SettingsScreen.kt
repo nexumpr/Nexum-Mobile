@@ -40,7 +40,8 @@ import mx.nexum.app.ui.theme.NexumTheme
 fun SettingsScreen(
     state: SettingsUiState,
     onIntent: (SettingsIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    verificationContent: @Composable () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -69,6 +70,8 @@ fun SettingsScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            verificationContent()
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "CONFIGURACIÓN Y SEGURIDAD",
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -110,6 +113,43 @@ fun SettingsScreen(
                         checked = state.isDarkTheme,
                         onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) }
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Legal & Help Navigation Cards
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                tonalElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Información y Ayuda",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    OutlinedButton(
+                        onClick = { onIntent(SettingsIntent.OpenPrivacy) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("📜 Aviso de Privacidad y Consentimientos")
+                    }
+                    OutlinedButton(
+                        onClick = { onIntent(SettingsIntent.OpenHelp) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("❓ Ayuda, FAQ y Consejos Educativos")
+                    }
                 }
             }
 
@@ -228,6 +268,18 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { onIntent(SettingsIntent.NavigateToActiveSessions) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("Dispositivos y Sesiones Activas", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedButton(
                         onClick = { onIntent(SettingsIntent.Logout) },

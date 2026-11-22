@@ -7,6 +7,7 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okio.Buffer
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
@@ -17,7 +18,9 @@ data class RecordedRequest(
     val method: String,
     val path: String,
     val headers: Headers,
-    val contentType: String?
+    val contentType: String?,
+    val contentLength: Long = 0L,
+    val body: String = ""
 )
 
 data class FixtureScenario(
@@ -43,11 +46,15 @@ class FixtureHttpSimulator(private val scenarios: Map<String, FixtureScenario>) 
         .build()
 
     private fun handle(request: Request): Response {
+        val bodyBuffer = Buffer()
+        request.body?.writeTo(bodyBuffer)
         recorded += RecordedRequest(
             method = request.method,
             path = request.url.encodedPath,
             headers = request.headers,
-            contentType = request.body?.contentType()?.toString()
+            contentType = request.body?.contentType()?.toString(),
+            contentLength = request.body?.contentLength() ?: 0L,
+            body = bodyBuffer.readUtf8()
         )
 
         val key = key(request.method, request.url.encodedPath)

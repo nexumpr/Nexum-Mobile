@@ -10,6 +10,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import mx.nexum.app.auth.data.dto.ChangePasswordRequestDto
 import mx.nexum.app.auth.data.dto.ChangePasswordResponseDto
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationResponse
+import mx.nexum.app.auth.data.dto.EmailVerificationResponse
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ForgotPasswordResponseDto
 import mx.nexum.app.auth.data.dto.LoginRequestDto
@@ -20,6 +23,7 @@ import mx.nexum.app.auth.data.dto.RegisterRequestDto
 import mx.nexum.app.auth.data.dto.RegisterResponseDto
 import mx.nexum.app.auth.data.dto.ResetPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ResetPasswordResponseDto
+import mx.nexum.app.auth.data.dto.SessionsPageResponseDto
 import mx.nexum.app.auth.data.network.AuthApiService
 import mx.nexum.app.auth.ui.AuthEffect
 import mx.nexum.app.auth.ui.ExpenseDraft
@@ -82,6 +86,31 @@ class RegisterViewModelTest {
             authorization: String,
             request: ChangePasswordRequestDto
         ): Response<ChangePasswordResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun getSessions(
+            authorization: String,
+            limit: Int?,
+            cursor: String?
+        ): Response<SessionsPageResponseDto> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun revokeSession(
+            authorization: String,
+            sessionId: String
+        ): Response<Unit> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun requestEmailVerification(authorization: String): Response<EmailVerificationResponse> {
+            throw NotImplementedError("Not needed in RegisterViewModelTest")
+        }
+
+        override suspend fun confirmEmailVerification(
+            request: ConfirmEmailVerificationRequest
+        ): Response<ConfirmEmailVerificationResponse> {
             throw NotImplementedError("Not needed in RegisterViewModelTest")
         }
     }
