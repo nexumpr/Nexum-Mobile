@@ -6,6 +6,9 @@ import mx.nexum.app.auth.data.dto.ChangePasswordRequest
 import mx.nexum.app.auth.data.dto.ChangePasswordRequestDto
 import mx.nexum.app.auth.data.dto.ChangePasswordResponse
 import mx.nexum.app.auth.data.dto.ClientDto
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationResponse
+import mx.nexum.app.auth.data.dto.EmailVerificationResponse
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequest
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ForgotPasswordResponse
@@ -24,6 +27,8 @@ import mx.nexum.app.auth.data.dto.RegisterResponse
 import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.ResetPasswordRequestDto
 import mx.nexum.app.auth.data.dto.ResetPasswordResponse
+import mx.nexum.app.auth.data.dto.SessionItemResponse
+import mx.nexum.app.auth.data.dto.SessionsPageResponse
 import mx.nexum.app.auth.data.dto.User
 import mx.nexum.app.auth.data.network.AuthApiService
 import mx.nexum.app.auth.data.network.ClientInfoProvider
@@ -290,5 +295,183 @@ class RetrofitAuthRepositoryApi(
             status = body?.status ?: "accepted",
             requestId = body?.requestId ?: UUID.randomUUID().toString()
         )
+    }
+
+    override suspend fun getSessions(
+        accessToken: String,
+        limit: Int?,
+        cursor: String?
+    ): SessionsPageResponse {
+        val authHeader = if (accessToken.startsWith("Bearer ")) accessToken else "Bearer $accessToken"
+        val response = service.getSessions(
+            authorization = authHeader,
+            limit = limit,
+            cursor = cursor
+        )
+        if (!response.isSuccessful) {
+            val code = response.code()
+            throw when (code) {
+                400 -> AuthApiException(
+                    kind = AuthErrorKind.VALIDATION,
+                    message = "Cursor o parámetros de paginación inválidos.",
+                    statusCode = 400
+                )
+                401 -> AuthApiException(
+                    kind = AuthErrorKind.INVALID_CREDENTIALS,
+                    message = "Sesión expirada o no autorizada.",
+                    statusCode = 401
+                )
+                else -> AuthApiException(
+                    kind = if (code >= 500) AuthErrorKind.SERVER_UNAVAILABLE else AuthErrorKind.UNKNOWN,
+                    message = "Error al consultar sesiones ($code)",
+                    retryable = code >= 500,
+                    statusCode = code
+                )
+            }
+        }
+        val body = response.body()
+        val items = body?.items?.map { dto ->
+            SessionItemResponse(
+                id = dto.id,
+                createdAt = dto.createdAt,
+                lastSeenAt = dto.lastSeenAt,
+                current = dto.current,
+                revoked = dto.revoked
+            )
+        } ?: emptyList()
+        return SessionsPageResponse(
+            items = items,
+            nextCursor = body?.nextCursor
+        )
+    }
+
+    override suspend fun revokeSession(accessToken: String, sessionId: String) {
+        val authHeader = if (accessToken.startsWith("Bearer ")) accessToken else "Bearer $accessToken"
+        val response = service.revokeSession(
+            authorization = authHeader,
+            sessionId = sessionId
+        )
+        if (response.code() == 204 || response.isSuccessful) {
+            return
+        }
+        val code = response.code()
+        throw when (code) {
+            404 -> AuthApiException(
+                kind = AuthErrorKind.NOT_FOUND,
+                message = "La sesión no existe o ya expiró",
+                retryable = false,
+                statusCode = 404
+            )
+            409 -> AuthApiException(
+                kind = AuthErrorKind.CONFLICT,
+                message = "Conflicto concurrente al cerrar la sesión, intenta de nuevo",
+                retryable = true,
+                statusCode = 409
+            )
+            401 -> AuthApiException(
+                kind = AuthErrorKind.INVALID_CREDENTIALS,
+                message = "Sesión no autorizada o expirada (401).",
+                statusCode = 401
+            )
+            else -> AuthApiException(
+                kind = if (code >= 500) AuthErrorKind.SERVER_UNAVAILABLE else AuthErrorKind.UNKNOWN,
+                message = "Error al revocar sesión ($code)",
+                retryable = code >= 500,
+                statusCode = code
+            )
+        }
+    }
+
+    override suspend fun requestEmailVerification(accessToken: String): EmailVerificationResponse {
+        val authHeader = if (accessToken.startsWith("Bearer ")) accessToken else "Bearer $accessToken"
+        val response = service.requestEmailVerification(authorization = authHeader)
+        when (response.code()) {
+            202 -> {
+                val body = response.body() ?: throw AuthApiException(
+                    kind = AuthErrorKind.UNKNOWN,
+                    message = "La respuesta 202 no incluyó el cuerpo esperado.",
+                    retryable = true,
+                    statusCode = 202
+                )
+                return EmailVerificationResponse(status = body.status, requestId = body.requestId)
+            }
+            409 -> throw AuthApiException(
+                kind = AuthErrorKind.CONFLICT,
+                message = "Tu correo electrónico ya está verificado",
+                retryable = false,
+                statusCode = 409
+            )
+            429 -> {
+                val retryAfterSeconds = response.headers()["Retry-After"]?.toIntOrNull() ?: 60
+                throw AuthApiException(
+                    kind = AuthErrorKind.RATE_LIMITED,
+                    message = "Has alcanzado el límite de 3 solicitudes cada 15 minutos",
+                    retryable = true,
+                    statusCode = 429,
+                    retryAfterSeconds = retryAfterSeconds
+                )
+            }
+            503 -> throw AuthApiException(
+                kind = AuthErrorKind.SERVICE_UNAVAILABLE,
+                message = "El servicio de correo no está disponible temporalmente (DEPENDENCY_UNAVAILABLE)",
+                retryable = true,
+                statusCode = 503
+            )
+            401 -> throw AuthApiException(
+                kind = AuthErrorKind.INVALID_CREDENTIALS,
+                message = "Sesión no autorizada o expirada (401).",
+                statusCode = 401
+            )
+            else -> {
+                val code = response.code()
+                throw AuthApiException(
+                    kind = if (code >= 500) AuthErrorKind.SERVICE_UNAVAILABLE else AuthErrorKind.UNKNOWN,
+                    message = "Error al solicitar verificación de correo ($code)",
+                    retryable = code >= 500,
+                    statusCode = code
+                )
+            }
+        }
+    }
+
+    override suspend fun confirmEmailVerification(
+        request: ConfirmEmailVerificationRequest
+    ): ConfirmEmailVerificationResponse {
+        val response = service.confirmEmailVerification(request = request)
+        when (response.code()) {
+            200 -> {
+                val body = response.body() ?: throw AuthApiException(
+                    kind = AuthErrorKind.UNKNOWN,
+                    message = "La respuesta 200 no incluyó el cuerpo esperado.",
+                    retryable = true,
+                    statusCode = 200
+                )
+                return ConfirmEmailVerificationResponse(
+                    status = body.status,
+                    requestId = body.requestId
+                )
+            }
+            400 -> throw AuthApiException(
+                kind = AuthErrorKind.INVALID_TOKEN,
+                message = "El código de verificación es inválido o ha expirado",
+                retryable = false,
+                statusCode = 400
+            )
+            409 -> throw AuthApiException(
+                kind = AuthErrorKind.CONFLICT,
+                message = "El código de verificación ya fue utilizado",
+                retryable = false,
+                statusCode = 409
+            )
+            else -> {
+                val code = response.code()
+                throw AuthApiException(
+                    kind = if (code >= 500) AuthErrorKind.SERVER_UNAVAILABLE else AuthErrorKind.UNKNOWN,
+                    message = "Error al confirmar verificación de correo ($code)",
+                    retryable = code >= 500,
+                    statusCode = code
+                )
+            }
+        }
     }
 }

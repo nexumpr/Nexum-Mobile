@@ -14,6 +14,7 @@ import mx.nexum.app.auth.data.AuthResult
 import mx.nexum.app.auth.data.InMemoryTokenStorage
 import mx.nexum.app.auth.data.MockAuthApi
 import mx.nexum.app.auth.data.dto.ChangePasswordRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequest
 import mx.nexum.app.auth.data.dto.Frequency
 import mx.nexum.app.auth.data.dto.Income
@@ -26,6 +27,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -642,6 +644,352 @@ class MockAuthApiTest {
             assertEquals(AuthErrorKind.NETWORK, e.kind)
             assertTrue(e.retryable)
         }
+    }
+
+    @Test
+    fun getSessionsExitosoRetornaPrimeraPaginaConSesionActualYCursor() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+        val response = api.getSessions(accessToken = login.accessToken, limit = 25, cursor = null)
+
+        assertNotNull(response)
+        assertEquals(2, response.items.size)
+        assertTrue(response.items[0].current)
+        assertFalse(response.items[0].revoked)
+        assertNotNull(response.items[0].id)
+        assertNotNull(response.items[0].createdAt)
+        assertNotNull(response.items[0].lastSeenAt)
+        assertEquals(MockAuthApi.PAGE_2_CURSOR, response.nextCursor)
+    }
+
+    @Test
+    fun getSessionsExitosoSegundaPaginaRetornaItemsYCursorNulo() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+        val response = api.getSessions(
+            accessToken = login.accessToken,
+            limit = 25,
+            cursor = MockAuthApi.PAGE_2_CURSOR
+        )
+
+        assertNotNull(response)
+        assertEquals(2, response.items.size)
+        assertFalse(response.items[0].current)
+        assertTrue(response.items[0].revoked)
+        assertNull(response.nextCursor)
+    }
+
+    @Test
+    fun getSessionsRechazaLimitFueraDeRangoCon400() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.getSessions(accessToken = login.accessToken, limit = 0, cursor = null)
+            fail("Se esperaba 400 por limit = 0")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+
+        try {
+            api.getSessions(accessToken = login.accessToken, limit = 101, cursor = null)
+            fail("Se esperaba 400 por limit = 101")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+    }
+
+    @Test
+    fun getSessionsRechazaCursorInvalidoCon400() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.getSessions(accessToken = login.accessToken, limit = 25, cursor = "short")
+            fail("Se esperaba 400 por cursor menor a 8 caracteres")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+
+        try {
+            api.getSessions(
+                accessToken = login.accessToken,
+                limit = 25,
+                cursor = MockAuthApi.INVALID_CURSOR
+            )
+            fail("Se esperaba 400 por cursor centinela inválido")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.VALIDATION, e.kind)
+            assertEquals(400, e.statusCode)
+        }
+    }
+
+    @Test
+    fun getSessionsConTokenInvalidoORevocadoFallaCon401() = runTest {
+        val api = MockAuthApi()
+        try {
+            api.getSessions(accessToken = MockAuthApi.EXPIRED_TOKEN, limit = 25, cursor = null)
+            fail("Se esperaba 401 por token expirado")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.INVALID_CREDENTIALS, e.kind)
+            assertEquals(401, e.statusCode)
+        }
+    }
+
+    @Test
+    fun getSessionsConTokenDeRedLanzaExcepcionReintentable() = runTest {
+        val api = MockAuthApi()
+        try {
+            api.getSessions(
+                accessToken = MockAuthApi.NETWORK_ERROR_TOKEN,
+                limit = 25,
+                cursor = null
+            )
+            fail("Se esperaba error de red")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.NETWORK, e.kind)
+            assertTrue(e.retryable)
+        }
+    }
+
+    @Test
+    fun revokeSessionExitosoIdempotenteEliminaSesionDeLista() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        val sessionsBefore = api.getSessions(accessToken = login.accessToken, limit = 25, cursor = null)
+        assertTrue(sessionsBefore.items.any { it.id == "sess_mock_other_01" })
+
+        // Revocar sesión remota
+        api.revokeSession(accessToken = login.accessToken, sessionId = "sess_mock_other_01")
+
+        // La siguiente llamada a getSessions ya no debe incluirla
+        val sessionsAfter = api.getSessions(accessToken = login.accessToken, limit = 25, cursor = null)
+        assertFalse(sessionsAfter.items.any { it.id == "sess_mock_other_01" })
+
+        // Idempotencia: revocarla de nuevo debe tener éxito sin excepción
+        api.revokeSession(accessToken = login.accessToken, sessionId = "sess_mock_other_01")
+    }
+
+    @Test
+    fun revokeSessionSesionNoEncontradaLanza404() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.revokeSession(accessToken = login.accessToken, sessionId = MockAuthApi.NOT_FOUND_SESSION)
+            fail("Se esperaba 404")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.NOT_FOUND, e.kind)
+            assertEquals(404, e.statusCode)
+            assertFalse(e.retryable)
+        }
+    }
+
+    @Test
+    fun revokeSessionConflictoConcurrenteLanza409() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.revokeSession(accessToken = login.accessToken, sessionId = MockAuthApi.CONFLICT_SESSION)
+            fail("Se esperaba 409")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.CONFLICT, e.kind)
+            assertEquals(409, e.statusCode)
+            assertTrue(e.retryable)
+        }
+    }
+
+    @Test
+    fun revokeSessionErrorDeRedLanzaExcepcionReintentable() = runTest {
+        val api = MockAuthApi()
+        val login = api.login(LoginRequest("demo@nexum.test", "Demo1234"))
+
+        try {
+            api.revokeSession(accessToken = login.accessToken, sessionId = MockAuthApi.NET_ERROR_SESSION)
+            fail("Se esperaba error de red")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.NETWORK, e.kind)
+            assertTrue(e.retryable)
+        }
+    }
+
+    @Test
+    fun revokeSessionConTokenInvalidoFallaCon401() = runTest {
+        val api = MockAuthApi()
+        try {
+            api.revokeSession(accessToken = MockAuthApi.EXPIRED_TOKEN, sessionId = "sess_mock_other_01")
+            fail("Se esperaba 401")
+        } catch (e: AuthApiException) {
+            assertEquals(AuthErrorKind.INVALID_CREDENTIALS, e.kind)
+            assertEquals(401, e.statusCode)
+        }
+    }
+
+    private fun fastApi() = MockAuthApi(
+        delayRange = 0L..0L,
+        emailVerificationDelayRange = 0L..0L
+    )
+
+    @Test
+    fun solicitudVerificacionDevuelve202ConRequestIdUnico() = runTest {
+        val api = fastApi()
+        val first = api.requestEmailVerification("mock-access-verification-1")
+        val second = api.requestEmailVerification("mock-access-verification-2")
+
+        assertEquals("accepted", first.status)
+        assertTrue(first.requestId.isNotBlank())
+        assertFalse(first.requestId == second.requestId)
+    }
+
+    @Test
+    fun cuotaDeTresSolicitudesBloqueaElCuartoIntento() = runTest {
+        val api = fastApi()
+        val token = "mock-access-verification-quota"
+        repeat(3) { api.requestEmailVerification(token) }
+
+        try {
+            api.requestEmailVerification(token)
+            fail("Se esperaba RATE_LIMITED en el cuarto intento")
+        } catch (error: AuthApiException) {
+            assertEquals(AuthErrorKind.RATE_LIMITED, error.kind)
+            assertEquals("Has alcanzado el límite de 3 solicitudes cada 15 minutos", error.message)
+            assertTrue(error.retryable)
+        }
+    }
+
+    @Test
+    fun centinelaCorreoYaVerificadoDevuelveConflicto() = runTest {
+        val api = fastApi()
+
+        try {
+            api.requestEmailVerification(MockAuthApi.ALREADY_VERIFIED_TOKEN)
+            fail("Se esperaba CONFLICT")
+        } catch (error: AuthApiException) {
+            assertEquals(AuthErrorKind.CONFLICT, error.kind)
+            assertEquals("Tu correo electrónico ya está verificado", error.message)
+            assertFalse(error.retryable)
+        }
+    }
+
+    @Test
+    fun centinelaSandboxSesDevuelve503SinEnmascarar() = runTest {
+        val api = fastApi()
+
+        try {
+            api.requestEmailVerification(MockAuthApi.SES_SANDBOX_UNAVAILABLE_TOKEN)
+            fail("Se esperaba SERVICE_UNAVAILABLE")
+        } catch (error: AuthApiException) {
+            assertEquals(AuthErrorKind.SERVICE_UNAVAILABLE, error.kind)
+            assertTrue(error.message.contains("DEPENDENCY_UNAVAILABLE"))
+            assertTrue(error.retryable)
+        }
+    }
+
+    @Test
+    fun centinelaDeRedDevuelveErrorReintentable() = runTest {
+        val api = fastApi()
+
+        try {
+            api.requestEmailVerification(MockAuthApi.NETWORK_ERROR_TOKEN)
+            fail("Se esperaba error de red")
+        } catch (error: AuthApiException) {
+            assertEquals(AuthErrorKind.NETWORK, error.kind)
+            assertEquals("Error de red al solicitar verificación", error.message)
+            assertTrue(error.retryable)
+        }
+    }
+
+    @Test
+    fun latenciaPorDefectoDeVerificacionEstaEnRango() = runTest {
+        val api = MockAuthApi(delayRange = 0L..0L)
+        val started = currentTime
+
+        api.requestEmailVerification("mock-access-latency")
+
+        val elapsed = currentTime - started
+        assertTrue("Latencia real: $elapsed", elapsed in 600L..1000L)
+    }
+
+    @Test
+    fun confirmacionExitosaRegistraUsoUnico() = runTest {
+        val api = fastApi()
+        val request = ConfirmEmailVerificationRequest("verification_token_sintetico_123")
+
+        val first = api.confirmEmailVerification(request)
+        assertEquals("accepted", first.status)
+        assertTrue(first.requestId.isNotBlank())
+
+        try {
+            api.confirmEmailVerification(request)
+            fail("Se esperaba CONFLICT en el segundo uso")
+        } catch (error: AuthApiException) {
+            assertEquals(AuthErrorKind.CONFLICT, error.kind)
+            assertEquals("El código de verificación ya fue utilizado", error.message)
+            assertEquals(409, error.statusCode)
+            assertFalse(error.retryable)
+        }
+    }
+
+    @Test
+    fun confirmacionConservaEspaciosYMayusculasDelToken() = runTest {
+        val api = fastApi()
+
+        val first = api.confirmEmailVerification(ConfirmEmailVerificationRequest("  AbC123XY_z  "))
+        val second = api.confirmEmailVerification(ConfirmEmailVerificationRequest("AbC123XY_z"))
+
+        assertFalse(first.requestId == second.requestId)
+    }
+
+    @Test
+    fun tokensExpiradoInvalidoYCortoDevuelven400() = runTest {
+        val api = fastApi()
+        val cases = listOf(
+            MockAuthApi.EXPIRED_VERIFICATION_TOKEN,
+            MockAuthApi.INVALID_VERIFICATION_TOKEN,
+            "corto"
+        )
+
+        cases.forEach { token ->
+            try {
+                api.confirmEmailVerification(ConfirmEmailVerificationRequest(token))
+                fail("Se esperaba INVALID_TOKEN para longitud ${token.length}")
+            } catch (error: AuthApiException) {
+                assertEquals(AuthErrorKind.INVALID_TOKEN, error.kind)
+                assertEquals("El código de verificación es inválido o ha expirado", error.message)
+                assertEquals(400, error.statusCode)
+                assertFalse(error.retryable)
+            }
+        }
+    }
+
+    @Test
+    fun centinelaDeRedEnConfirmacionEsReintentable() = runTest {
+        val api = fastApi()
+
+        try {
+            api.confirmEmailVerification(ConfirmEmailVerificationRequest(MockAuthApi.NETWORK_ERROR_TOKEN))
+            fail("Se esperaba error de red")
+        } catch (error: AuthApiException) {
+            assertEquals(AuthErrorKind.NETWORK, error.kind)
+            assertEquals("Error de red al confirmar correo", error.message)
+            assertTrue(error.retryable)
+        }
+    }
+
+    @Test
+    fun latenciaPorDefectoDeConfirmacionEstaEnRango() = runTest {
+        val api = MockAuthApi(delayRange = 0L..0L)
+        val started = currentTime
+
+        api.confirmEmailVerification(ConfirmEmailVerificationRequest("verification_latency_123"))
+
+        val elapsed = currentTime - started
+        assertTrue("Latencia real: $elapsed", elapsed in 600L..1000L)
     }
 
     private fun assertNullSafe(value: Any?) {

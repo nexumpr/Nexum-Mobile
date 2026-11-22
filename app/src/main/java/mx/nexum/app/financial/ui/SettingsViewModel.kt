@@ -29,12 +29,17 @@ sealed interface SettingsIntent : UiIntent {
     data object OpenPrivacy : SettingsIntent
     data object OpenHelp : SettingsIntent
     data object Logout : SettingsIntent
+    data object NavigateToActiveSessions : SettingsIntent
 }
 
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
+<<<<<<< HEAD
     data object NavigateToPrivacy : SettingsEffect
     data object NavigateToHelp : SettingsEffect
+=======
+    data object NavigateToActiveSessions : SettingsEffect
+>>>>>>> developer
     data class ShowToast(val message: String) : SettingsEffect
 }
 
@@ -57,6 +62,11 @@ class SettingsViewModel(
             SettingsIntent.OpenPrivacy -> emitEffect(SettingsEffect.NavigateToPrivacy)
             SettingsIntent.OpenHelp -> emitEffect(SettingsEffect.NavigateToHelp)
             SettingsIntent.Logout -> logout()
+            SettingsIntent.NavigateToActiveSessions -> {
+                viewModelScope.launch {
+                    emitEffect(SettingsEffect.NavigateToActiveSessions)
+                }
+            }
         }
     }
 

@@ -4,6 +4,9 @@ import kotlinx.coroutines.delay
 import java.util.UUID
 import mx.nexum.app.auth.data.dto.ChangePasswordRequest
 import mx.nexum.app.auth.data.dto.ChangePasswordResponse
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationResponse
+import mx.nexum.app.auth.data.dto.EmailVerificationResponse
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequest
 import mx.nexum.app.auth.data.dto.ForgotPasswordResponse
 import mx.nexum.app.auth.data.dto.LoginRequest
@@ -15,11 +18,14 @@ import mx.nexum.app.auth.data.dto.RegisterResponse
 import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.ResetPasswordResponse
 import mx.nexum.app.auth.data.dto.SessionIdDto
+import mx.nexum.app.auth.data.dto.SessionItemResponse
+import mx.nexum.app.auth.data.dto.SessionsPageResponse
 import mx.nexum.app.auth.data.dto.User
 
 class MockAuthApi(
     private val delayRange: LongRange = 800L..1500L,
-    private val maxLoginAttempts: Int = 5
+    private val maxLoginAttempts: Int = 5,
+    private val emailVerificationDelayRange: LongRange = 600L..1000L
 ) : AuthApi {
 
     private data class TokenFamily(
@@ -46,6 +52,40 @@ class MockAuthApi(
     private val consumedRefreshTokens = mutableSetOf<String>()
     private val revokedAccessTokens = mutableSetOf<String>()
     private val usedResetTokens = mutableSetOf<String>()
+    private val revokedSessionIds = mutableSetOf<String>()
+    private val emailVerificationRequestsByToken = mutableMapOf<String, Int>()
+    private val usedVerificationTokens = mutableSetOf<String>()
+
+    private val mockSessionsList = mutableListOf(
+        SessionItemResponse(
+            id = "sess_current_mock_99",
+            createdAt = "2026-11-19T10:00:00Z",
+            lastSeenAt = "2026-11-19T20:00:00Z",
+            current = true,
+            revoked = false
+        ),
+        SessionItemResponse(
+            id = "sess_mock_other_01",
+            createdAt = "2026-11-15T08:30:00Z",
+            lastSeenAt = "2026-11-18T14:20:00Z",
+            current = false,
+            revoked = false
+        ),
+        SessionItemResponse(
+            id = "sess_mock_revoked_02",
+            createdAt = "2026-11-01T12:00:00Z",
+            lastSeenAt = "2026-11-05T09:15:00Z",
+            current = false,
+            revoked = true
+        ),
+        SessionItemResponse(
+            id = "sess_mock_other_03",
+            createdAt = "2026-10-20T16:45:00Z",
+            lastSeenAt = "2026-10-25T11:00:00Z",
+            current = false,
+            revoked = false
+        )
+    )
 
     override suspend fun register(request: RegisterRequest): RegisterResponse {
         simulateNetwork()
@@ -420,6 +460,199 @@ class MockAuthApi(
         }
     }
 
+    override suspend fun getSessions(
+        accessToken: String,
+        limit: Int?,
+        cursor: String?
+    ): SessionsPageResponse {
+        val delayMs = (400L..800L).random()
+        delay(delayMs)
+
+        if (accessToken == NETWORK_ERROR_TOKEN || accessToken.contains(NETWORK_ERROR_TOKEN) ||
+            accessToken == NETWORK_ERROR_LOGOUT_TOKEN || accessToken == NETWORK_ERROR_EMAIL
+        ) {
+            throw AuthApiException(
+                kind = AuthErrorKind.NETWORK,
+                message = "Error de red al consultar sesiones.",
+                retryable = true
+            )
+        }
+
+        if (accessToken == EXPIRED_TOKEN || revokedAccessTokens.contains(accessToken)) {
+            throw AuthApiException(
+                kind = AuthErrorKind.INVALID_CREDENTIALS,
+                message = "Sesión inválida o expirada (401).",
+                statusCode = 401
+            )
+        }
+
+        val effectiveLimit = limit ?: 25
+        if (effectiveLimit !in 1..100) {
+            throw AuthApiException(
+                kind = AuthErrorKind.VALIDATION,
+                message = "El parámetro limit debe estar entre 1 y 100",
+                statusCode = 400
+            )
+        }
+
+        if (cursor != null && (cursor.length !in 8..2048 || cursor == INVALID_CURSOR)) {
+            throw AuthApiException(
+                kind = AuthErrorKind.VALIDATION,
+                message = "Cursor de paginación inválido o expirado",
+                statusCode = 400
+            )
+        }
+
+        synchronized(lock) {
+            val page1Items = mockSessionsList.filter { it.id == "sess_current_mock_99" || it.id == "sess_mock_other_01" }
+                .filterNot { revokedSessionIds.contains(it.id) }
+            val page2Items = mockSessionsList.filter { it.id == "sess_mock_revoked_02" || it.id == "sess_mock_other_03" }
+                .filterNot { revokedSessionIds.contains(it.id) }
+
+            return if (cursor == null) {
+                // Página 1: incluye sesión actual al inicio y cursor para página 2
+                SessionsPageResponse(
+                    items = page1Items,
+                    nextCursor = if (page2Items.isNotEmpty()) PAGE_2_CURSOR else null
+                )
+            } else if (cursor == PAGE_2_CURSOR) {
+                // Página 2: ítems finales, nextCursor es null
+                SessionsPageResponse(
+                    items = page2Items,
+                    nextCursor = null
+                )
+            } else {
+                // Cualquier otro cursor válido
+                SessionsPageResponse(
+                    items = emptyList(),
+                    nextCursor = null
+                )
+            }
+        }
+    }
+
+    override suspend fun revokeSession(accessToken: String, sessionId: String) {
+        val delayMs = (400L..800L).random()
+        delay(delayMs)
+
+        if (sessionId == NET_ERROR_SESSION || accessToken == NETWORK_ERROR_TOKEN ||
+            accessToken.contains(NETWORK_ERROR_TOKEN) || accessToken == NETWORK_ERROR_LOGOUT_TOKEN
+        ) {
+            throw AuthApiException(
+                kind = AuthErrorKind.NETWORK,
+                message = "Error de red al revocar sesión",
+                retryable = true
+            )
+        }
+
+        if (accessToken == EXPIRED_TOKEN || revokedAccessTokens.contains(accessToken)) {
+            throw AuthApiException(
+                kind = AuthErrorKind.INVALID_CREDENTIALS,
+                message = "Sesión inválida o expirada (401).",
+                statusCode = 401
+            )
+        }
+
+        if (sessionId == NOT_FOUND_SESSION) {
+            throw AuthApiException(
+                kind = AuthErrorKind.NOT_FOUND,
+                message = "La sesión no existe o ya expiró",
+                retryable = false,
+                statusCode = 404
+            )
+        }
+
+        if (sessionId == CONFLICT_SESSION) {
+            throw AuthApiException(
+                kind = AuthErrorKind.CONFLICT,
+                message = "Conflicto concurrente al cerrar la sesión, intenta de nuevo",
+                retryable = true,
+                statusCode = 409
+            )
+        }
+
+        synchronized(lock) {
+            // Idempotencia: si ya fue revocada previamente, retorna éxito sin lanzar excepción
+            revokedSessionIds.add(sessionId)
+            mockSessionsList.removeAll { it.id == sessionId }
+        }
+    }
+
+    override suspend fun requestEmailVerification(accessToken: String): EmailVerificationResponse {
+        delay(emailVerificationDelayRange.random())
+        when (accessToken) {
+            ALREADY_VERIFIED_TOKEN -> throw AuthApiException(
+                kind = AuthErrorKind.CONFLICT,
+                message = "Tu correo electrónico ya está verificado",
+                retryable = false
+            )
+            SES_SANDBOX_UNAVAILABLE_TOKEN -> throw AuthApiException(
+                kind = AuthErrorKind.SERVICE_UNAVAILABLE,
+                message = "El servicio de correo no está disponible temporalmente (DEPENDENCY_UNAVAILABLE)",
+                retryable = true
+            )
+            NETWORK_ERROR_TOKEN -> throw AuthApiException(
+                kind = AuthErrorKind.NETWORK,
+                message = "Error de red al solicitar verificación",
+                retryable = true
+            )
+        }
+        synchronized(lock) {
+            val attempts = emailVerificationRequestsByToken[accessToken] ?: 0
+            if (attempts >= 3) {
+                throw AuthApiException(
+                    kind = AuthErrorKind.RATE_LIMITED,
+                    message = "Has alcanzado el límite de 3 solicitudes cada 15 minutos",
+                    retryable = true
+                )
+            }
+            emailVerificationRequestsByToken[accessToken] = attempts + 1
+        }
+        return EmailVerificationResponse(
+            status = "accepted",
+            requestId = UUID.randomUUID().toString()
+        )
+    }
+
+    override suspend fun confirmEmailVerification(
+        request: ConfirmEmailVerificationRequest
+    ): ConfirmEmailVerificationResponse {
+        delay(emailVerificationDelayRange.random())
+        val token = request.token
+        if (token.length < 10 ||
+            token == EXPIRED_VERIFICATION_TOKEN ||
+            token == INVALID_VERIFICATION_TOKEN
+        ) {
+            throw AuthApiException(
+                kind = AuthErrorKind.INVALID_TOKEN,
+                message = "El código de verificación es inválido o ha expirado",
+                retryable = false,
+                statusCode = 400
+            )
+        }
+        if (token == NETWORK_ERROR_TOKEN) {
+            throw AuthApiException(
+                kind = AuthErrorKind.NETWORK,
+                message = "Error de red al confirmar correo",
+                retryable = true
+            )
+        }
+        synchronized(lock) {
+            if (!usedVerificationTokens.add(token)) {
+                throw AuthApiException(
+                    kind = AuthErrorKind.CONFLICT,
+                    message = "El código de verificación ya fue utilizado",
+                    retryable = false,
+                    statusCode = 409
+                )
+            }
+        }
+        return ConfirmEmailVerificationResponse(
+            status = "accepted",
+            requestId = UUID.randomUUID().toString()
+        )
+    }
+
     fun isAccessTokenRevoked(accessToken: String): Boolean = synchronized(lock) {
         revokedAccessTokens.contains(accessToken)
     }
@@ -439,6 +672,18 @@ class MockAuthApi(
         const val EXPIRED_RESET_TOKEN = "expired_reset_token"
         const val NETWORK_ERROR_TOKEN = "net_error_token"
         const val SERVICE_UNAVAILABLE_TOKEN = "service_unavailable_token"
+        const val ALREADY_VERIFIED_TOKEN = "already_verified_token"
+        const val SES_SANDBOX_UNAVAILABLE_TOKEN = "ses_sandbox_503_token"
         const val NETWORK_ERROR_LOGOUT_TOKEN = "net_error_logout"
+
+        const val EXPIRED_VERIFICATION_TOKEN = "expired_verification_token"
+        const val INVALID_VERIFICATION_TOKEN = "invalid_verification_token"
+
+        const val INVALID_CURSOR = "invalid-cursor"
+        const val PAGE_2_CURSOR = "cursor_page_2_xyz12345"
+
+        const val NOT_FOUND_SESSION = "not_found_session"
+        const val CONFLICT_SESSION = "conflict_session"
+        const val NET_ERROR_SESSION = "net_error_session"
     }
 }

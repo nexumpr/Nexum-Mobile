@@ -2,6 +2,9 @@ package mx.nexum.app.auth.data
 
 import mx.nexum.app.auth.data.dto.ChangePasswordRequest
 import mx.nexum.app.auth.data.dto.ChangePasswordResponse
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationResponse
+import mx.nexum.app.auth.data.dto.EmailVerificationResponse
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequest
 import mx.nexum.app.auth.data.dto.ForgotPasswordResponse
 import mx.nexum.app.auth.data.dto.LoginRequest
@@ -12,6 +15,7 @@ import mx.nexum.app.auth.data.dto.RegisterRequest
 import mx.nexum.app.auth.data.dto.RegisterResponse
 import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.ResetPasswordResponse
+import mx.nexum.app.auth.data.dto.SessionsPageResponse
 
 class AuthApiException(
     val kind: AuthErrorKind,
@@ -41,5 +45,26 @@ interface AuthApi {
         accessToken: String,
         request: ChangePasswordRequest
     ): ChangePasswordResponse =
+        throw UnsupportedOperationException("No implementado")
+
+    suspend fun getSessions(
+        accessToken: String,
+        limit: Int? = 25,
+        cursor: String? = null
+    ): SessionsPageResponse =
+        throw UnsupportedOperationException("No implementado")
+
+    suspend fun revokeSession(
+        accessToken: String,
+        sessionId: String
+    ): Unit =
+        throw UnsupportedOperationException("No implementado")
+
+    suspend fun requestEmailVerification(accessToken: String): EmailVerificationResponse =
+        throw UnsupportedOperationException("No implementado")
+
+    suspend fun confirmEmailVerification(
+        request: ConfirmEmailVerificationRequest
+    ): ConfirmEmailVerificationResponse =
         throw UnsupportedOperationException("No implementado")
 }

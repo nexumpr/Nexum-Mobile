@@ -2,113 +2,108 @@
 project: Nexum-Mobile
 unit: 200-Sesiones-Activas
 kind: technical-plan
-version: 1.0.0
+version: 1.1.0
 status: ready
 implementation: only_on_explicit_request
 ---
 
-# PLAN — Consulta de Sesiones Activas (List Sessions)
+# PLAN — Consulta de Sesiones Propias (List Sessions)
+
+## Reglas Operativas y Contexto
+- **Lectura obligatoria previa:** Consultar `memoria.md` antes de ejecutar cualquier paso del plan para alinear convenciones del repositorio, manejo de tokens y rutas de navegación.
+- **Restricción de repositorio:** No ejecutar ninguna acción en GitHub (sin commits, branches, pushes ni PRs).
 
 ## Estrategia técnica
-Implementar la consulta y presentación de sesiones activas bajo el contrato **NEXUM-E008** en la arquitectura MVI y el patrón Repositorio del módulo `auth`:
-1. **Contratos DTO y mapeos de datos:**
-   - DTO de respuesta: `SessionItemResponse(val id: String, val device: String, val lastSeenAt: String, val current: Boolean)`.
-   - Modelo de dominio UI: `ActiveSession(val id: String, val deviceName: String, val formattedLastSeen: String, val isCurrentDevice: Boolean)`.
-2. **Ampliación de interfaces:**
-   - En `AuthApi`: `suspend fun getSessions(accessToken: String): List<SessionItemResponse>`.
-   - En `AuthRepository`: `suspend fun getActiveSessions(): AuthResult<List<ActiveSession>>`.
-3. **Mapeo y Formato Local:**
-   - Transformar `lastSeenAt` (ISO-8601 UTC) a formato amigable relativo o de fecha local del usuario (ej. "Activo ahora", "Ayer a las 18:20").
-   - Garantizar que la sesión actual (`current == true`) encabece la lista en la presentación.
+Implementar la consulta y presentación de sesiones propias bajo el contrato **NEXUM-E008** (`GET /api/v1/auth/sessions`) en la arquitectura MVI y el patrón Repositorio del módulo `auth`:
+
+1. **Contratos DTO y mapeos de datos (estrictos a E008):**
+    - DTO de respuesta paginada: `SessionsPageResponse(val items: List<SessionItemResponse>, val nextCursor: String? = null)`.
+    - DTO de ítem (exactamente los 5 campos del contrato): `SessionItemResponse(val id: String, val createdAt: String, val lastSeenAt: String, val current: Boolean, val revoked: Boolean)`.
+    - Modelo de dominio UI (sin depender de nombre de dispositivo, plataforma, IP ni ubicación):
+      `UserSession(val id: String, val shortId: String, val formattedCreatedAt: String, val formattedLastSeenAt: String, val isCurrent: Boolean, val isRevoked: Boolean)`.
+    - Modelo de página de dominio: `SessionsPage(val items: List<UserSession>, val nextCursor: String?)`.
+
+2. **Ampliación de interfaces y paginación por cursor:**
+    - En `AuthApi`:
+      `suspend fun getSessions(accessToken: String, limit: Int? = 25, cursor: String? = null): SessionsPageResponse`
+      *(Endpoint: `GET /api/v1/auth/sessions` con header `Authorization: Bearer <accessToken>` y query params opcionales `limit` [1–100] y `cursor` [8–2048 chars opaco]).*
+    - En `AuthRepository`:
+      `suspend fun getSessions(limit: Int = 25, cursor: String? = null): AuthResult<SessionsPage>`
+
+3. **Mapeo, Formato Local y Reglas de Presentación:**
+    - Transformar `createdAt` y `lastSeenAt` (ISO-8601 UTC) a formato legible local (ej. `"Activo ahora"`, `"Última actividad: hoy 18:20"`, `"Iniciada el 17 nov 2026"`).
+    - Generar `shortId` visual a partir de los primeros caracteres de `id` (ej. `"Sesión #a1b2c3d4"`) junto con el badge `"Sesión actual"` cuando `current == true` y estado `"Revocada"` si `revoked == true`, evitando cualquier dependencia de datos de hardware/IP inexistentes en E008.
+    - Garantizar que la sesión actual (`isCurrent == true`) encabece la lista en la primera página.
+    - Si el backend responde `400 Bad Request` por cursor manipulado, vencido o de otro usuario, mapear a error de validación/paginación (`AuthErrorKind.VALIDATION_ERROR` o equivalente en `AuthRepository`) y permitir recargar desde la primera página (`cursor = null`).
+
 4. **Estados MVI de la pantalla:**
-   - `SessionsUiState`:
-     - `sessions: List<ActiveSession> = emptyList()`
-     - `isLoading: Boolean = false`
-     - `isRefreshing: Boolean = false`
-     - `errorMessage: String? = null`
-   - Intenciones `SessionsIntent`:
-     - `LoadSessions`
-     - `Refresh`
-     - `DismissError`
+    - `SessionsUiState`:
+        - `sessions: List<UserSession> = emptyList()`
+        - `nextCursor: String? = null`
+        - `isLoading: Boolean = false`
+        - `isRefreshing: Boolean = false`
+        - `isLoadingMore: Boolean = false`
+        - `errorMessage: String? = null`
+    - Intenciones `SessionsIntent`:
+        - `LoadSessions`
+        - `Refresh`
+        - `LoadMore`
+        - `DismissError`
+
 5. **Simulación en `MockAuthApi`:**
-   - Retardo determinista de 400–800 ms.
-   - Retorna lista sintética con:
-     1. Dispositivo actual: `id = "sess-current"`, `device = "Pixel 8 Pro (Android 16)"`, `current = true`, `lastSeenAt = now()`.
-     2. Dispositivo secundario: `id = "sess-web"`, `device = "Chrome en Windows 11"`, `current = false`, `lastSeenAt = now() - 1 día`.
-   - Token centinela `net@error.test` lanza `AuthApiException(AuthErrorKind.NETWORK, "Error al consultar sesiones", retryable = true)`.
+    - Retardo determinista de 400–800 ms.
+    - Valida rango de `limit` (`1..100`) y longitud de `cursor` (`8..2048`) cuando no sea nulo; si el cursor es inválido o igual al centinela `"invalid-cursor"`, lanza `AuthApiException(AuthErrorKind.VALIDATION_ERROR, "Cursor de paginación inválido o expirado")`.
+    - Retorna `SessionsPageResponse` con ítems que respetan estrictamente los 5 campos (`id`, `createdAt`, `lastSeenAt`, `current`, `revoked`), soportando al menos 2 páginas con `nextCursor` opaco y omitiendo `nextCursor` (`null`) en la última página.
+    - Token centinela `net@error.test` lanza `AuthApiException(AuthErrorKind.NETWORK, "Error al consultar sesiones", retryable = true)`.
 
 ## Contratos y modelos de datos (NEXUM-E008)
 
 ```kotlin
 // DTOs de red (contrato NEXUM-E008)
-data class SessionItemResponse(
-    val id: String,
-    val device: String,
-    val lastSeenAt: String,
-    val current: Boolean
+@Serializable
+data class SessionsPageResponse(
+    val items: List<SessionItemResponse>,
+    val nextCursor: String? = null
 )
 
-// Modelo de dominio para presentación
-data class ActiveSession(
+@Serializable
+data class SessionItemResponse(
     val id: String,
-    val deviceName: String,
-    val formattedLastSeen: String,
-    val isCurrentDevice: Boolean
+    val createdAt: String,
+    val lastSeenAt: String,
+    val current: Boolean,
+    val revoked: Boolean
+)
+
+// Modelos de dominio para presentación
+data class UserSession(
+    val id: String,
+    val shortId: String,
+    val formattedCreatedAt: String,
+    val formattedLastSeenAt: String,
+    val isCurrent: Boolean,
+    val isRevoked: Boolean
+)
+
+data class SessionsPage(
+    val items: List<UserSession>,
+    val nextCursor: String?
 )
 
 // Interfaz ampliada en AuthApi
 interface AuthApi {
-    // Métodos previos: register, login, refresh, logout, forgotPassword, resetPassword, changePassword
-    suspend fun getSessions(accessToken: String): List<SessionItemResponse>
+    // GET /api/v1/auth/sessions · Bearer · 200 OK
+    suspend fun getSessions(
+        accessToken: String,
+        limit: Int? = 25,
+        cursor: String? = null
+    ): SessionsPageResponse
 }
 
 // Interfaz ampliada en AuthRepository
 interface AuthRepository {
-    // Métodos previos...
-    suspend fun getActiveSessions(): AuthResult<List<ActiveSession>>
+    suspend fun getSessions(
+        limit: Int = 25,
+        cursor: String? = null
+    ): AuthResult<SessionsPage>
 }
-```
-
-## Estados e Intenciones MVI
-
-```kotlin
-data class SessionsUiState(
-    val sessions: List<ActiveSession> = emptyList(),
-    val isLoading: Boolean = false,
-    val isRefreshing: Boolean = false,
-    val errorMessage: String? = null
-)
-
-sealed interface SessionsIntent {
-    data object LoadSessions : SessionsIntent
-    data object Refresh : SessionsIntent
-    data object DismissError : SessionsIntent
-}
-```
-
-## Orden de trabajo
-| Paso | Acción | Requisito rector |
-| --- | --- | --- |
-| **N200-P01** | Definir modelo DTO de NEXUM-E008 (`SessionItemResponse`) y modelo `ActiveSession`. | M200-R02, M200-R03 |
-| **N200-P02** | Ampliar contratos `AuthApi` y `AuthRepository` con la consulta de sesiones. | M200-R02 |
-| **N200-P03** | Implementar la simulación en `MockAuthApi` con sesiones sintéticas y centinelas de red. | M200-R05 |
-| **N200-P04** | Construir `SessionsViewModel` MVI con estados de carga, refresco y manejo de errores. | M200-R01, M200-R04 |
-| **N200-P05** | Diseñar `ActiveSessionsScreen` en Compose con Material 3, badge para dispositivo actual y pull-to-refresh. | M200-R01, M200-R04 |
-| **N200-P06** | Desarrollar pruebas unitarias completas (`SessionsViewModelTest`, `MockAuthApiTest`) con `kotlinx-coroutines-test`. | M200-R01…M200-R05 |
-
-## Dependencias y decisiones técnicas
-- **Aprobado**: Material 3 y Jetpack Compose sin dependencias externas.
-- **Privacidad**: Se descarta expresamente cualquier transporte de `refreshToken` o hashes en la capa de transporte (MO-PR06, MO-PR10).
-- **Preparación para revocación (E009)**: `ActiveSession.id` se expone de forma opaca y lista para conectarse con la acción de borrado en la siguiente unidad.
-
-## Estrategia de pruebas
-- **Pruebas de ViewModel:**
-  - `LoadSessions` transiciona `isLoading = true` → `Content` con lista ordenada (sesión actual al inicio).
-  - `Refresh` activa `isRefreshing = true` sin borrar la lista existente.
-  - Error de red transiciona a estado `Error` con mensaje reintentable.
-- **Pruebas de Repositorio y Mock:**
-  - `getActiveSessions()` retorna lista de sesiones y mapea timestamps correctamente.
-  - Verificación de que ningún DTO contiene campos de tokens.
-  - Centinela `net@error.test` devuelve `Failure(NETWORK)`.
-- **Pruebas de regresión:**
-  - Asegurar que `assembleDebug` y los 50 tests previos de autenticación continúen pasando.

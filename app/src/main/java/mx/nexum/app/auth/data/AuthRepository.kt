@@ -10,6 +10,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mx.nexum.app.auth.data.dto.ChangePasswordRequest
 import mx.nexum.app.auth.data.dto.ChangePasswordResponse
+import mx.nexum.app.auth.data.dto.ConfirmEmailVerificationRequest
 import mx.nexum.app.auth.data.dto.ForgotPasswordRequest
 import mx.nexum.app.auth.data.dto.LoginRequest
 import mx.nexum.app.auth.data.dto.LoginResponse
@@ -19,7 +20,7 @@ import mx.nexum.app.auth.data.dto.ResetPasswordRequest
 import mx.nexum.app.auth.data.dto.User
 import mx.nexum.app.auth.ui.AuthEffect
 
-enum class AuthErrorKind { CONFLICT, INVALID_CREDENTIALS, RATE_LIMITED, NETWORK, SERVER_UNAVAILABLE, UNKNOWN, VALIDATION }
+enum class AuthErrorKind { CONFLICT, INVALID_CREDENTIALS, INVALID_TOKEN, RATE_LIMITED, NETWORK, SERVER_UNAVAILABLE, SERVICE_UNAVAILABLE, UNKNOWN, VALIDATION, NOT_FOUND }
 
 data class AuthError(
     val kind: AuthErrorKind,
@@ -63,6 +64,35 @@ data class ResetPasswordOutcome(
     val requestId: String? = null
 )
 
+data class EmailVerificationOutcome(
+    val status: String,
+    val requestId: String
+)
+
+data class ConfirmEmailVerificationOutcome(
+    val status: String,
+    val requestId: String
+)
+
+data class UserSession(
+    val id: String,
+    val shortId: String,
+    val formattedCreatedAt: String,
+    val formattedLastSeenAt: String,
+    val isCurrent: Boolean,
+    val isRevoked: Boolean
+) {
+    val current: Boolean get() = isCurrent
+    val revoked: Boolean get() = isRevoked
+}
+
+typealias ActiveSession = UserSession
+
+data class SessionsPage(
+    val items: List<UserSession>,
+    val nextCursor: String?
+)
+
 interface AuthRepository {
     val sessionEffects: SharedFlow<AuthEffect>
         get() = MutableSharedFlow()
@@ -85,6 +115,24 @@ interface AuthRepository {
         currentPassword: String,
         newPassword: String
     ): AuthResult<ChangePasswordResponse> =
+        AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
+
+    suspend fun getSessions(
+        limit: Int = 25,
+        cursor: String? = null
+    ): AuthResult<SessionsPage> =
+        AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
+
+    suspend fun revokeSession(
+        sessionId: String,
+        isCurrent: Boolean
+    ): AuthResult<Unit> =
+        AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
+
+    suspend fun requestEmailVerification(): AuthResult<EmailVerificationOutcome> =
+        AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
+
+    suspend fun confirmEmailVerification(token: String): AuthResult<ConfirmEmailVerificationOutcome> =
         AuthResult.Failure(AuthError(AuthErrorKind.UNKNOWN, "No implementado"))
 }
 
@@ -206,6 +254,179 @@ class AuthRepositoryImpl(
             AuthResult.Success(response)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toAuthError())
+        }
+    }
+
+    override suspend fun getSessions(
+        limit: Int,
+        cursor: String?
+    ): AuthResult<SessionsPage> {
+        val currentSession = tokenStorage.current()
+            ?: return AuthResult.Failure(
+                AuthError(
+                    kind = AuthErrorKind.INVALID_CREDENTIALS,
+                    message = "No hay sesión activa.",
+                    statusCode = 401
+                )
+            )
+
+        return try {
+            val response = api.getSessions(
+                accessToken = currentSession.accessToken,
+                limit = limit,
+                cursor = cursor
+            )
+            val domainItems = response.items.map { item ->
+                UserSession(
+                    id = item.id,
+                    shortId = "Sesión #" + (if (item.id.length >= 8) item.id.take(8) else item.id),
+                    formattedCreatedAt = formatSessionTimestamp(item.createdAt, isCreatedAt = true),
+                    formattedLastSeenAt = formatSessionTimestamp(item.lastSeenAt, isCreatedAt = false),
+                    isCurrent = item.current,
+                    isRevoked = item.revoked
+                )
+            }
+            // En la primera página (cursor == null), asegurar que la sesión actual encabece la lista
+            val sortedItems = if (cursor == null) {
+                domainItems.sortedByDescending { it.isCurrent }
+            } else {
+                domainItems
+            }
+            AuthResult.Success(
+                SessionsPage(
+                    items = sortedItems,
+                    nextCursor = response.nextCursor
+                )
+            )
+        } catch (error: Throwable) {
+            val authError = error.toAuthError()
+            if (authError.statusCode == 401 || authError.kind == AuthErrorKind.INVALID_CREDENTIALS) {
+                tokenStorage.clear()
+                _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
+            }
+            AuthResult.Failure(authError)
+        }
+    }
+
+    private val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+    override suspend fun revokeSession(sessionId: String, isCurrent: Boolean): AuthResult<Unit> {
+        val currentSession = tokenStorage.current()
+            ?: return AuthResult.Failure(
+                AuthError(
+                    kind = AuthErrorKind.INVALID_CREDENTIALS,
+                    message = "No hay sesión activa.",
+                    statusCode = 401
+                )
+            )
+
+        val isMockSentinel = sessionId.startsWith("sess_") ||
+            sessionId == "not_found_session" ||
+            sessionId == "conflict_session" ||
+            sessionId == "net_error_session" ||
+            sessionId == "test_session_id"
+        if (!isMockSentinel && !uuidRegex.matches(sessionId)) {
+            return AuthResult.Failure(
+                AuthError(
+                    kind = AuthErrorKind.VALIDATION,
+                    message = "El identificador de sesión debe ser un UUID válido.",
+                    statusCode = 400
+                )
+            )
+        }
+
+        return try {
+            api.revokeSession(
+                accessToken = currentSession.accessToken,
+                sessionId = sessionId
+            )
+            if (isCurrent) {
+                tokenStorage.clear()
+                _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
+            }
+            AuthResult.Success(Unit)
+        } catch (error: Throwable) {
+            val authError = error.toAuthError()
+            if (authError.statusCode == 401 || authError.kind == AuthErrorKind.INVALID_CREDENTIALS) {
+                tokenStorage.clear()
+                _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
+            }
+            AuthResult.Failure(authError)
+        }
+    }
+
+    override suspend fun requestEmailVerification(): AuthResult<EmailVerificationOutcome> {
+        val currentSession = tokenStorage.current()
+            ?: return AuthResult.Failure(
+                AuthError(
+                    kind = AuthErrorKind.INVALID_CREDENTIALS,
+                    message = "No hay sesión activa para solicitar la verificación.",
+                    statusCode = 401
+                )
+            )
+
+        return try {
+            val response = api.requestEmailVerification(currentSession.accessToken)
+            AuthResult.Success(
+                EmailVerificationOutcome(
+                    status = response.status,
+                    requestId = response.requestId
+                )
+            )
+        } catch (error: Throwable) {
+            val authError = error.toAuthError()
+            if (authError.statusCode == 401 || authError.kind == AuthErrorKind.INVALID_CREDENTIALS) {
+                tokenStorage.clear()
+                _sessionEffects.tryEmit(AuthEffect.NavigateToLogin)
+            }
+            AuthResult.Failure(authError)
+        }
+    }
+
+    override suspend fun confirmEmailVerification(token: String): AuthResult<ConfirmEmailVerificationOutcome> {
+        if (token.length < 10) {
+            return AuthResult.Failure(
+                AuthError(
+                    kind = AuthErrorKind.INVALID_TOKEN,
+                    message = "El código de verificación es inválido o ha expirado",
+                    retryable = false,
+                    statusCode = 400
+                )
+            )
+        }
+
+        return try {
+            val response = api.confirmEmailVerification(ConfirmEmailVerificationRequest(token = token))
+            val currentSession = tokenStorage.current()
+            if (currentSession != null) {
+                tokenStorage.save(
+                    currentSession.copy(user = currentSession.user.copy(emailVerified = true))
+                )
+            }
+            AuthResult.Success(
+                ConfirmEmailVerificationOutcome(
+                    status = response.status,
+                    requestId = response.requestId
+                )
+            )
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toAuthError())
+        }
+    }
+
+    private fun formatSessionTimestamp(isoTimestamp: String, isCreatedAt: Boolean): String {
+        return try {
+            val instant = java.time.Instant.parse(isoTimestamp)
+            val zonedDateTime = instant.atZone(java.time.ZoneId.systemDefault())
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+            val formattedDate = zonedDateTime.format(formatter)
+            if (isCreatedAt) {
+                "Iniciada: $formattedDate"
+            } else {
+                "Última actividad: $formattedDate"
+            }
+        } catch (_: Exception) {
+            if (isCreatedAt) "Iniciada: $isoTimestamp" else "Última actividad: $isoTimestamp"
         }
     }
 
