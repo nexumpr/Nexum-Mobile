@@ -34,12 +34,9 @@ sealed interface SettingsIntent : UiIntent {
 
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
-<<<<<<< HEAD
     data object NavigateToPrivacy : SettingsEffect
     data object NavigateToHelp : SettingsEffect
-=======
     data object NavigateToActiveSessions : SettingsEffect
->>>>>>> developer
     data class ShowToast(val message: String) : SettingsEffect
 }
 

@@ -60,15 +60,11 @@ fun MainAppShell(
     tokenStorage: TokenStorage,
     authRepository: AuthRepository,
     modifier: Modifier = Modifier,
-<<<<<<< HEAD
     isDarkTheme: Boolean = true,
     onThemeChanged: (Boolean) -> Unit = {},
-    onLogout: () -> Unit = {}
-=======
     onLogout: () -> Unit = {},
     onNavigateToActiveSessions: () -> Unit = {},
     onNavigateToConfirmVerification: () -> Unit = {}
->>>>>>> developer
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
     var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy" or "help"
@@ -84,17 +80,13 @@ fun MainAppShell(
     val movementsViewModel: MovementsListViewModel = viewModel { MovementsListViewModel(financialRepository) }
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
-<<<<<<< HEAD
     val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(InMemoryTokenStorage(), onThemeChanged) }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(tokenStorage, onThemeChanged) }
     val privacyViewModel: PrivacyNoticeViewModel = viewModel { PrivacyNoticeViewModel(financialRepository) }
     val helpViewModel: HelpEducationViewModel = viewModel { HelpEducationViewModel(financialRepository) }
-=======
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(tokenStorage) }
     val emailVerificationViewModel: EmailVerificationViewModel = viewModel {
         EmailVerificationViewModel(authRepository, tokenStorage)
     }
->>>>>>> developer
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
@@ -102,31 +94,26 @@ fun MainAppShell(
     val goalsState by goalsViewModel.uiState.collectAsState()
     val profileState by profileViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
-<<<<<<< HEAD
     val privacyState by privacyViewModel.uiState.collectAsState()
     val helpState by helpViewModel.uiState.collectAsState()
+    val emailVerificationState by emailVerificationViewModel.uiState.collectAsState()
 
     // Initialize switch state
     LaunchedEffect(isDarkTheme) {
         settingsViewModel.onIntent(SettingsIntent.ToggleTheme(isDarkTheme))
-=======
-    val emailVerificationState by emailVerificationViewModel.uiState.collectAsState()
+    }
 
     LaunchedEffect(emailVerificationViewModel) {
         emailVerificationViewModel.onIntent(EmailVerificationIntent.RefreshStatus)
->>>>>>> developer
     }
 
     LaunchedEffect(settingsViewModel) {
         settingsViewModel.effects.collect { effect ->
             when (effect) {
                 SettingsEffect.NavigateToLogin -> onLogout()
-<<<<<<< HEAD
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
-=======
                 SettingsEffect.NavigateToActiveSessions -> onNavigateToActiveSessions()
->>>>>>> developer
                 is SettingsEffect.ShowToast -> {}
             }
         }
@@ -186,10 +173,7 @@ fun MainAppShell(
                 MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
-<<<<<<< HEAD
                 MainTab.Profile -> ProfileScreen(state = profileState, onIntent = profileViewModel::onIntent)
-                MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
-=======
                 MainTab.Settings -> SettingsScreen(
                     state = settingsState,
                     onIntent = settingsViewModel::onIntent,
@@ -201,7 +185,6 @@ fun MainAppShell(
                         )
                     }
                 )
->>>>>>> developer
             }
 
             if (activeOverlay != null) {

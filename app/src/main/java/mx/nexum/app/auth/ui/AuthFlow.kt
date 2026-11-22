@@ -225,12 +225,6 @@ fun AuthFlow(
                     onIntent = registerViewModel::onIntent
                 )
 
-<<<<<<< HEAD
-                AuthScreen.App -> MainAppShell(
-                    isDarkTheme = isDarkTheme,
-                    onThemeChanged = onThemeChanged,
-                    onLogout = { screenName = AuthScreen.Login.name }
-=======
                 AuthScreen.ForgotPassword -> ForgotPasswordScreen(
                     state = forgotPasswordState,
                     onIntent = forgotPasswordViewModel::onIntent
@@ -259,12 +253,13 @@ fun AuthFlow(
                 AuthScreen.App -> MainAppShell(
                     tokenStorage = flowViewModel.tokenStorage,
                     authRepository = repository,
+                    isDarkTheme = isDarkTheme,
+                    onThemeChanged = onThemeChanged,
                     onLogout = { screenName = AuthScreen.Login.name },
                     onNavigateToActiveSessions = { screenName = AuthScreen.ActiveSessions.name },
                     onNavigateToConfirmVerification = {
                         screenName = AuthScreen.ConfirmEmailVerification.name
                     }
->>>>>>> developer
                 )
             }
         }
