@@ -15,7 +15,7 @@ import mx.nexum.app.ui.theme.NexumTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
         enableEdgeToEdge()
         setContent {
             var isDarkTheme by remember { mutableStateOf(true) }

@@ -20,7 +20,7 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Nexum"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="sensorPortrait"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
