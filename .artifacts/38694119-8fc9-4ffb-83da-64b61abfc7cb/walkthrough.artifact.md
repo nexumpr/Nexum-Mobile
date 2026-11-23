@@ -1,19 +1,24 @@
-# Walkthrough — Integración de Privacidad, Consentimientos y Ayuda/FAQ (Oleada 1)
+# Walkthrough — Orientación Vertical Exclusiva (Portrait) y Gestos de Deslizamiento (Swipe Back)
 
-He integrado las pantallas de **Aviso de Privacidad y Consentimientos** (E015, E016, E017) y **Ayuda / FAQ y Consejos Educativos** (E070, E071) conectándolas directamente desde la pestaña de **Ajustes** en el panel de control principal.
+He corregido la orientación de la aplicación para que funcione **única y exclusivamente en modo vertical** (*Sensor Portrait*), manteniendo activos los **gestos táctiles de deslizamiento hacia atrás** (*Swipe Back / BackHandler*).
 
 ## Cambios Realizados
 
-### Módulo Financiero / Ajustes y Ayuda UI (`mx.nexum.app.financial.ui`)
+### Manifiesto y Actividad Principal (`app/src/main`)
 
-#### [NEW] [PrivacyNoticeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt), [PrivacyNoticeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeScreen.kt)
-- Consulta del aviso legal vigente y registro de aceptación de términos con diseño *Glassmorphism*.
+#### [MODIFY] [AndroidManifest.xml](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/AndroidManifest.xml)
+- Cambiado a `android:screenOrientation="sensorPortrait"`, conservando `android:enableOnBackInvokedCallback="true"`.
 
-#### [NEW] [HelpEducationViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt), [HelpEducationScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationScreen.kt)
-- Listado interactivo de preguntas frecuentes (FAQ) y consejos de educación financiera.
+#### [MODIFY] [MainActivity.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/MainActivity.kt)
+- Forzada la orientación a nivel de actividad con `requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT`.
 
-#### [MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Añadidos botones de acceso directo en la pantalla de Ajustes para abrir en formato modal el **Aviso de Privacidad** y la **Ayuda y FAQ**.
+### Manejo de Gestos en UI (`mx.nexum.app.auth.ui`, `mx.nexum.app.financial.ui`)
+
+#### [MODIFY] [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt) & [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
+- Conservados los interceptores `BackHandler` de Jetpack Compose:
+  - Al realizar el gesto de retroceso en modales (Privacidad, Ayuda), se cierra el modal.
+  - Al realizar el gesto en una pestaña secundaria (Movimientos, Pagos, Metas, Perfil, Ajustes), regresa a la pestaña principal (**Resumen**).
+  - En el flujo de login/registro, el gesto regresa a la pantalla de acceso sin cerrar la app abruptamente.
 
 ---
 

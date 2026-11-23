@@ -12,6 +12,8 @@ import mx.nexum.app.financial.data.dto.CreateGoalRequest
 import mx.nexum.app.financial.data.dto.CreateGoalResponse
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.DeleteAccountRequest
+import mx.nexum.app.financial.data.dto.DeleteAccountResponse
 import mx.nexum.app.financial.data.dto.EducationTipDto
 import mx.nexum.app.financial.data.dto.FaqItemDto
 import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
@@ -70,6 +72,9 @@ interface FinancialRepository {
     suspend fun updatePreferences(language: String?, timezone: String?, ifMatch: String? = null): AuthResult<PreferencesDto>
     suspend fun getFaq(locale: String? = null): AuthResult<List<FaqItemDto>>
     suspend fun getEducationTips(locale: String? = null): AuthResult<List<EducationTipDto>>
+
+    // Oleada 2 Methods (E014)
+    suspend fun deleteAccount(currentPassword: String): AuthResult<DeleteAccountResponse>
 
     companion object {
         @Suppress("unused")
@@ -369,8 +374,21 @@ class FinancialRepositoryImpl(
             AuthResult.Failure(error.toFinancialError())
         }
 
+    // Oleada 2 Implementation (E014)
+    override suspend fun deleteAccount(currentPassword: String): AuthResult<DeleteAccountResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = DeleteAccountRequest(confirmation = "DELETE_MY_ACCOUNT", currentPassword = currentPassword)
+            val response = api.deleteAccount("Bearer $token", request)
+            tokenStorage.clear()
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            tokenStorage.clear()
+            AuthResult.Failure(error.toFinancialError())
+        }
+
     private fun Throwable.toFinancialError(): AuthError = when (this) {
         is CancellationException -> throw this
-        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar integración Oleada 1.", retryable = true)
+        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar repositorio.", retryable = true)
     }
 }
