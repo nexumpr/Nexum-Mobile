@@ -8,6 +8,7 @@ import mx.nexum.app.core.mvi.UiEffect
 import mx.nexum.app.core.mvi.UiIntent
 import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
+import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import java.util.UUID
 
@@ -19,6 +20,13 @@ data class RecurringPaymentsUiState(
 
 sealed interface RecurringPaymentsIntent : UiIntent {
     data object LoadPayments : RecurringPaymentsIntent
+    data class CreatePayment(
+        val concept: String,
+        val amount: Double,
+        val categoryId: String = "otros",
+        val type: String = "expense",
+        val frequency: String = "monthly"
+    ) : RecurringPaymentsIntent
     data class RecordPayment(val paymentId: String, val amount: Double?) : RecurringPaymentsIntent
     data class DeletePayment(val paymentId: String) : RecurringPaymentsIntent
 }
@@ -39,6 +47,7 @@ class RecurringPaymentsViewModel(
     override fun onIntent(intent: RecurringPaymentsIntent) {
         when (intent) {
             RecurringPaymentsIntent.LoadPayments -> loadPayments()
+            is RecurringPaymentsIntent.CreatePayment -> createPayment(intent.concept, intent.amount, intent.categoryId, intent.type, intent.frequency)
             is RecurringPaymentsIntent.RecordPayment -> recordPayment(intent.paymentId, intent.amount)
             is RecurringPaymentsIntent.DeletePayment -> deletePayment(intent.paymentId)
         }
@@ -50,6 +59,28 @@ class RecurringPaymentsViewModel(
             when (val result = financialRepository.getRecurringPayments()) {
                 is AuthResult.Success -> {
                     setState { copy(isLoading = false, payments = result.data) }
+                }
+                is AuthResult.Failure -> {
+                    setState { copy(isLoading = false, errorMessage = result.error.message) }
+                }
+            }
+        }
+    }
+
+    private fun createPayment(concept: String, amount: Double, categoryId: String, type: String, frequency: String) {
+        viewModelScope.launch {
+            setState { copy(isLoading = true, errorMessage = null) }
+            val request = CreateRecurringPaymentRequest(
+                concept = concept,
+                amount = amount,
+                categoryId = categoryId,
+                type = type,
+                frequency = frequency
+            )
+            when (val result = financialRepository.createRecurringPayment(request)) {
+                is AuthResult.Success -> {
+                    emitEffect(RecurringPaymentsEffect.ShowToast("Regla recurrente creada en servidor."))
+                    loadPayments()
                 }
                 is AuthResult.Failure -> {
                     setState { copy(isLoading = false, errorMessage = result.error.message) }

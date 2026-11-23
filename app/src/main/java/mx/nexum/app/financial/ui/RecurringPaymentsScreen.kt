@@ -166,6 +166,10 @@ fun RecurringPaymentsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
+                            val amt = amountInput.toDoubleOrNull() ?: 0.0
+                            if (conceptInput.isNotBlank() && amt > 0.0) {
+                                onIntent(RecurringPaymentsIntent.CreatePayment(conceptInput, amt))
+                            }
                             showAddDialog = false
                             conceptInput = ""
                             amountInput = ""

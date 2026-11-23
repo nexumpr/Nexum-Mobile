@@ -186,6 +186,10 @@ fun MovementsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
+                            val amt = amountInput.toDoubleOrNull() ?: 0.0
+                            if (conceptInput.isNotBlank() && amt > 0.0) {
+                                onIntent(MovementsListIntent.CreateMovement(conceptInput, amt, "otros", typeInput))
+                            }
                             showAddDialog = false
                             conceptInput = ""
                             amountInput = ""

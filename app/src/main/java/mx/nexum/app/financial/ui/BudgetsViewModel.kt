@@ -8,6 +8,7 @@ import mx.nexum.app.core.mvi.UiEffect
 import mx.nexum.app.core.mvi.UiIntent
 import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
+import mx.nexum.app.financial.data.dto.BudgetReplaceItemDto
 import mx.nexum.app.financial.data.dto.BudgetUsageDto
 
 data class BudgetsUiState(
@@ -22,6 +23,10 @@ data class BudgetsUiState(
 sealed interface BudgetsIntent : UiIntent {
     data object LoadBudgets : BudgetsIntent
     data class PeriodChanged(val period: String) : BudgetsIntent
+    data class SaveBudget(
+        val categoryId: String,
+        val limitAmount: String
+    ) : BudgetsIntent
 }
 
 @Suppress("unused")
@@ -45,6 +50,7 @@ class BudgetsViewModel(
                 setState { copy(period = intent.period) }
                 loadBudgets()
             }
+            is BudgetsIntent.SaveBudget -> saveBudget(intent.categoryId, intent.limitAmount)
         }
     }
 
@@ -63,6 +69,23 @@ class BudgetsViewModel(
                     budgetUsageItems = usageItems,
                     etag = etag
                 )
+            }
+        }
+    }
+
+    private fun saveBudget(categoryId: String, limitAmount: String) {
+        viewModelScope.launch {
+            setState { copy(isLoading = true, errorMessage = null) }
+            val item = BudgetReplaceItemDto(categoryId = categoryId.ifBlank { "otros" }, limitAmount = limitAmount)
+            val etag = currentState.etag ?: "\"v1\""
+            when (val result = financialRepository.replaceBudgets(currentState.period, "MXN", listOf(item), etag)) {
+                is AuthResult.Success -> {
+                    emitEffect(BudgetsEffect.ShowToast("Presupuesto guardado en servidor (200 OK)."))
+                    loadBudgets()
+                }
+                is AuthResult.Failure -> {
+                    setState { copy(isLoading = false, errorMessage = result.error.message) }
+                }
             }
         }
     }
