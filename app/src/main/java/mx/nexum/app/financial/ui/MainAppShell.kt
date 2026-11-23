@@ -106,6 +106,7 @@ fun MainAppShell(
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
+                SettingsEffect.NavigateToActiveSessions -> {}
                 is SettingsEffect.ShowToast -> {}
             }
         }
