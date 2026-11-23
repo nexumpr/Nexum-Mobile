@@ -1,28 +1,30 @@
-# Walkthrough — Orientación Vertical Exclusiva (Portrait) y Gestos de Deslizamiento (Swipe Back)
+# Walkthrough — Integración Handoff Oleada 3 (Backend v0.19.2 - 13 Endpoints)
 
-He corregido la orientación de la aplicación para que funcione **única y exclusivamente en modo vertical** (*Sensor Portrait*), manteniendo activos los **gestos táctiles de deslizamiento hacia atrás** (*Swipe Back / BackHandler*).
+He completado la integración técnica y la representación visual de los **13 endpoints de la Oleada 3** especificados en `Nexum_Handoff_Android_Oleada3_v0.19.2_2026-11-21.md` dentro de la aplicación.
 
 ## Cambios Realizados
 
-### Manifiesto y Actividad Principal (`app/src/main`)
+### Capa de Datos Financiera y Módulo UI (`mx.nexum.app.financial.data`, `ui`)
 
-#### [MODIFY] [AndroidManifest.xml](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/AndroidManifest.xml)
-- Cambiado a `android:screenOrientation="sensorPortrait"`, conservando `android:enableOnBackInvokedCallback="true"`.
+#### [MODIFY] [FinancialDtos.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt)
+- Añadidos DTOs con importes decimales tipo `String` ("12000.00") para:
+  - **Dashboard y Resumen Financiero (E026, E051):** `DashboardResponse` y `FinancialSummaryOleada3Dto`.
+  - **Presupuestos (E048–E050):** `BudgetDto`, `PageOfBudgetResponse`, `BudgetReplaceRequest`, `BudgetUsageDto`, `PageOfBudgetUsageResponse`.
+  - **Aportaciones Transaccionales a Metas (E043–E047):** `GoalAllocationDto`, `ContributionPreviewRequest`, `ContributionPreviewResponse`, `ContributionCreateRequest`, `ContributionDto`, `PageOfContributionResponse`, `ReverseContributionRequest`.
+  - **Exportación de Datos (E020):** `UserExportResponse`.
 
-#### [MODIFY] [MainActivity.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/MainActivity.kt)
-- Forzada la orientación a nivel de actividad con `requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT`.
+#### [MODIFY] [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt), [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
+- Declarados e implementados los 13 endpoints de Oleada 3 con cabeceras `@Header("Idempotency-Key")` (E037, E044, E047) y `@Header("If-Match")` (E049).
 
-### Manejo de Gestos en UI (`mx.nexum.app.auth.ui`, `mx.nexum.app.financial.ui`)
+#### [NEW] [BudgetsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/BudgetsViewModel.kt), [BudgetsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/BudgetsScreen.kt)
+- Creado el ViewModel MVI y la pantalla de **Presupuestos y Consumo por Categoría** con barras de uso real e iluminación *Aero-Futuristic*.
 
-#### [MODIFY] [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt) & [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Conservados los interceptores `BackHandler` de Jetpack Compose:
-  - Al realizar el gesto de retroceso en modales (Privacidad, Ayuda), se cierra el modal.
-  - Al realizar el gesto en una pestaña secundaria (Movimientos, Pagos, Metas, Perfil, Ajustes), regresa a la pestaña principal (**Resumen**).
-  - En el flujo de login/registro, el gesto regresa a la pantalla de acceso sin cerrar la app abruptamente.
+#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
+- Añadida la pestaña de **Presupuestos** al menú de navegación inferior, permitiendo al usuario acceder e interactuar con sus límites presupuestarios.
 
 ---
 
 ## Resultados de Verificación
 
 - **Compilación:** `./gradlew assembleDebug` → **BUILD SUCCESSFUL**.
-- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **240 tests pasados en verde (0 fallos)**.
+- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **329 tests pasados en verde (0 fallos)** (incrementado de 240 a 329).
