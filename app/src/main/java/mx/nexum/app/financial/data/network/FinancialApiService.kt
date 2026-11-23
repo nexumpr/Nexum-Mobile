@@ -25,6 +25,7 @@ import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
 import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.financial.data.dto.GoalOleada2Dto
+import mx.nexum.app.financial.data.dto.GoalsListResponse
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
