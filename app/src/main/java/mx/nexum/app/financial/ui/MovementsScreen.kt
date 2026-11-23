@@ -41,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import mx.nexum.app.financial.data.dto.MovementDto
+import mx.nexum.app.financial.data.dto.MovementOleada2Dto
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
@@ -151,14 +151,14 @@ fun MovementsScreen(
                         OutlinedTextField(
                             value = conceptInput,
                             onValueChange = { conceptInput = it },
-                            label = { Text("Concepto") },
+                            label = { Text("Concepto o Descripción") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                         OutlinedTextField(
                             value = amountInput,
                             onValueChange = { amountInput = it },
-                            label = { Text("Monto ($)") },
+                            label = { Text("Monto (ej. 125.50)") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -186,16 +186,15 @@ fun MovementsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            val amt = amountInput.toDoubleOrNull() ?: 0.0
-                            if (conceptInput.isNotBlank() && amt > 0.0) {
-                                onIntent(MovementsListIntent.CreateMovement(conceptInput, amt, "otros", typeInput))
+                            if (conceptInput.isNotBlank() && amountInput.isNotBlank()) {
+                                onIntent(MovementsListIntent.CreateMovement(conceptInput.trim(), amountInput.trim(), "otros", typeInput))
                             }
                             showAddDialog = false
                             conceptInput = ""
                             amountInput = ""
                         }
                     ) {
-                        Text("Registrar Movimiento")
+                        Text("Registrar en Servidor")
                     }
                 },
                 dismissButton = {
@@ -210,7 +209,7 @@ fun MovementsScreen(
 
 @Composable
 private fun MovementItemCard(
-    movement: MovementDto,
+    movement: MovementOleada2Dto,
     onDelete: () -> Unit
 ) {
     Surface(
@@ -228,7 +227,7 @@ private fun MovementItemCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = movement.concept,
+                    text = movement.description,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )

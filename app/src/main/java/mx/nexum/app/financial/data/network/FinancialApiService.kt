@@ -1,7 +1,6 @@
 package mx.nexum.app.financial.data.network
 
 import mx.nexum.app.financial.data.dto.BootstrapResponse
-import mx.nexum.app.financial.data.dto.BudgetDto
 import mx.nexum.app.financial.data.dto.BudgetReplaceRequest
 import mx.nexum.app.financial.data.dto.CategoryDto
 import mx.nexum.app.financial.data.dto.ConsentItemDto
@@ -9,9 +8,12 @@ import mx.nexum.app.financial.data.dto.ContributionCreateRequest
 import mx.nexum.app.financial.data.dto.ContributionDto
 import mx.nexum.app.financial.data.dto.ContributionPreviewRequest
 import mx.nexum.app.financial.data.dto.ContributionPreviewResponse
+import mx.nexum.app.financial.data.dto.CreateGoalOleada2Request
 import mx.nexum.app.financial.data.dto.CreateGoalRequest
 import mx.nexum.app.financial.data.dto.CreateGoalResponse
+import mx.nexum.app.financial.data.dto.CreateMovementOleada2Request
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
+import mx.nexum.app.financial.data.dto.CreateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
 import mx.nexum.app.financial.data.dto.DashboardResponse
 import mx.nexum.app.financial.data.dto.DeleteAccountRequest
@@ -22,9 +24,11 @@ import mx.nexum.app.financial.data.dto.FinancialSummaryOleada3Dto
 import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
 import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalDto
+import mx.nexum.app.financial.data.dto.GoalOleada2Dto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
+import mx.nexum.app.financial.data.dto.MovementsListResponse
 import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetUsageResponse
@@ -35,7 +39,9 @@ import mx.nexum.app.financial.data.dto.RecordConsentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
+import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.financial.data.dto.RecurringPaymentRecordPaymentRequest
+import mx.nexum.app.financial.data.dto.RecurringPaymentsListResponse
 import mx.nexum.app.financial.data.dto.ReverseContributionRequest
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
@@ -248,12 +254,72 @@ interface FinancialApiService {
         @Query("locale") locale: String? = null
     ): List<EducationTipDto>
 
-    // Oleada 2 (E014)
+    // Oleada 2 (E014, E027–E041)
     @HTTP(method = "DELETE", path = "users/me", hasBody = true)
     suspend fun deleteAccount(
         @Header("Authorization") authorization: String,
         @Body request: DeleteAccountRequest
     ): DeleteAccountResponse
+
+    @GET("movements")
+    suspend fun getMovementsOleada2(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("type") type: String? = null,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null
+    ): List<MovementOleada2Dto>
+
+    @POST("movements")
+    suspend fun createMovementOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateMovementOleada2Request
+    ): MovementOleada2Dto
+
+    @DELETE("movements/{movementId}")
+    suspend fun deleteMovementOleada2(
+        @Header("Authorization") authorization: String,
+        @Path("movementId") movementId: String
+    )
+
+    @GET("recurring-payments")
+    suspend fun getRecurringPaymentsOleada2(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("active") active: Boolean? = null,
+        @Query("type") type: String? = null
+    ): List<RecurringPaymentOleada2Dto>
+
+    @POST("recurring-payments")
+    suspend fun createRecurringPaymentOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateRecurringPaymentOleada2Request
+    ): RecurringPaymentOleada2Dto
+
+    @DELETE("recurring-payments/{recurringPaymentId}")
+    suspend fun deleteRecurringPaymentOleada2(
+        @Header("Authorization") authorization: String,
+        @Path("recurringPaymentId") recurringPaymentId: String
+    )
+
+    @GET("goals")
+    suspend fun getGoalsOleada2(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("status") status: String? = null
+    ): List<GoalOleada2Dto>
+
+    @POST("goals")
+    suspend fun createGoalOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateGoalOleada2Request
+    ): GoalOleada2Dto
 
     // Oleada 3 Endpoints (E020, E026, E037, E042–E051)
     @GET("users/me/export")

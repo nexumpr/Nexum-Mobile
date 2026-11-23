@@ -8,12 +8,11 @@ import mx.nexum.app.core.mvi.UiEffect
 import mx.nexum.app.core.mvi.UiIntent
 import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
-import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
-import mx.nexum.app.financial.data.dto.RecurringPaymentDto
-import java.util.UUID
+import mx.nexum.app.financial.data.dto.CreateRecurringPaymentOleada2Request
+import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 
 data class RecurringPaymentsUiState(
-    val payments: List<RecurringPaymentDto> = emptyList(),
+    val payments: List<RecurringPaymentOleada2Dto> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) : UiState
@@ -21,13 +20,13 @@ data class RecurringPaymentsUiState(
 sealed interface RecurringPaymentsIntent : UiIntent {
     data object LoadPayments : RecurringPaymentsIntent
     data class CreatePayment(
-        val concept: String,
-        val amount: Double,
+        val name: String,
+        val amount: String,
         val categoryId: String = "otros",
         val type: String = "expense",
         val frequency: String = "monthly"
     ) : RecurringPaymentsIntent
-    data class RecordPayment(val paymentId: String, val amount: Double?) : RecurringPaymentsIntent
+    data class RecordPayment(val paymentId: String, val amount: String) : RecurringPaymentsIntent
     data class DeletePayment(val paymentId: String) : RecurringPaymentsIntent
 }
 
@@ -47,7 +46,7 @@ class RecurringPaymentsViewModel(
     override fun onIntent(intent: RecurringPaymentsIntent) {
         when (intent) {
             RecurringPaymentsIntent.LoadPayments -> loadPayments()
-            is RecurringPaymentsIntent.CreatePayment -> createPayment(intent.concept, intent.amount, intent.categoryId, intent.type, intent.frequency)
+            is RecurringPaymentsIntent.CreatePayment -> createPayment(intent.name, intent.amount, intent.categoryId, intent.type, intent.frequency)
             is RecurringPaymentsIntent.RecordPayment -> recordPayment(intent.paymentId, intent.amount)
             is RecurringPaymentsIntent.DeletePayment -> deletePayment(intent.paymentId)
         }
@@ -56,7 +55,7 @@ class RecurringPaymentsViewModel(
     private fun loadPayments() {
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
-            when (val result = financialRepository.getRecurringPayments()) {
+            when (val result = financialRepository.getRecurringPaymentsOleada2()) {
                 is AuthResult.Success -> {
                     setState { copy(isLoading = false, payments = result.data) }
                 }
@@ -67,17 +66,19 @@ class RecurringPaymentsViewModel(
         }
     }
 
-    private fun createPayment(concept: String, amount: Double, categoryId: String, type: String, frequency: String) {
+    private fun createPayment(name: String, amount: String, categoryId: String, type: String, frequency: String) {
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
-            val request = CreateRecurringPaymentRequest(
-                concept = concept,
+            val request = CreateRecurringPaymentOleada2Request(
+                name = name,
                 amount = amount,
-                categoryId = categoryId,
+                currency = "MXN",
+                frequency = frequency,
+                nextDueDate = "2026-12-01",
                 type = type,
-                frequency = frequency
+                startDate = "2026-11-23"
             )
-            when (val result = financialRepository.createRecurringPayment(request)) {
+            when (val result = financialRepository.createRecurringPaymentOleada2(request)) {
                 is AuthResult.Success -> {
                     emitEffect(RecurringPaymentsEffect.ShowToast("Regla recurrente creada en servidor."))
                     loadPayments()
@@ -89,11 +90,10 @@ class RecurringPaymentsViewModel(
         }
     }
 
-    private fun recordPayment(paymentId: String, amount: Double?) {
+    private fun recordPayment(paymentId: String, amount: String) {
         viewModelScope.launch {
-            val idempotencyKey = UUID.randomUUID().toString()
-            val occurredAt = "2026-11-18T00:00:00Z"
-            when (val result = financialRepository.recordRecurringPaymentPayment(paymentId, occurredAt, amount, idempotencyKey)) {
+            val occurredAt = "2026-11-23T00:00:00Z"
+            when (val result = financialRepository.recordRecurringPaymentPaymentOleada3(paymentId, occurredAt, amount)) {
                 is AuthResult.Success -> {
                     emitEffect(RecurringPaymentsEffect.ShowToast("Pago registrado con éxito (✓)."))
                     loadPayments()
@@ -107,7 +107,7 @@ class RecurringPaymentsViewModel(
 
     private fun deletePayment(paymentId: String) {
         viewModelScope.launch {
-            when (val result = financialRepository.deleteRecurringPayment(paymentId)) {
+            when (val result = financialRepository.deleteRecurringPaymentOleada2(paymentId)) {
                 is AuthResult.Success -> {
                     emitEffect(RecurringPaymentsEffect.ShowToast("Programación desactivada."))
                     loadPayments()

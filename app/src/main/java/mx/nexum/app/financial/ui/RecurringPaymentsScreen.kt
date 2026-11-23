@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import mx.nexum.app.financial.data.dto.RecurringPaymentDto
+import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
@@ -157,7 +157,7 @@ fun RecurringPaymentsScreen(
                         OutlinedTextField(
                             value = amountInput,
                             onValueChange = { amountInput = it },
-                            label = { Text("Monto ($)") },
+                            label = { Text("Monto (ej. 3500.00)") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -166,16 +166,15 @@ fun RecurringPaymentsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            val amt = amountInput.toDoubleOrNull() ?: 0.0
-                            if (conceptInput.isNotBlank() && amt > 0.0) {
-                                onIntent(RecurringPaymentsIntent.CreatePayment(conceptInput, amt))
+                            if (conceptInput.isNotBlank() && amountInput.isNotBlank()) {
+                                onIntent(RecurringPaymentsIntent.CreatePayment(conceptInput.trim(), amountInput.trim()))
                             }
                             showAddDialog = false
                             conceptInput = ""
                             amountInput = ""
                         }
                     ) {
-                        Text("Crear Regla Recurrente")
+                        Text("Crear en Servidor")
                     }
                 },
                 dismissButton = {
@@ -190,7 +189,7 @@ fun RecurringPaymentsScreen(
 
 @Composable
 private fun RecurringPaymentCard(
-    payment: RecurringPaymentDto,
+    payment: RecurringPaymentOleada2Dto,
     onRecordPayment: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -209,7 +208,7 @@ private fun RecurringPaymentCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = payment.concept,
+                    text = payment.name,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )

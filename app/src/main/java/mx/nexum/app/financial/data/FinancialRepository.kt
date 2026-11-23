@@ -8,16 +8,18 @@ import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.financial.data.dto.BootstrapResponse
 import mx.nexum.app.financial.data.dto.BudgetReplaceItemDto
 import mx.nexum.app.financial.data.dto.BudgetReplaceRequest
-import mx.nexum.app.financial.data.dto.BudgetUsageDto
 import mx.nexum.app.financial.data.dto.CategoryDto
 import mx.nexum.app.financial.data.dto.ConsentItemDto
 import mx.nexum.app.financial.data.dto.ContributionCreateRequest
 import mx.nexum.app.financial.data.dto.ContributionDto
 import mx.nexum.app.financial.data.dto.ContributionPreviewRequest
 import mx.nexum.app.financial.data.dto.ContributionPreviewResponse
+import mx.nexum.app.financial.data.dto.CreateGoalOleada2Request
 import mx.nexum.app.financial.data.dto.CreateGoalRequest
 import mx.nexum.app.financial.data.dto.CreateGoalResponse
+import mx.nexum.app.financial.data.dto.CreateMovementOleada2Request
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
+import mx.nexum.app.financial.data.dto.CreateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
 import mx.nexum.app.financial.data.dto.DashboardResponse
 import mx.nexum.app.financial.data.dto.DeleteAccountRequest
@@ -29,6 +31,7 @@ import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
 import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalAllocationDto
 import mx.nexum.app.financial.data.dto.GoalDto
+import mx.nexum.app.financial.data.dto.GoalOleada2Dto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
@@ -42,6 +45,7 @@ import mx.nexum.app.financial.data.dto.RecordConsentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
+import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.financial.data.dto.RecurringPaymentRecordPaymentRequest
 import mx.nexum.app.financial.data.dto.ReverseContributionRequest
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
@@ -90,8 +94,18 @@ interface FinancialRepository {
     suspend fun getFaq(locale: String? = null): AuthResult<List<FaqItemDto>>
     suspend fun getEducationTips(locale: String? = null): AuthResult<List<EducationTipDto>>
 
-    // Oleada 2 Methods (E014)
+    // Oleada 2 Methods (E014, E027–E041)
     suspend fun deleteAccount(currentPassword: String): AuthResult<DeleteAccountResponse>
+    suspend fun getMovementsOleada2(limit: Int? = null, cursor: String? = null, type: String? = null, from: String? = null, to: String? = null): AuthResult<List<MovementOleada2Dto>>
+    suspend fun createMovementOleada2(request: CreateMovementOleada2Request, idempotencyKey: String? = null): AuthResult<MovementOleada2Dto>
+    suspend fun deleteMovementOleada2(movementId: String): AuthResult<Unit>
+
+    suspend fun getRecurringPaymentsOleada2(limit: Int? = null, cursor: String? = null, active: Boolean? = null, type: String? = null): AuthResult<List<RecurringPaymentOleada2Dto>>
+    suspend fun createRecurringPaymentOleada2(request: CreateRecurringPaymentOleada2Request, idempotencyKey: String? = null): AuthResult<RecurringPaymentOleada2Dto>
+    suspend fun deleteRecurringPaymentOleada2(recurringPaymentId: String): AuthResult<Unit>
+
+    suspend fun getGoalsOleada2(limit: Int? = null, cursor: String? = null, status: String? = null): AuthResult<List<GoalOleada2Dto>>
+    suspend fun createGoalOleada2(request: CreateGoalOleada2Request, idempotencyKey: String? = null): AuthResult<GoalOleada2Dto>
 
     // Oleada 3 Methods (E020, E026, E037, E042–E051)
     suspend fun getUserExport(limit: Int? = null, cursor: String? = null): AuthResult<UserExportResponse>
@@ -406,7 +420,7 @@ class FinancialRepositoryImpl(
             AuthResult.Failure(error.toFinancialError())
         }
 
-    // Oleada 2 Implementation (E014)
+    // Oleada 2 Implementation (E014, E027–E041)
     override suspend fun deleteAccount(currentPassword: String): AuthResult<DeleteAccountResponse> =
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
@@ -416,6 +430,81 @@ class FinancialRepositoryImpl(
             AuthResult.Success(response)
         } catch (error: Throwable) {
             tokenStorage.clear()
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getMovementsOleada2(limit: Int?, cursor: String?, type: String?, from: String?, to: String?): AuthResult<List<MovementOleada2Dto>> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getMovementsOleada2("Bearer $token", limit, cursor, type, from, to)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun createMovementOleada2(request: CreateMovementOleada2Request, idempotencyKey: String?): AuthResult<MovementOleada2Dto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val key = idempotencyKey ?: ("android-mov-" + UUID.randomUUID().toString())
+            val response = api.createMovementOleada2("Bearer $token", key, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun deleteMovementOleada2(movementId: String): AuthResult<Unit> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            api.deleteMovementOleada2("Bearer $token", movementId)
+            AuthResult.Success(Unit)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getRecurringPaymentsOleada2(limit: Int?, cursor: String?, active: Boolean?, type: String?): AuthResult<List<RecurringPaymentOleada2Dto>> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getRecurringPaymentsOleada2("Bearer $token", limit, cursor, active, type)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun createRecurringPaymentOleada2(request: CreateRecurringPaymentOleada2Request, idempotencyKey: String?): AuthResult<RecurringPaymentOleada2Dto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val key = idempotencyKey ?: ("android-rec-" + UUID.randomUUID().toString())
+            val response = api.createRecurringPaymentOleada2("Bearer $token", key, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun deleteRecurringPaymentOleada2(recurringPaymentId: String): AuthResult<Unit> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            api.deleteRecurringPaymentOleada2("Bearer $token", recurringPaymentId)
+            AuthResult.Success(Unit)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getGoalsOleada2(limit: Int?, cursor: String?, status: String?): AuthResult<List<GoalOleada2Dto>> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getGoalsOleada2("Bearer $token", limit, cursor, status)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun createGoalOleada2(request: CreateGoalOleada2Request, idempotencyKey: String?): AuthResult<GoalOleada2Dto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val key = idempotencyKey ?: ("android-goal-" + UUID.randomUUID().toString())
+            val response = api.createGoalOleada2("Bearer $token", key, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
         }
 
