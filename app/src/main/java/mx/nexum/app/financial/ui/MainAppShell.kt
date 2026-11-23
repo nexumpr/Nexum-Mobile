@@ -1,5 +1,6 @@
 package mx.nexum.app.financial.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,6 +61,14 @@ fun MainAppShell(
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
     var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy" or "help"
+
+    BackHandler(enabled = activeOverlay != null || selectedTab != MainTab.Summary) {
+        if (activeOverlay != null) {
+            activeOverlay = null
+        } else if (selectedTab != MainTab.Summary) {
+            selectedTab = MainTab.Summary
+        }
+    }
 
     val financialRepository = remember {
         FinancialRepository.create(
