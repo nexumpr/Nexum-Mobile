@@ -13,13 +13,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,13 +45,17 @@ import androidx.compose.ui.unit.sp
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.ui.theme.NexumTheme
 
-@Suppress("UNUSED_PARAMETER")
 @Composable
 fun GoalsScreen(
     state: GoalsUiState,
     onIntent: (GoalsIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showAddDialog by remember { mutableStateOf(false) }
+    var nameInput by remember { mutableStateOf("") }
+    var targetInput by remember { mutableStateOf("") }
+    var initialSavedInput by remember { mutableStateOf("") }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -80,8 +97,23 @@ fun GoalsScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (state.goals.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No hay metas de ahorro registradas.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "No tienes metas de ahorro registradas.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Toca el botón + para crear tu primera meta.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -93,6 +125,73 @@ fun GoalsScreen(
                     }
                 }
             }
+        }
+
+        // FAB to add real goal
+        FloatingActionButton(
+            onClick = { showAddDialog = true },
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Nueva Meta de Ahorro")
+        }
+
+        if (showAddDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddDialog = false },
+                title = { Text("Nueva Meta de Ahorro", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = nameInput,
+                            onValueChange = { nameInput = it },
+                            label = { Text("Nombre de la meta") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = targetInput,
+                            onValueChange = { targetInput = it },
+                            label = { Text("Monto Objetivo ($)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = initialSavedInput,
+                            onValueChange = { initialSavedInput = it },
+                            label = { Text("Ahorro Inicial ($)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val target = targetInput.toDoubleOrNull() ?: 0.0
+                            val initial = initialSavedInput.toDoubleOrNull() ?: 0.0
+                            if (nameInput.isNotBlank() && target > 0.0) {
+                                onIntent(GoalsIntent.CreateGoal(nameInput, target, initial, "🎯", "2027-12-31"))
+                            }
+                            showAddDialog = false
+                            nameInput = ""
+                            targetInput = ""
+                            initialSavedInput = ""
+                        }
+                    ) {
+                        Text("Crear Meta")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }
@@ -165,12 +264,7 @@ private fun GoalCard(goal: GoalDto) {
 private fun GoalsPreview() {
     NexumTheme {
         GoalsScreen(
-            state = GoalsUiState(
-                goals = listOf(
-                    GoalDto("1", "Fondo de Emergencia", 30000.0, 15000.0, 5000.0, "🛡️", "2026-12-31", "active", 50.0),
-                    GoalDto("2", "Nueva Laptop", 20000.0, 25000.0, 10000.0, "💻", "2026-10-31", "completed", 125.0)
-                )
-            ),
+            state = GoalsUiState(),
             onIntent = {}
         )
     }

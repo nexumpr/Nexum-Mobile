@@ -13,13 +13,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -37,6 +50,11 @@ fun MovementsScreen(
     onIntent: (MovementsListIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showAddDialog by remember { mutableStateOf(false) }
+    var conceptInput by remember { mutableStateOf("") }
+    var amountInput by remember { mutableStateOf("") }
+    var typeInput by remember { mutableStateOf("expense") }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -78,8 +96,23 @@ fun MovementsScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (state.movements.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No hay movimientos registrados.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "No tienes movimientos registrados.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Toca el botón + para agregar tu primer movimiento.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -94,6 +127,79 @@ fun MovementsScreen(
                     }
                 }
             }
+        }
+
+        // FAB to add real movement
+        FloatingActionButton(
+            onClick = { showAddDialog = true },
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Nuevo Movimiento")
+        }
+
+        if (showAddDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddDialog = false },
+                title = { Text("Nuevo Movimiento", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = conceptInput,
+                            onValueChange = { conceptInput = it },
+                            label = { Text("Concepto") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = amountInput,
+                            onValueChange = { amountInput = it },
+                            label = { Text("Monto ($)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = { typeInput = "income" },
+                                colors = ButtonDefaults.buttonColors(containerColor = if (typeInput == "income") MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Ingreso")
+                            }
+                            Button(
+                                onClick = { typeInput = "expense" },
+                                colors = ButtonDefaults.buttonColors(containerColor = if (typeInput == "expense") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Gasto")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showAddDialog = false
+                            conceptInput = ""
+                            amountInput = ""
+                        }
+                    ) {
+                        Text("Registrar Movimiento")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }
@@ -146,12 +252,7 @@ private fun MovementItemCard(
 private fun MovementsPreview() {
     NexumTheme {
         MovementsScreen(
-            state = MovementsListUiState(
-                movements = listOf(
-                    MovementDto("1", "Sueldo quincenal", 10000.0, "cat_1", "income", "monthly", null, "2026-11-18"),
-                    MovementDto("2", "Supermercado", 1250.50, "cat_2", "expense", null, null, "2026-11-17")
-                )
-            ),
+            state = MovementsListUiState(),
             onIntent = {}
         )
     }
