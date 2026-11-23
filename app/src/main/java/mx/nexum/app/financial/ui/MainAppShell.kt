@@ -35,11 +35,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.viewmodel.compose.viewModel
-import mx.nexum.app.auth.data.AuthRepository
-import mx.nexum.app.auth.data.TokenStorage
-import mx.nexum.app.auth.ui.EmailVerificationIntent
-import mx.nexum.app.auth.ui.EmailVerificationRequestScreen
-import mx.nexum.app.auth.ui.EmailVerificationViewModel
+import mx.nexum.app.auth.data.InMemoryTokenStorage
 import mx.nexum.app.auth.data.network.NetworkModule
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
@@ -57,22 +53,18 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
 
 @Composable
 fun MainAppShell(
-    tokenStorage: TokenStorage,
-    authRepository: AuthRepository,
     modifier: Modifier = Modifier,
     isDarkTheme: Boolean = true,
     onThemeChanged: (Boolean) -> Unit = {},
-    onLogout: () -> Unit = {},
-    onNavigateToActiveSessions: () -> Unit = {},
-    onNavigateToConfirmVerification: () -> Unit = {}
+    onLogout: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
     var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy" or "help"
 
-    val financialRepository = remember(tokenStorage) {
+    val financialRepository = remember {
         FinancialRepository.create(
             NetworkModule.retrofit.create(FinancialApiService::class.java),
-            tokenStorage
+            InMemoryTokenStorage()
         )
     }
 
@@ -81,12 +73,9 @@ fun MainAppShell(
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
     val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(tokenStorage, onThemeChanged) }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(InMemoryTokenStorage(), onThemeChanged) }
     val privacyViewModel: PrivacyNoticeViewModel = viewModel { PrivacyNoticeViewModel(financialRepository) }
     val helpViewModel: HelpEducationViewModel = viewModel { HelpEducationViewModel(financialRepository) }
-    val emailVerificationViewModel: EmailVerificationViewModel = viewModel {
-        EmailVerificationViewModel(authRepository, tokenStorage)
-    }
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
@@ -96,15 +85,10 @@ fun MainAppShell(
     val settingsState by settingsViewModel.uiState.collectAsState()
     val privacyState by privacyViewModel.uiState.collectAsState()
     val helpState by helpViewModel.uiState.collectAsState()
-    val emailVerificationState by emailVerificationViewModel.uiState.collectAsState()
 
     // Initialize switch state
     LaunchedEffect(isDarkTheme) {
         settingsViewModel.onIntent(SettingsIntent.ToggleTheme(isDarkTheme))
-    }
-
-    LaunchedEffect(emailVerificationViewModel) {
-        emailVerificationViewModel.onIntent(EmailVerificationIntent.RefreshStatus)
     }
 
     LaunchedEffect(settingsViewModel) {
@@ -113,7 +97,6 @@ fun MainAppShell(
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
-                SettingsEffect.NavigateToActiveSessions -> onNavigateToActiveSessions()
                 is SettingsEffect.ShowToast -> {}
             }
         }
@@ -174,17 +157,7 @@ fun MainAppShell(
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
                 MainTab.Profile -> ProfileScreen(state = profileState, onIntent = profileViewModel::onIntent)
-                MainTab.Settings -> SettingsScreen(
-                    state = settingsState,
-                    onIntent = settingsViewModel::onIntent,
-                    verificationContent = {
-                        EmailVerificationRequestScreen(
-                            state = emailVerificationState,
-                            onIntent = emailVerificationViewModel::onIntent,
-                            onNavigateToConfirmVerification = onNavigateToConfirmVerification
-                        )
-                    }
-                )
+                MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
             }
 
             if (activeOverlay != null) {

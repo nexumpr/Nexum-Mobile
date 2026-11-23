@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,6 +25,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -249,7 +251,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Logout Card
+            // Account Actions (Logout & E014 Delete Account) Card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -260,14 +262,14 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Sesión de Usuario",
+                        text = "Sesión y Cuenta de Usuario",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = { onIntent(SettingsIntent.NavigateToActiveSessions) },
@@ -284,15 +286,71 @@ fun SettingsScreen(
                     OutlinedButton(
                         onClick = { onIntent(SettingsIntent.Logout) },
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp)
                     ) {
                         Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
                     }
+
+                    // Oleada 2 (E014): Delete Account Button
+                    Button(
+                        onClick = { onIntent(SettingsIntent.ShowDeleteAccountDialog) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("⚠️ Eliminar Cuenta (E014)", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
                 }
             }
+        }
+
+        // Oleada 2 (E014): Delete Account Confirmation Dialog
+        if (state.showDeleteAccountDialog) {
+            AlertDialog(
+                onDismissRequest = { onIntent(SettingsIntent.DismissDeleteAccountDialog) },
+                title = { Text("⚠️ Eliminar Cuenta Definitivamente", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Esta acción programará la eliminación definitiva de tu cuenta y purgará todas tus sesiones. Escribe exactamente 'DELETE_MY_ACCOUNT' e ingresa tu contraseña actual para confirmar.")
+                        OutlinedTextField(
+                            value = state.deleteAccountConfirmationText,
+                            onValueChange = { onIntent(SettingsIntent.DeleteAccountConfirmationTextChanged(it)) },
+                            label = { Text("Confirmación (DELETE_MY_ACCOUNT)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = state.deleteAccountPassword,
+                            onValueChange = { onIntent(SettingsIntent.DeleteAccountPasswordChanged(it)) },
+                            label = { Text("Contraseña actual") },
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        state.deleteAccountError?.let { err ->
+                            Text(text = err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { onIntent(SettingsIntent.ConfirmDeleteAccount) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Confirmar Borrado (202 Accepted)", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onIntent(SettingsIntent.DismissDeleteAccountDialog) }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }

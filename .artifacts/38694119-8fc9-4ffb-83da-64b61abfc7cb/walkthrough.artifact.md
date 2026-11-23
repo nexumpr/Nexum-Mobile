@@ -1,19 +1,29 @@
-# Walkthrough — Integración de Privacidad, Consentimientos y Ayuda/FAQ (Oleada 1)
+# Walkthrough — Integración de la Guía Oleada 2 (15 Endpoints E014, E027–E041)
 
-He integrado las pantallas de **Aviso de Privacidad y Consentimientos** (E015, E016, E017) y **Ayuda / FAQ y Consejos Educativos** (E070, E071) conectándolas directamente desde la pestaña de **Ajustes** en el panel de control principal.
+He implementado la integración técnica y funcional de los **15 endpoints de la Oleada 2** especificados en `Nexum_Oleada2_Guia_Integracion_Android_15_Endpoints.md`, incluyendo el flujo UI e interactivo de **Eliminación Programada de Cuenta** (`E014`).
 
 ## Cambios Realizados
 
-### Módulo Financiero / Ajustes y Ayuda UI (`mx.nexum.app.financial.ui`)
+### Capa de Datos Financiera y de Cuenta (`mx.nexum.app.financial.data`)
 
-#### [NEW] [PrivacyNoticeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt), [PrivacyNoticeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeScreen.kt)
-- Consulta del aviso legal vigente y registro de aceptación de términos con diseño *Glassmorphism*.
+#### [MODIFY] [FinancialDtos.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt)
+- Añadidos DTOs con anotaciones `@SerializedName` e importes decimales tipo `String` ("125.50"):
+  - **Eliminación de Cuenta (E014):** `DeleteAccountRequest` ("DELETE_MY_ACCOUNT") y `DeleteAccountResponse` (`202 Scheduled`).
+  - **Movimientos (E027–E030):** `MovementsListResponse`, `MovementOleada2Dto`, `CreateMovementOleada2Request`, `UpdateMovementOleada2Request`.
+  - **Pagos Recurrentes (E032–E035):** `RecurringPaymentsListResponse`, `RecurringPaymentOleada2Dto`, `CreateRecurringPaymentOleada2Request`, `UpdateRecurringPaymentOleada2Request`.
+  - **Metas de Ahorro (E038–E041):** `GoalsListResponse`, `GoalOleada2Dto`, `GoalTotalsDto`, `CreateGoalOleada2Request`, `UpdateGoalOleada2Request`.
 
-#### [NEW] [HelpEducationViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt), [HelpEducationScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationScreen.kt)
-- Listado interactivo de preguntas frecuentes (FAQ) y consejos de educación financiera.
+#### [MODIFY] [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt)
+- Añadidas las 15 operaciones Retrofit con cabeceras `@Header("Idempotency-Key")` (para altas de movimientos, recurrentes y metas), `@Header("If-Match")` (para ediciones `PATCH`) y `@HTTP(method = "DELETE", path = "users/me", hasBody = true)` para eliminación de cuenta.
 
-#### [MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Añadidos botones de acceso directo en la pantalla de Ajustes para abrir en formato modal el **Aviso de Privacidad** y la **Ayuda y FAQ**.
+#### [MODIFY] [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
+- Expuestos los métodos correspondientes en `FinancialRepositoryImpl`, incluyendo `deleteAccount` que maneja el estado `202 Scheduled` y realiza la purga incondicional de `TokenStorage.clear()`.
+
+### Módulo de Ajustes y Seguridad UI (`mx.nexum.app.financial.ui`)
+
+#### [MODIFY] [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt), [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)
+- Añadido el botón **"⚠️ Eliminar Cuenta (E014)"** y un diálogo modal interactivo con alerta que exige la contraseña actual y el texto de confirmación exacto `"DELETE_MY_ACCOUNT"`.
+- Al confirmar, ejecuta `financialRepository.deleteAccount(...)`, maneja la respuesta `202 Accepted` (`scheduled`), limpia las credenciales locales y devuelve al usuario a la pantalla de inicio de sesión.
 
 ---
 

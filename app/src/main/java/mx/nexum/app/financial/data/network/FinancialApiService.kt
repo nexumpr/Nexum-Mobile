@@ -7,6 +7,8 @@ import mx.nexum.app.financial.data.dto.CreateGoalRequest
 import mx.nexum.app.financial.data.dto.CreateGoalResponse
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.DeleteAccountRequest
+import mx.nexum.app.financial.data.dto.DeleteAccountResponse
 import mx.nexum.app.financial.data.dto.EducationTipDto
 import mx.nexum.app.financial.data.dto.FaqItemDto
 import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
@@ -31,10 +33,10 @@ import mx.nexum.app.financial.data.dto.UserProfileDto
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -229,4 +231,11 @@ interface FinancialApiService {
     suspend fun getEducationTips(
         @Query("locale") locale: String? = null
     ): List<EducationTipDto>
+
+    // Oleada 2 (E014)
+    @HTTP(method = "DELETE", path = "users/me", hasBody = true)
+    suspend fun deleteAccount(
+        @Header("Authorization") authorization: String,
+        @Body request: DeleteAccountRequest
+    ): DeleteAccountResponse
 }
