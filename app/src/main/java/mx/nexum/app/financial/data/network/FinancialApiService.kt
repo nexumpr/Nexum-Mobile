@@ -177,7 +177,7 @@ interface FinancialApiService {
         @Query("status") status: String? = null,
         @Query("page") page: Int? = null,
         @Query("limit") limit: Int? = null
-    ): List<GoalDto>
+    ): List<jGoalDto>
 
     @POST("goals")
     suspend fun createGoal(
@@ -270,7 +270,7 @@ interface FinancialApiService {
         @Query("type") type: String? = null,
         @Query("from") from: String? = null,
         @Query("to") to: String? = null
-    ): List<MovementOleada2Dto>
+    ): MovementsListResponse
 
     @POST("movements")
     suspend fun createMovementOleada2(
@@ -292,7 +292,7 @@ interface FinancialApiService {
         @Query("cursor") cursor: String? = null,
         @Query("active") active: Boolean? = null,
         @Query("type") type: String? = null
-    ): List<RecurringPaymentOleada2Dto>
+    ): RecurringPaymentsListResponse
 
     @POST("recurring-payments")
     suspend fun createRecurringPaymentOleada2(
@@ -313,7 +313,7 @@ interface FinancialApiService {
         @Query("limit") limit: Int? = null,
         @Query("cursor") cursor: String? = null,
         @Query("status") status: String? = null
-    ): List<GoalOleada2Dto>
+    ): GoalsListResponse
 
     @POST("goals")
     suspend fun createGoalOleada2(

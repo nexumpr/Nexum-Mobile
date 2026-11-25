@@ -10,6 +10,8 @@ import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.dto.CreateMovementOleada2Request
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
+import java.util.Locale
+import java.util.UUID
 
 data class MovementsListUiState(
     val movements: List<MovementOleada2Dto> = emptyList(),
@@ -28,6 +30,7 @@ sealed interface MovementsListIntent : UiIntent {
     data class DeleteMovement(val movementId: String) : MovementsListIntent
 }
 
+@Suppress("unused")
 sealed interface MovementsListEffect : UiEffect {
     data class ShowToast(val message: String) : MovementsListEffect
 }
@@ -63,18 +66,22 @@ class MovementsListViewModel(
         }
     }
 
-    private fun createMovement(description: String, amount: String, categoryId: String, type: String) {
+    private fun createMovement(description: String, rawAmount: String, categoryId: String, type: String) {
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
+            val parsedDouble = rawAmount.replace("$", "").trim().toDoubleOrNull() ?: 0.0
+            val formattedAmount = String.format(Locale.US, "%.2f", parsedDouble)
+
             val request = CreateMovementOleada2Request(
                 type = type,
-                amount = amount,
+                amount = formattedAmount,
                 currency = "MXN",
                 categoryId = categoryId.ifBlank { "otros" },
                 description = description,
-                occurredAt = "2026-11-23T10:00:00Z"
+                occurredAt = java.time.Instant.now().toString()
             )
-            when (val result = financialRepository.createMovementOleada2(request)) {
+            val idempotencyKey = "android-mov-" + UUID.randomUUID().toString()
+            when (val result = financialRepository.createMovementOleada2(request, idempotencyKey)) {
                 is AuthResult.Success -> {
                     emitEffect(MovementsListEffect.ShowToast("Movimiento registrado en servidor."))
                     loadMovements()

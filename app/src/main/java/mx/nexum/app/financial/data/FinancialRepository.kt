@@ -35,6 +35,7 @@ import mx.nexum.app.financial.data.dto.GoalOleada2Dto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
+import mx.nexum.app.financial.data.dto.MovementsListResponse
 import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetUsageResponse
@@ -47,6 +48,7 @@ import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.financial.data.dto.RecurringPaymentRecordPaymentRequest
+import mx.nexum.app.financial.data.dto.RecurringPaymentsListResponse
 import mx.nexum.app.financial.data.dto.ReverseContributionRequest
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
@@ -437,7 +439,7 @@ class FinancialRepositoryImpl(
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
             val response = api.getMovementsOleada2("Bearer $token", limit, cursor, type, from, to)
-            AuthResult.Success(response)
+            AuthResult.Success(response.items)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
         }
@@ -465,7 +467,7 @@ class FinancialRepositoryImpl(
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
             val response = api.getRecurringPaymentsOleada2("Bearer $token", limit, cursor, active, type)
-            AuthResult.Success(response)
+            AuthResult.Success(response.items)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
         }
@@ -493,7 +495,7 @@ class FinancialRepositoryImpl(
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
             val response = api.getGoalsOleada2("Bearer $token", limit, cursor, status)
-            AuthResult.Success(response)
+            AuthResult.Success(response.items)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
         }

@@ -11,6 +11,8 @@ import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.dto.CreateGoalOleada2Request
 import mx.nexum.app.financial.data.dto.GoalOleada2Dto
 import mx.nexum.app.financial.data.dto.GoalTotalsDto
+import java.util.Locale
+import java.util.UUID
 
 data class GoalsUiState(
     val goals: List<GoalOleada2Dto> = emptyList(),
@@ -60,23 +62,28 @@ class GoalsViewModel(
         }
     }
 
-    private fun createGoal(name: String, targetAmount: String, initialSaved: String, targetDate: String) {
-        val targetVal = targetAmount.toDoubleOrNull() ?: 0.0
+    private fun createGoal(name: String, rawTarget: String, rawInitial: String, targetDate: String) {
+        val targetVal = rawTarget.replace("$", "").trim().toDoubleOrNull() ?: 0.0
         if (name.isBlank() || targetVal <= 0.0) {
             setState { copy(errorMessage = "Nombre y monto objetivo válidos requeridos.") }
             return
         }
 
+        val formattedTarget = String.format(Locale.US, "%.2f", targetVal)
+        val initialVal = rawInitial.replace("$", "").trim().toDoubleOrNull() ?: 0.0
+        val formattedInitial = String.format(Locale.US, "%.2f", initialVal)
+
         viewModelScope.launch {
             setState { copy(isCreating = true, errorMessage = null) }
             val request = CreateGoalOleada2Request(
                 name = name,
-                targetAmount = targetAmount,
+                targetAmount = formattedTarget,
                 currency = "MXN",
                 targetDate = targetDate,
-                initialSavedAmount = initialSaved.ifBlank { "0.00" }
+                initialSavedAmount = formattedInitial
             )
-            when (val result = financialRepository.createGoalOleada2(request)) {
+            val idempotencyKey = "android-goal-" + UUID.randomUUID().toString()
+            when (val result = financialRepository.createGoalOleada2(request, idempotencyKey)) {
                 is AuthResult.Success -> {
                     setState { copy(isCreating = false) }
                     emitEffect(GoalsEffect.ShowToast("Meta creada con éxito."))

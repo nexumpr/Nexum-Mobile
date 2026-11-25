@@ -10,6 +10,8 @@ import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
+import java.util.Locale
+import java.util.UUID
 
 data class RecurringPaymentsUiState(
     val payments: List<RecurringPaymentOleada2Dto> = emptyList(),
@@ -30,6 +32,7 @@ sealed interface RecurringPaymentsIntent : UiIntent {
     data class DeletePayment(val paymentId: String) : RecurringPaymentsIntent
 }
 
+@Suppress("unused")
 sealed interface RecurringPaymentsEffect : UiEffect {
     data class ShowToast(val message: String) : RecurringPaymentsEffect
 }
@@ -66,19 +69,23 @@ class RecurringPaymentsViewModel(
         }
     }
 
-    private fun createPayment(name: String, amount: String, categoryId: String, type: String, frequency: String) {
+    private fun createPayment(name: String, rawAmount: String, categoryId: String, type: String, frequency: String) {
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
+            val parsedDouble = rawAmount.replace("$", "").trim().toDoubleOrNull() ?: 0.0
+            val formattedAmount = String.format(Locale.US, "%.2f", parsedDouble)
+
             val request = CreateRecurringPaymentOleada2Request(
                 name = name,
-                amount = amount,
+                amount = formattedAmount,
                 currency = "MXN",
                 frequency = frequency,
                 nextDueDate = "2026-12-01",
                 type = type,
-                startDate = "2026-11-23"
+                startDate = "2026-11-24"
             )
-            when (val result = financialRepository.createRecurringPaymentOleada2(request)) {
+            val idempotencyKey = "android-rec-" + UUID.randomUUID().toString()
+            when (val result = financialRepository.createRecurringPaymentOleada2(request, idempotencyKey)) {
                 is AuthResult.Success -> {
                     emitEffect(RecurringPaymentsEffect.ShowToast("Regla recurrente creada en servidor."))
                     loadPayments()
@@ -92,8 +99,9 @@ class RecurringPaymentsViewModel(
 
     private fun recordPayment(paymentId: String, amount: String) {
         viewModelScope.launch {
-            val occurredAt = "2026-11-23T00:00:00Z"
-            when (val result = financialRepository.recordRecurringPaymentPaymentOleada3(paymentId, occurredAt, amount)) {
+            val occurredAt = "2026-11-24T00:00:00Z"
+            val idempotencyKey = "android-pay-" + UUID.randomUUID().toString()
+            when (val result = financialRepository.recordRecurringPaymentPaymentOleada3(paymentId, occurredAt, amount, "MXN", idempotencyKey)) {
                 is AuthResult.Success -> {
                     emitEffect(RecurringPaymentsEffect.ShowToast("Pago registrado con éxito (✓)."))
                     loadPayments()
