@@ -648,6 +648,16 @@ class FinancialRepositoryImpl(
 
     private fun Throwable.toFinancialError(): AuthError = when (this) {
         is CancellationException -> throw this
-        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red al procesar repositorio.", retryable = true)
+        is retrofit2.HttpException -> {
+            val errorBody = response()?.errorBody()?.string()
+            val message = try {
+                val json = com.google.gson.JsonParser.parseString(errorBody).asJsonObject
+                json.getAsJsonObject("error")?.get("message")?.asString ?: "Error del servidor (${code()})"
+            } catch (_: Exception) {
+                "Error HTTP ${code()}: ${message()}"
+            }
+            AuthError(AuthErrorKind.UNKNOWN, message, retryable = code() >= 500)
+        }
+        else -> AuthError(AuthErrorKind.UNKNOWN, message ?: "Error de red: ${localizedMessage ?: "desconocido"}", retryable = true)
     }
 }
