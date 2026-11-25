@@ -173,12 +173,12 @@ data class UpdateOnboardingRequest(
 
 // Oleada 1 DTOs (E012, E013, E015, E016, E017, E068, E069, E070, E071)
 data class UserProfileDto(
-    @SerializedName("id") val id: String,
-    @SerializedName("email") val email: String,
-    @SerializedName("displayName") val displayName: String,
-    @SerializedName("emailVerified") val emailVerified: Boolean,
-    @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("version") val version: Int
+    @SerializedName("id") val id: String?,
+    @SerializedName("email") val email: String?,
+    @SerializedName("displayName") val displayName: String?,
+    @SerializedName("emailVerified") val emailVerified: Boolean?,
+    @SerializedName("createdAt") val createdAt: String?,
+    @SerializedName("version") val version: Int?
 )
 
 data class UpdateProfileRequest(
@@ -204,9 +204,9 @@ data class RecordConsentRequest(
 )
 
 data class PreferencesDto(
-    @SerializedName("language") val language: String,
-    @SerializedName("timezone") val timezone: String,
-    @SerializedName("version") val version: Int
+    @SerializedName("language") val language: String?,
+    @SerializedName("timezone") val timezone: String?,
+    @SerializedName("version") val version: Int?
 )
 
 data class UpdatePreferencesRequest(

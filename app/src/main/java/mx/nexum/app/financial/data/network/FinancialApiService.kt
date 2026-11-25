@@ -49,6 +49,7 @@ import mx.nexum.app.financial.data.dto.UpdateMovementRequest
 import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
 import mx.nexum.app.financial.data.dto.UpdatePreferencesRequest
 import mx.nexum.app.financial.data.dto.UpdateProfileRequest
+import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
 import mx.nexum.app.financial.data.dto.UserExportResponse
 import mx.nexum.app.financial.data.dto.UserProfileDto
@@ -299,6 +300,14 @@ interface FinancialApiService {
         @Header("Authorization") authorization: String,
         @Header("Idempotency-Key") idempotencyKey: String,
         @Body request: CreateRecurringPaymentOleada2Request
+    ): RecurringPaymentOleada2Dto
+
+    @PATCH("recurring-payments/{recurringPaymentId}")
+    suspend fun updateRecurringPaymentOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("If-Match") ifMatch: String,
+        @Path("recurringPaymentId") recurringPaymentId: String,
+        @Body request: UpdateRecurringPaymentOleada2Request
     ): RecurringPaymentOleada2Dto
 
     @DELETE("recurring-payments/{recurringPaymentId}")

@@ -10,9 +10,12 @@ import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
 
 data class ProfileUiState(
+    val userId: String = "",
     val email: String = "",
     val displayName: String = "",
     val emailVerified: Boolean = false,
+    val createdAt: String = "",
+    val profileVersion: Int = 1,
     val language: String = "es",
     val timezone: String = "America/Mexico_City",
     val isLoading: Boolean = false,
@@ -63,9 +66,12 @@ class ProfileViewModel(
                     setState {
                         copy(
                             isLoading = false,
-                            email = profileResult.data.email,
-                            displayName = profileResult.data.displayName,
-                            emailVerified = profileResult.data.emailVerified
+                            userId = profileResult.data.id ?: "",
+                            email = profileResult.data.email ?: "",
+                            displayName = profileResult.data.displayName ?: "",
+                            emailVerified = profileResult.data.emailVerified ?: false,
+                            createdAt = profileResult.data.createdAt ?: "",
+                            profileVersion = profileResult.data.version ?: 1
                         )
                     }
                 }
@@ -77,8 +83,8 @@ class ProfileViewModel(
             if (prefResult is AuthResult.Success) {
                 setState {
                     copy(
-                        language = prefResult.data.language,
-                        timezone = prefResult.data.timezone
+                        language = prefResult.data.language ?: "es",
+                        timezone = prefResult.data.timezone ?: "America/Mexico_City"
                     )
                 }
             }
@@ -99,6 +105,7 @@ class ProfileViewModel(
             if (updateResult is AuthResult.Success && prefResult is AuthResult.Success) {
                 setState { copy(isLoading = false, successMessage = "Perfil y preferencias actualizados con éxito.") }
                 emitEffect(ProfileEffect.ShowToast("Perfil actualizado con éxito."))
+                loadProfile()
             } else {
                 val errorMsg = (updateResult as? AuthResult.Failure)?.error?.message ?: (prefResult as? AuthResult.Failure)?.error?.message ?: "Error al actualizar perfil."
                 setState { copy(isLoading = false, errorMessage = errorMsg) }

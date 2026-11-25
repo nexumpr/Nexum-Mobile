@@ -3,6 +3,7 @@ package mx.nexum.app.financial.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -65,14 +66,41 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "PERFIL DE USUARIO",
+                text = "PERFIL DE USUARIO DETALLADO",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 ),
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Metadata card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                tonalElevation = 4.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Detalles de Identidad",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    MetadataRow(label = "ID de Usuario", value = state.userId.ifBlank { "Cargando..." })
+                    MetadataRow(label = "Verificación de Correo", value = if (state.emailVerified) "Verificado ✓" else "Pendiente de verificación")
+                    MetadataRow(label = "Fecha de Alta", value = if (state.createdAt.length >= 10) state.createdAt.take(10) else "—")
+                    MetadataRow(label = "Versión del Perfil", value = "v${state.profileVersion}")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -86,7 +114,7 @@ fun ProfileScreen(
                         .padding(20.dp)
                 ) {
                     Text(
-                        text = "Información de Cuenta",
+                        text = "Configuración y Preferencias",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -179,12 +207,25 @@ fun ProfileScreen(
     }
 }
 
+@Composable
+private fun MetadataRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ProfilePreview() {
     NexumTheme {
         ProfileScreen(
-            state = ProfileUiState(email = "usuario@nexum.mx", displayName = "Usuario Nexum"),
+            state = ProfileUiState(email = "usuario@nexum.mx", displayName = "Usuario Nexum", userId = "uuid-1234", emailVerified = true, createdAt = "2026-11-20T18:00:00Z"),
             onIntent = {}
         )
     }

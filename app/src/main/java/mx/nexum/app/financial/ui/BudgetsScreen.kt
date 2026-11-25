@@ -97,6 +97,21 @@ fun BudgetsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            state.errorMessage?.let { err ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Text(
+                        text = "Error: $err",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -158,7 +173,7 @@ fun BudgetsScreen(
                         OutlinedTextField(
                             value = limitInput,
                             onValueChange = { limitInput = it },
-                            label = { Text("Monto Límite ($)") },
+                            label = { Text("Monto Límite (ej. 1000.00)") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -167,15 +182,17 @@ fun BudgetsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            if (categoryInput.isNotBlank() && limitInput.isNotBlank()) {
-                                onIntent(BudgetsIntent.SaveBudget(categoryInput.trim().lowercase(), limitInput.trim()))
+                            val limitVal = limitInput.replace("$", "").trim().toDoubleOrNull() ?: 0.0
+                            val formattedLimit = String.format(java.util.Locale.US, "%.2f", limitVal)
+                            if (categoryInput.isNotBlank() && limitVal > 0.0) {
+                                onIntent(BudgetsIntent.SaveBudget(categoryInput.trim().lowercase(), formattedLimit))
                             }
                             showAddDialog = false
                             categoryInput = ""
                             limitInput = ""
                         }
                     ) {
-                        Text("Guardar Presupuesto")
+                        Text("Guardar en Servidor")
                     }
                 },
                 dismissButton = {

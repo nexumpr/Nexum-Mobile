@@ -1,13 +1,21 @@
-# Walkthrough — Integración Handoff Oleada 3 (Backend v0.19.2 - 13 Endpoints)
+# Walkthrough — Edición y Baja Lógica de Pagos Recurrentes (Endpoints E035 y E036)
 
-He completado la integración técnica, corrección de referencias y compilación exitosa de los **13 endpoints de la Oleada 3** especificados en `Nexum_Handoff_Android_Oleada3_v0.19.2_2026-11-21.md`.
+He completado la implementación de los controles de **Edición** (`PATCH /recurring-payments/{id}` E035) y **Desactivación / Baja Lógica** (`DELETE /recurring-payments/{id}` E036) para la pantalla de Pagos Recurrentes.
 
 ## Cambios Realizados
 
-### Capa de Datos Financiera y Módulo UI (`mx.nexum.app.financial.data`, `ui`)
+### Módulo Financiero de Pagos Recurrentes (`mx.nexum.app.financial.ui`, `data`)
+
+#### [MODIFY] [RecurringPaymentsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt)
+- Incorporada la intención `EditPayment(paymentId, name, amount, nextDueDate, version)` invocando `updateRecurringPaymentOleada2` con la cabecera de versión `If-Match: "v$version"`.
+
+#### [MODIFY] [RecurringPaymentsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsScreen.kt)
+- Añadido el botón de **Lápiz / Editar (✎)** en cada tarjeta de pago recurrente.
+- Creado el **Diálogo Modal de Edición (E035)** precargado con el nombre, monto y fecha de próximo vencimiento actual.
+- Creado el **Diálogo Modal de Confirmación de Desactivación (E036)** al presionar el botón `×` para evitar borrados accidentales.
 
 #### [MODIFY] [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt), [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
-- Declarados e implementados los 13 endpoints de Oleada 3 (`getUserExport`, `getFinancialSummaryOleada3`, `recordRecurringPaymentPaymentOleada3`, `deleteGoalOleada3`, `previewGoalContribution`, `createGoalContribution`, `getGoalContributions`, `getGoalContributionDetail`, `reverseGoalContribution`, `getBudgets`, `replaceBudgets`, `getBudgetUsage`, `getDashboard`), resolviendo todas las referencias pendientes y asegurando la compilación limpia.
+- Conectado el endpoint `updateRecurringPaymentOleada2` enviando la cabecera `If-Match` para concurrencia optimista.
 
 ---
 
