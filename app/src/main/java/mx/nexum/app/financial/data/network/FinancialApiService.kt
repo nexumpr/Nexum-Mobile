@@ -177,7 +177,7 @@ interface FinancialApiService {
         @Query("status") status: String? = null,
         @Query("page") page: Int? = null,
         @Query("limit") limit: Int? = null
-    ): List<jGoalDto>
+    ): List<GoalDto>
 
     @POST("goals")
     suspend fun createGoal(
