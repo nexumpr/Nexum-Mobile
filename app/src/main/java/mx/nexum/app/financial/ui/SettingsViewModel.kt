@@ -34,6 +34,7 @@ sealed interface SettingsIntent : UiIntent {
     data object SubmitChangePassword : SettingsIntent
     data object OpenPrivacy : SettingsIntent
     data object OpenHelp : SettingsIntent
+    data object NavigateToActiveSessions : SettingsIntent
     data object ShowDeleteAccountDialog : SettingsIntent
     data object DismissDeleteAccountDialog : SettingsIntent
     data class DeleteAccountPasswordChanged(val v: String) : SettingsIntent
@@ -46,6 +47,7 @@ sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
     data object NavigateToPrivacy : SettingsEffect
     data object NavigateToHelp : SettingsEffect
+    data object NavigateToActiveSessions : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
 }
 
@@ -68,6 +70,7 @@ class SettingsViewModel(
             SettingsIntent.SubmitChangePassword -> changePassword()
             SettingsIntent.OpenPrivacy -> emitEffect(SettingsEffect.NavigateToPrivacy)
             SettingsIntent.OpenHelp -> emitEffect(SettingsEffect.NavigateToHelp)
+            SettingsIntent.NavigateToActiveSessions -> emitEffect(SettingsEffect.NavigateToActiveSessions)
             SettingsIntent.ShowDeleteAccountDialog -> setState { copy(showDeleteAccountDialog = true, deleteAccountError = null, deleteAccountPassword = "", deleteAccountConfirmationText = "") }
             SettingsIntent.DismissDeleteAccountDialog -> setState { copy(showDeleteAccountDialog = false) }
             is SettingsIntent.DeleteAccountPasswordChanged -> setState { copy(deleteAccountPassword = intent.v, deleteAccountError = null) }
