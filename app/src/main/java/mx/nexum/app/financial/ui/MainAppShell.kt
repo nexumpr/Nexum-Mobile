@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
@@ -36,7 +37,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.viewmodel.compose.viewModel
-import mx.nexum.app.auth.data.InMemoryTokenStorage
+import mx.nexum.app.auth.data.SharedTokenStorage
 import mx.nexum.app.auth.data.network.NetworkModule
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
@@ -48,6 +49,7 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
     object Movements : MainTab("Movimientos", Icons.Default.List)
     object Recurring : MainTab("Pagos", Icons.Default.CheckCircle)
     object Goals : MainTab("Metas", Icons.Default.Star)
+    object Budgets : MainTab("Presupuestos", Icons.Default.AccountBalance)
     object Profile : MainTab("Perfil", Icons.Default.Person)
     object Settings : MainTab("Ajustes", Icons.Default.Settings)
 }
@@ -73,7 +75,7 @@ fun MainAppShell(
     val financialRepository = remember {
         FinancialRepository.create(
             NetworkModule.retrofit.create(FinancialApiService::class.java),
-            InMemoryTokenStorage()
+            SharedTokenStorage.instance
         )
     }
 
@@ -81,8 +83,9 @@ fun MainAppShell(
     val movementsViewModel: MovementsListViewModel = viewModel { MovementsListViewModel(financialRepository) }
     val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
+    val budgetsViewModel: BudgetsViewModel = viewModel { BudgetsViewModel(financialRepository) }
     val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(InMemoryTokenStorage(), onThemeChanged) }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(SharedTokenStorage.instance, onThemeChanged, financialRepository) }
     val privacyViewModel: PrivacyNoticeViewModel = viewModel { PrivacyNoticeViewModel(financialRepository) }
     val helpViewModel: HelpEducationViewModel = viewModel { HelpEducationViewModel(financialRepository) }
 
@@ -90,6 +93,7 @@ fun MainAppShell(
     val movementsState by movementsViewModel.uiState.collectAsState()
     val recurringState by recurringViewModel.uiState.collectAsState()
     val goalsState by goalsViewModel.uiState.collectAsState()
+    val budgetsState by budgetsViewModel.uiState.collectAsState()
     val profileState by profileViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val privacyState by privacyViewModel.uiState.collectAsState()
@@ -106,8 +110,7 @@ fun MainAppShell(
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
-                SettingsEffect.NavigateToActiveSessions -> {}
-                is SettingsEffect.ShowToast -> {}
+                else -> {}
             }
         }
     }
@@ -136,7 +139,7 @@ fun MainAppShell(
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
-                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Profile, MainTab.Settings)
+                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Budgets, MainTab.Profile, MainTab.Settings)
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
@@ -166,6 +169,7 @@ fun MainAppShell(
                 MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
+                MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
                 MainTab.Profile -> ProfileScreen(state = profileState, onIntent = profileViewModel::onIntent)
                 MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
             }

@@ -3,7 +3,7 @@ package mx.nexum.app.financial.ui
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthResult
-import mx.nexum.app.auth.data.InMemoryTokenStorage
+import mx.nexum.app.auth.data.SharedTokenStorage
 import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.core.mvi.MviViewModel
 import mx.nexum.app.core.mvi.UiEffect
@@ -40,20 +40,18 @@ sealed interface SettingsIntent : UiIntent {
     data class DeleteAccountConfirmationTextChanged(val v: String) : SettingsIntent
     data object ConfirmDeleteAccount : SettingsIntent
     data object Logout : SettingsIntent
-    data object NavigateToActiveSessions : SettingsIntent
 }
 
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
     data object NavigateToPrivacy : SettingsEffect
     data object NavigateToHelp : SettingsEffect
-    data object NavigateToActiveSessions : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
 }
 
 @Suppress("unused")
 class SettingsViewModel(
-    private val tokenStorage: TokenStorage = InMemoryTokenStorage(),
+    private val tokenStorage: TokenStorage = SharedTokenStorage.instance,
     private val onThemeChanged: (Boolean) -> Unit = {},
     private val financialRepository: FinancialRepository? = null
 ) : MviViewModel<SettingsUiState, SettingsIntent, SettingsEffect>(SettingsUiState()) {
@@ -76,11 +74,6 @@ class SettingsViewModel(
             is SettingsIntent.DeleteAccountConfirmationTextChanged -> setState { copy(deleteAccountConfirmationText = intent.v, deleteAccountError = null) }
             SettingsIntent.ConfirmDeleteAccount -> deleteAccount()
             SettingsIntent.Logout -> logout()
-            SettingsIntent.NavigateToActiveSessions -> {
-                viewModelScope.launch {
-                    emitEffect(SettingsEffect.NavigateToActiveSessions)
-                }
-            }
         }
     }
 

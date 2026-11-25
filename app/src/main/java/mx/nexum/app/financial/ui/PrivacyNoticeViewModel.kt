@@ -34,9 +34,8 @@ class PrivacyNoticeViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<PrivacyNoticeUiState, PrivacyNoticeIntent, PrivacyNoticeEffect>(PrivacyNoticeUiState()) {
 
-    init {
-        onIntent(PrivacyNoticeIntent.LoadData)
-    }
+    var isLoaded = false
+        private set
 
     override fun onIntent(intent: PrivacyNoticeIntent) {
         when (intent) {
@@ -45,7 +44,8 @@ class PrivacyNoticeViewModel(
         }
     }
 
-    private fun loadData() {
+    fun loadData() {
+        isLoaded = true
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
             val noticeResult = financialRepository.getCurrentPrivacyNotice()

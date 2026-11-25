@@ -27,3 +27,7 @@ class InMemoryTokenStorage : TokenStorage {
         }
     }
 }
+
+object SharedTokenStorage {
+    val instance: TokenStorage = InMemoryTokenStorage()
+}

@@ -42,7 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import mx.nexum.app.financial.data.dto.GoalDto
+import mx.nexum.app.financial.data.dto.GoalOleada2Dto
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
@@ -91,6 +91,21 @@ fun GoalsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            state.errorMessage?.let { err ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Text(
+                        text = "Error: $err",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
 
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -156,14 +171,14 @@ fun GoalsScreen(
                         OutlinedTextField(
                             value = targetInput,
                             onValueChange = { targetInput = it },
-                            label = { Text("Monto Objetivo ($)") },
+                            label = { Text("Monto Objetivo (ej. 12000.00)") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
                         OutlinedTextField(
                             value = initialSavedInput,
                             onValueChange = { initialSavedInput = it },
-                            label = { Text("Ahorro Inicial ($)") },
+                            label = { Text("Ahorro Inicial (ej. 500.00)") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -172,10 +187,8 @@ fun GoalsScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            val target = targetInput.toDoubleOrNull() ?: 0.0
-                            val initial = initialSavedInput.toDoubleOrNull() ?: 0.0
-                            if (nameInput.isNotBlank() && target > 0.0) {
-                                onIntent(GoalsIntent.CreateGoal(nameInput, target, initial, "🎯", "2027-12-31"))
+                            if (nameInput.isNotBlank() && targetInput.isNotBlank()) {
+                                onIntent(GoalsIntent.CreateGoal(nameInput.trim(), targetInput.trim(), initialSavedInput.trim(), "2027-12-31"))
                             }
                             showAddDialog = false
                             nameInput = ""
@@ -183,7 +196,7 @@ fun GoalsScreen(
                             initialSavedInput = ""
                         }
                     ) {
-                        Text("Crear Meta")
+                        Text("Crear en Servidor")
                     }
                 },
                 dismissButton = {
@@ -197,8 +210,10 @@ fun GoalsScreen(
 }
 
 @Composable
-private fun GoalCard(goal: GoalDto) {
-    val rawProgress = if (goal.targetAmount > 0) (goal.savedAmount / goal.targetAmount).toFloat() else 0f
+private fun GoalCard(goal: GoalOleada2Dto) {
+    val saved = goal.savedAmount.toDoubleOrNull() ?: 0.0
+    val target = goal.targetAmount.toDoubleOrNull() ?: 1.0
+    val rawProgress = if (target > 0) (saved / target).toFloat() else 0f
     val clampedProgress = rawProgress.coerceIn(0f, 1f)
     val displayPercent = (clampedProgress * 100).toInt()
 
@@ -219,7 +234,7 @@ private fun GoalCard(goal: GoalDto) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${goal.emoji ?: "🎯"} ${goal.name}",
+                    text = "🎯 ${goal.name}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface
                 )

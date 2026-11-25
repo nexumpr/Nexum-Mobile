@@ -1,6 +1,5 @@
 package mx.nexum.app
 
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +14,6 @@ import mx.nexum.app.ui.theme.NexumTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
         enableEdgeToEdge()
         setContent {
             var isDarkTheme by remember { mutableStateOf(true) }

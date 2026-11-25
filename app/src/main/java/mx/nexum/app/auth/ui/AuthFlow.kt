@@ -1,5 +1,6 @@
 package mx.nexum.app.auth.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,7 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.AuthRepositoryImpl
-import mx.nexum.app.auth.data.InMemoryTokenStorage
+import mx.nexum.app.auth.data.SharedTokenStorage
 import androidx.compose.ui.tooling.preview.Preview
 import mx.nexum.app.financial.ui.MainAppShell
 import mx.nexum.app.ui.theme.NexumTheme
@@ -31,7 +32,7 @@ enum class AuthScreen { Login, Register, App }
 class AuthFlowViewModel : ViewModel() {
     val repository: AuthRepository = AuthRepositoryImpl(
         mx.nexum.app.auth.data.RetrofitAuthRepositoryApi(),
-        InMemoryTokenStorage()
+        SharedTokenStorage.instance
     )
 }
 
@@ -52,6 +53,12 @@ fun AuthFlow(
     val registerState by registerViewModel.state.collectAsState()
     val loginState by loginViewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    BackHandler(enabled = screen != AuthScreen.Login) {
+        if (screen == AuthScreen.Register || screen == AuthScreen.App) {
+            screenName = AuthScreen.Login.name
+        }
+    }
 
     LaunchedEffect(loginViewModel, registerViewModel, snackbarHostState) {
         launch {

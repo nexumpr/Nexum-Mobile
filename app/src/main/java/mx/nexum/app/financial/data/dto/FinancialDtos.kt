@@ -350,3 +350,122 @@ data class UpdateGoalOleada2Request(
     @SerializedName("targetDate") val targetDate: String? = null,
     @SerializedName("status") val status: String? = null
 )
+
+// Oleada 3 DTOs (E020, E026, E037, E042–E051)
+data class UserExportResponse(
+    @SerializedName("profile") val profile: UserProfileDto,
+    @SerializedName("exportedAt") val exportedAt: String,
+    @SerializedName("movements") val movements: List<MovementOleada2Dto>,
+    @SerializedName("goals") val goals: List<GoalOleada2Dto>,
+    @SerializedName("consents") val consents: List<ConsentItemDto>,
+    @SerializedName("contributions") val contributions: List<ContributionDto>? = null,
+    @SerializedName("budgets") val budgets: List<BudgetDto>? = null,
+    @SerializedName("recurringPayments") val recurringPayments: List<RecurringPaymentOleada2Dto>? = null,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+data class FinancialSummaryOleada3Dto(
+    @SerializedName("period") val period: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("income") val income: String,
+    @SerializedName("expenses") val expenses: String,
+    @SerializedName("savings") val savings: String,
+    @SerializedName("net") val net: String,
+    @SerializedName("asOf") val asOf: String
+)
+
+data class RecurringPaymentRecordPaymentRequest(
+    @SerializedName("paidAt") val paidAt: String,
+    @SerializedName("amount") val amount: String,
+    @SerializedName("currency") val currency: String = "MXN"
+)
+
+data class GoalAllocationDto(
+    @SerializedName("goalId") val goalId: String,
+    @SerializedName("amount") val amount: String
+)
+
+data class ContributionPreviewRequest(
+    @SerializedName("amount") val amount: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("allocations") val allocations: List<GoalAllocationDto>
+)
+
+data class ContributionPreviewResponse(
+    @SerializedName("amount") val amount: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("allocations") val allocations: List<GoalAllocationDto>,
+    @SerializedName("remaining") val remaining: String,
+    @SerializedName("canCommit") val canCommit: Boolean
+)
+
+data class ContributionCreateRequest(
+    @SerializedName("amount") val amount: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("allocations") val allocations: List<GoalAllocationDto>,
+    @SerializedName("occurredAt") val occurredAt: String
+)
+
+data class ContributionDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("amount") val amount: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("allocations") val allocations: List<GoalAllocationDto>,
+    @SerializedName("occurredAt") val occurredAt: String,
+    @SerializedName("status") val status: String,
+    @SerializedName("version") val version: Int
+)
+
+data class PageOfContributionResponse(
+    @SerializedName("items") val items: List<ContributionDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+data class ReverseContributionRequest(
+    @SerializedName("reason") val reason: String
+)
+
+data class BudgetDto(
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("period") val period: String,
+    @SerializedName("limitAmount") val limitAmount: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("version") val version: Int
+)
+
+data class PageOfBudgetResponse(
+    @SerializedName("items") val items: List<BudgetDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+data class BudgetReplaceItemDto(
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("limitAmount") val limitAmount: String
+)
+
+data class BudgetReplaceRequest(
+    @SerializedName("period") val period: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("budgets") val budgets: List<BudgetReplaceItemDto>
+)
+
+data class BudgetUsageDto(
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("period") val period: String,
+    @SerializedName("usedAmount") val usedAmount: String,
+    @SerializedName("limitAmount") val limitAmount: String,
+    @SerializedName("currency") val currency: String = "MXN"
+)
+
+data class PageOfBudgetUsageResponse(
+    @SerializedName("items") val items: List<BudgetUsageDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+data class DashboardResponse(
+    @SerializedName("period") val period: String,
+    @SerializedName("summary") val summary: FinancialSummaryOleada3Dto,
+    @SerializedName("goals") val goals: List<GoalOleada2Dto>,
+    @SerializedName("latestMovements") val latestMovements: List<MovementOleada2Dto>,
+    @SerializedName("asOf") val asOf: String
+)
