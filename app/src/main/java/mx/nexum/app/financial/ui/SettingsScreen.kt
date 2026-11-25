@@ -27,6 +27,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -42,8 +46,7 @@ import mx.nexum.app.ui.theme.NexumTheme
 fun SettingsScreen(
     state: SettingsUiState,
     onIntent: (SettingsIntent) -> Unit,
-    modifier: Modifier = Modifier,
-    verificationContent: @Composable () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
@@ -72,8 +75,6 @@ fun SettingsScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            verificationContent()
-            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "CONFIGURACIÓN Y SEGURIDAD",
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -270,18 +271,6 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
-
-                    Button(
-                        onClick = { onIntent(SettingsIntent.NavigateToActiveSessions) },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    ) {
-                        Text("Dispositivos y Sesiones Activas", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     OutlinedButton(
                         onClick = { onIntent(SettingsIntent.Logout) },
