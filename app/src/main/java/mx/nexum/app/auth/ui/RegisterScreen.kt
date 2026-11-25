@@ -1,9 +1,12 @@
 package mx.nexum.app.auth.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,10 +34,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.nexum.app.ui.theme.NexumTheme
@@ -45,6 +50,8 @@ fun RegisterScreen(
     onIntent: (RegisterIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -251,8 +258,9 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // Mandatory Terms and Conditions & Privacy Checkbox
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Checkbox(
@@ -260,11 +268,32 @@ fun RegisterScreen(
                             onCheckedChange = { onIntent(RegisterIntent.TermsAccepted(it)) },
                             enabled = !state.isLoading
                         )
-                        Text(
-                            text = "Acepto el Aviso de Privacidad (versión 2026-11)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Column(modifier = Modifier.weight(1f).padding(top = 4.dp)) {
+                            Text(
+                                text = "Acepto el Aviso de Privacidad y Términos y Condiciones *",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            TextButton(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nexumpr.github.io/nexum-privacidad/"))
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (_: Exception) {}
+                                },
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text(
+                                    text = "📄 Ver Términos y Condiciones en la Web ↗",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        textDecoration = TextDecoration.Underline
+                                    ),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
                     state.termsError?.let {
                         Text(
@@ -278,11 +307,13 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
                         onClick = { onIntent(RegisterIntent.Submit) },
-                        enabled = !state.isLoading,
+                        enabled = !state.isLoading && state.termsAccepted,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
