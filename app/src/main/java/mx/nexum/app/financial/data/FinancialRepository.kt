@@ -53,6 +53,7 @@ import mx.nexum.app.financial.data.dto.UpdateMovementRequest
 import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
 import mx.nexum.app.financial.data.dto.UpdatePreferencesRequest
 import mx.nexum.app.financial.data.dto.UpdateProfileRequest
+import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
 import mx.nexum.app.financial.data.dto.UserExportResponse
 import mx.nexum.app.financial.data.dto.UserProfileDto
@@ -102,6 +103,7 @@ interface FinancialRepository {
 
     suspend fun getRecurringPaymentsOleada2(limit: Int? = null, cursor: String? = null, active: Boolean? = null, type: String? = null): AuthResult<List<RecurringPaymentOleada2Dto>>
     suspend fun createRecurringPaymentOleada2(request: CreateRecurringPaymentOleada2Request, idempotencyKey: String? = null): AuthResult<RecurringPaymentOleada2Dto>
+    suspend fun updateRecurringPaymentOleada2(recurringPaymentId: String, ifMatch: String, request: UpdateRecurringPaymentOleada2Request): AuthResult<RecurringPaymentOleada2Dto>
     suspend fun deleteRecurringPaymentOleada2(recurringPaymentId: String): AuthResult<Unit>
 
     suspend fun getGoalsOleada2(limit: Int? = null, cursor: String? = null, status: String? = null): AuthResult<List<GoalOleada2Dto>>
@@ -482,6 +484,15 @@ class FinancialRepositoryImpl(
             val token = tokenStorage.current()?.accessToken ?: ""
             val key = idempotencyKey ?: ("android-rec-" + UUID.randomUUID().toString())
             val response = api.createRecurringPaymentOleada2("Bearer $token", key, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun updateRecurringPaymentOleada2(recurringPaymentId: String, ifMatch: String, request: UpdateRecurringPaymentOleada2Request): AuthResult<RecurringPaymentOleada2Dto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.updateRecurringPaymentOleada2("Bearer $token", ifMatch, recurringPaymentId, request)
             AuthResult.Success(response)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
