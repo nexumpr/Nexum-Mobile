@@ -66,12 +66,12 @@ class ProfileViewModel(
                     setState {
                         copy(
                             isLoading = false,
-                            userId = profileResult.data.id,
-                            email = profileResult.data.email,
-                            displayName = profileResult.data.displayName,
-                            emailVerified = profileResult.data.emailVerified,
-                            createdAt = profileResult.data.createdAt,
-                            profileVersion = profileResult.data.version
+                            userId = profileResult.data.id ?: "",
+                            email = profileResult.data.email ?: "",
+                            displayName = profileResult.data.displayName ?: "",
+                            emailVerified = profileResult.data.emailVerified ?: false,
+                            createdAt = profileResult.data.createdAt ?: "",
+                            profileVersion = profileResult.data.version ?: 1
                         )
                     }
                 }
@@ -83,8 +83,8 @@ class ProfileViewModel(
             if (prefResult is AuthResult.Success) {
                 setState {
                     copy(
-                        language = prefResult.data.language,
-                        timezone = prefResult.data.timezone
+                        language = prefResult.data.language ?: "es",
+                        timezone = prefResult.data.timezone ?: "America/Mexico_City"
                     )
                 }
             }

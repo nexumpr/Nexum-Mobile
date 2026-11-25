@@ -95,7 +95,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     MetadataRow(label = "ID de Usuario", value = state.userId.ifBlank { "Cargando..." })
                     MetadataRow(label = "Verificación de Correo", value = if (state.emailVerified) "Verificado ✓" else "Pendiente de verificación")
-                    MetadataRow(label = "Fecha de Alta", value = state.createdAt.take(10).ifBlank { "—" })
+                    MetadataRow(label = "Fecha de Alta", value = if (state.createdAt.length >= 10) state.createdAt.take(10) else "—")
                     MetadataRow(label = "Versión del Perfil", value = "v${state.profileVersion}")
                 }
             }

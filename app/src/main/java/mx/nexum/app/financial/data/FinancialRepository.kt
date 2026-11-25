@@ -35,7 +35,6 @@ import mx.nexum.app.financial.data.dto.GoalOleada2Dto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
-import mx.nexum.app.financial.data.dto.MovementsListResponse
 import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetUsageResponse
@@ -48,7 +47,6 @@ import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.financial.data.dto.RecurringPaymentRecordPaymentRequest
-import mx.nexum.app.financial.data.dto.RecurringPaymentsListResponse
 import mx.nexum.app.financial.data.dto.ReverseContributionRequest
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
@@ -187,8 +185,15 @@ class FinancialRepositoryImpl(
     override suspend fun getFinancialSummary(): AuthResult<FinancialSummaryResponse> =
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
-            val response = api.getFinancialSummary("Bearer $token")
-            AuthResult.Success(response)
+            val response = api.getFinancialSummaryOleada3("Bearer $token", null)
+            val summary = FinancialSummaryResponse(
+                income = response.income.toDoubleOrNull() ?: 0.0,
+                fixedExpenses = response.expenses.toDoubleOrNull() ?: 0.0,
+                variableExpenses = 0.0,
+                savings = response.savings.toDoubleOrNull() ?: 0.0,
+                available = response.net.toDoubleOrNull() ?: 0.0
+            )
+            AuthResult.Success(summary)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
         }
