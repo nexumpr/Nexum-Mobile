@@ -55,7 +55,7 @@ class RecurringPaymentsViewModel(
         }
     }
 
-    private fun loadPayments() {
+    fun loadPayments() {
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
             when (val result = financialRepository.getRecurringPaymentsOleada2()) {
@@ -99,15 +99,17 @@ class RecurringPaymentsViewModel(
 
     private fun recordPayment(paymentId: String, amount: String) {
         viewModelScope.launch {
-            val occurredAt = "2026-11-24T00:00:00Z"
+            setState { copy(isLoading = true, errorMessage = null) }
+            val paidAt = java.time.Instant.now().toString()
             val idempotencyKey = "android-pay-" + UUID.randomUUID().toString()
-            when (val result = financialRepository.recordRecurringPaymentPaymentOleada3(paymentId, occurredAt, amount, "MXN", idempotencyKey)) {
+            when (val result = financialRepository.recordRecurringPaymentPaymentOleada3(paymentId, paidAt, amount, "MXN", idempotencyKey)) {
                 is AuthResult.Success -> {
+                    setState { copy(isLoading = false) }
                     emitEffect(RecurringPaymentsEffect.ShowToast("Pago registrado con éxito (✓)."))
                     loadPayments()
                 }
                 is AuthResult.Failure -> {
-                    setState { copy(errorMessage = result.error.message) }
+                    setState { copy(isLoading = false, errorMessage = result.error.message) }
                 }
             }
         }

@@ -36,8 +36,11 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mx.nexum.app.auth.data.SharedTokenStorage
+import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.auth.data.network.NetworkModule
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
@@ -52,6 +55,28 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
     object Budgets : MainTab("Presupuestos", Icons.Default.AccountBalance)
     object Profile : MainTab("Perfil", Icons.Default.Person)
     object Settings : MainTab("Ajustes", Icons.Default.Settings)
+}
+
+class FinancialViewModelFactory(
+    private val financialRepository: FinancialRepository,
+    private val tokenStorage: TokenStorage,
+    private val onThemeChanged: (Boolean) -> Unit
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return when {
+            modelClass.isAssignableFrom(FinancialSummaryViewModel::class.java) -> FinancialSummaryViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(MovementsListViewModel::class.java) -> MovementsListViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(RecurringPaymentsViewModel::class.java) -> RecurringPaymentsViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(GoalsViewModel::class.java) -> GoalsViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(BudgetsViewModel::class.java) -> BudgetsViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) -> ProfileViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(PrivacyNoticeViewModel::class.java) -> PrivacyNoticeViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(HelpEducationViewModel::class.java) -> HelpEducationViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(SettingsViewModel::class.java) -> SettingsViewModel(tokenStorage, onThemeChanged, financialRepository) as T
+            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+        }
+    }
 }
 
 @Composable
@@ -79,15 +104,19 @@ fun MainAppShell(
         )
     }
 
-    val summaryViewModel: FinancialSummaryViewModel = viewModel { FinancialSummaryViewModel(financialRepository) }
-    val movementsViewModel: MovementsListViewModel = viewModel { MovementsListViewModel(financialRepository) }
-    val recurringViewModel: RecurringPaymentsViewModel = viewModel { RecurringPaymentsViewModel(financialRepository) }
-    val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
-    val budgetsViewModel: BudgetsViewModel = viewModel { BudgetsViewModel(financialRepository) }
-    val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(SharedTokenStorage.instance, onThemeChanged, financialRepository) }
-    val privacyViewModel: PrivacyNoticeViewModel = viewModel { PrivacyNoticeViewModel(financialRepository) }
-    val helpViewModel: HelpEducationViewModel = viewModel { HelpEducationViewModel(financialRepository) }
+    val factory = remember {
+        FinancialViewModelFactory(financialRepository, SharedTokenStorage.instance, onThemeChanged)
+    }
+
+    val summaryViewModel: FinancialSummaryViewModel = viewModel(factory = factory)
+    val movementsViewModel: MovementsListViewModel = viewModel(factory = factory)
+    val recurringViewModel: RecurringPaymentsViewModel = viewModel(factory = factory)
+    val goalsViewModel: GoalsViewModel = viewModel(factory = factory)
+    val budgetsViewModel: BudgetsViewModel = viewModel(factory = factory)
+    val profileViewModel: ProfileViewModel = viewModel(factory = factory)
+    val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+    val privacyViewModel: PrivacyNoticeViewModel = viewModel(factory = factory)
+    val helpViewModel: HelpEducationViewModel = viewModel(factory = factory)
 
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
@@ -98,6 +127,19 @@ fun MainAppShell(
     val settingsState by settingsViewModel.uiState.collectAsState()
     val privacyState by privacyViewModel.uiState.collectAsState()
     val helpState by helpViewModel.uiState.collectAsState()
+
+    // Refresh data whenever tab changes
+    LaunchedEffect(selectedTab) {
+        when (selectedTab) {
+            MainTab.Summary -> {}
+            MainTab.Movements -> movementsViewModel.onIntent(MovementsListIntent.LoadMovements)
+            MainTab.Recurring -> recurringViewModel.onIntent(RecurringPaymentsIntent.LoadPayments)
+            MainTab.Goals -> goalsViewModel.onIntent(GoalsIntent.LoadGoals)
+            MainTab.Budgets -> budgetsViewModel.loadBudgets()
+            MainTab.Profile -> profileViewModel.loadProfile()
+            MainTab.Settings -> {}
+        }
+    }
 
     // Initialize switch state
     LaunchedEffect(isDarkTheme) {
