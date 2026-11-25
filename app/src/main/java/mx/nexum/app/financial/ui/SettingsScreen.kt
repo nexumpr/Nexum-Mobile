@@ -252,7 +252,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Account Actions (Logout & E014 Delete Account) Card
+            // Account Actions (Logout, Active Sessions E008/E009 & Delete Account E014) Card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -271,6 +271,18 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
+
+                    // Active Sessions Button (E008/E009)
+                    Button(
+                        onClick = { onIntent(SettingsIntent.NavigateToActiveSessions) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("📱 Dispositivos y Sesiones Activas (E008/E009)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                    }
 
                     OutlinedButton(
                         onClick = { onIntent(SettingsIntent.Logout) },

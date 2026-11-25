@@ -39,9 +39,18 @@ import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import mx.nexum.app.auth.data.AuthRepositoryImpl
+import mx.nexum.app.auth.data.RetrofitAuthRepositoryApi
 import mx.nexum.app.auth.data.SharedTokenStorage
 import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.auth.data.network.NetworkModule
+import mx.nexum.app.auth.ui.ActiveSessionsScreen
+import mx.nexum.app.auth.ui.ConfirmEmailVerificationIntent
+import mx.nexum.app.auth.ui.ConfirmEmailVerificationScreen
+import mx.nexum.app.auth.ui.ConfirmEmailVerificationViewModel
+import mx.nexum.app.auth.ui.EmailVerificationViewModel
+import mx.nexum.app.auth.ui.SessionsIntent
+import mx.nexum.app.auth.ui.SessionsViewModel
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
 import androidx.compose.ui.unit.dp
@@ -87,7 +96,7 @@ fun MainAppShell(
     onLogout: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
-    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy" or "help"
+    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email"
 
     BackHandler(enabled = activeOverlay != null || selectedTab != MainTab.Summary) {
         if (activeOverlay != null) {
@@ -95,6 +104,13 @@ fun MainAppShell(
         } else if (selectedTab != MainTab.Summary) {
             selectedTab = MainTab.Summary
         }
+    }
+
+    val authRepository = remember {
+        AuthRepositoryImpl(
+            RetrofitAuthRepositoryApi(),
+            SharedTokenStorage.instance
+        )
     }
 
     val financialRepository = remember {
@@ -118,6 +134,10 @@ fun MainAppShell(
     val privacyViewModel: PrivacyNoticeViewModel = viewModel(factory = factory)
     val helpViewModel: HelpEducationViewModel = viewModel(factory = factory)
 
+    val sessionsViewModel: SessionsViewModel = viewModel { SessionsViewModel(authRepository) }
+    val emailVerificationViewModel: EmailVerificationViewModel = viewModel { EmailVerificationViewModel(authRepository, SharedTokenStorage.instance) }
+    val confirmEmailVerificationViewModel: ConfirmEmailVerificationViewModel = viewModel { ConfirmEmailVerificationViewModel(authRepository, SharedTokenStorage.instance) }
+
     val summaryState by summaryViewModel.uiState.collectAsState()
     val movementsState by movementsViewModel.uiState.collectAsState()
     val recurringState by recurringViewModel.uiState.collectAsState()
@@ -127,6 +147,10 @@ fun MainAppShell(
     val settingsState by settingsViewModel.uiState.collectAsState()
     val privacyState by privacyViewModel.uiState.collectAsState()
     val helpState by helpViewModel.uiState.collectAsState()
+
+    val sessionsState by sessionsViewModel.state.collectAsState()
+    val emailVerificationState by emailVerificationViewModel.uiState.collectAsState()
+    val confirmEmailState by confirmEmailVerificationViewModel.state.collectAsState()
 
     // Refresh data whenever tab changes
     LaunchedEffect(selectedTab) {
@@ -152,6 +176,10 @@ fun MainAppShell(
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
+                SettingsEffect.NavigateToActiveSessions -> {
+                    sessionsViewModel.onIntent(SessionsIntent.LoadSessions)
+                    activeOverlay = "sessions"
+                }
                 else -> {}
             }
         }
@@ -212,7 +240,13 @@ fun MainAppShell(
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
                 MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
-                MainTab.Profile -> ProfileScreen(state = profileState, onIntent = profileViewModel::onIntent)
+                MainTab.Profile -> ProfileScreen(
+                    state = profileState,
+                    onIntent = profileViewModel::onIntent,
+                    emailVerificationState = emailVerificationState,
+                    onEmailVerificationIntent = emailVerificationViewModel::onIntent,
+                    onNavigateToConfirmEmail = { activeOverlay = "confirm_email" }
+                )
                 MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
             }
 
@@ -221,16 +255,35 @@ fun MainAppShell(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(600.dp),
+                            .height(650.dp),
                         shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.surface
                     ) {
                         Column(modifier = Modifier.fillMaxSize()) {
                             Box(modifier = Modifier.weight(1f)) {
-                                if (activeOverlay == "privacy") {
-                                    PrivacyNoticeScreen(state = privacyState, onIntent = privacyViewModel::onIntent)
-                                } else if (activeOverlay == "help") {
-                                    HelpEducationScreen(state = helpState)
+                                when (activeOverlay) {
+                                    "privacy" -> PrivacyNoticeScreen(state = privacyState, onIntent = privacyViewModel::onIntent)
+                                    "help" -> HelpEducationScreen(state = helpState)
+                                    "sessions" -> ActiveSessionsScreen(
+                                        state = sessionsState,
+                                        onIntent = { intent ->
+                                            if (intent is SessionsIntent.NavigateBack) {
+                                                activeOverlay = null
+                                            } else {
+                                                sessionsViewModel.onIntent(intent)
+                                            }
+                                        }
+                                    )
+                                    "confirm_email" -> ConfirmEmailVerificationScreen(
+                                        state = confirmEmailState,
+                                        onIntent = { intent ->
+                                            when (intent) {
+                                                is ConfirmEmailVerificationIntent.NavigateToLogin -> activeOverlay = null
+                                                is ConfirmEmailVerificationIntent.NavigateToRequestVerification -> activeOverlay = null
+                                                else -> confirmEmailVerificationViewModel.onIntent(intent)
+                                            }
+                                        }
+                                    )
                                 }
                             }
                             TextButton(

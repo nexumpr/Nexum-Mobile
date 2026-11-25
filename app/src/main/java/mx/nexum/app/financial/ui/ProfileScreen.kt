@@ -30,13 +30,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.nexum.app.auth.ui.EmailVerificationIntent
+import mx.nexum.app.auth.ui.EmailVerificationRequestScreen
+import mx.nexum.app.auth.ui.EmailVerificationUiState
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
 fun ProfileScreen(
     state: ProfileUiState,
     onIntent: (ProfileIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    emailVerificationState: EmailVerificationUiState = EmailVerificationUiState(userEmail = state.email, isEmailVerified = state.emailVerified),
+    onEmailVerificationIntent: (EmailVerificationIntent) -> Unit = {},
+    onNavigateToConfirmEmail: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
@@ -101,6 +107,17 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Email Verification Card (E010/E011) if not verified
+            if (!state.emailVerified) {
+                EmailVerificationRequestScreen(
+                    state = emailVerificationState.copy(userEmail = state.email, isEmailVerified = state.emailVerified),
+                    onIntent = onEmailVerificationIntent,
+                    onNavigateToConfirmVerification = onNavigateToConfirmEmail,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),

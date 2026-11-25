@@ -1,21 +1,24 @@
-# Walkthrough — Edición y Baja Lógica de Pagos Recurrentes (Endpoints E035 y E036)
+# Walkthrough — Integración de Sesiones Activas (E008/E009) y Verificación de Correo (E010/E011)
 
-He completado la implementación de los controles de **Edición** (`PATCH /recurring-payments/{id}` E035) y **Desactivación / Baja Lógica** (`DELETE /recurring-payments/{id}` E036) para la pantalla de Pagos Recurrentes.
+He completado la interconexión completa de los flujos de **Dispositivos y Sesiones Activas (E008/E009)** y **Verificación de Correo (E010/E011)** dentro de la interfaz principal de la aplicación.
 
 ## Cambios Realizados
 
-### Módulo Financiero de Pagos Recurrentes (`mx.nexum.app.financial.ui`, `data`)
+### 1. Gestión de Dispositivos y Sesiones Activas (`E008/E009`)
 
-#### [MODIFY] [RecurringPaymentsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt)
-- Incorporada la intención `EditPayment(paymentId, name, amount, nextDueDate, version)` invocando `updateRecurringPaymentOleada2` con la cabecera de versión `If-Match: "v$version"`.
+#### [MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt)
+- Añadido el botón **"📱 Dispositivos y Sesiones Activas (E008/E009)"** en la tarjeta de Sesión y Cuenta de Usuario de Ajustes.
+- Al presionarlo, dispara `SettingsIntent.NavigateToActiveSessions`.
 
-#### [MODIFY] [RecurringPaymentsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsScreen.kt)
-- Añadido el botón de **Lápiz / Editar (✎)** en cada tarjeta de pago recurrente.
-- Creado el **Diálogo Modal de Edición (E035)** precargado con el nombre, monto y fecha de próximo vencimiento actual.
-- Creado el **Diálogo Modal de Confirmación de Desactivación (E036)** al presionar el botón `×` para evitar borrados accidentales.
+### 2. Verificación e Ingreso de Código de Correo (`E010/E011`)
 
-#### [MODIFY] [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt), [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
-- Conectado el endpoint `updateRecurringPaymentOleada2` enviando la cabecera `If-Match` para concurrencia optimista.
+#### [MODIFY] [ProfileScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileScreen.kt)
+- Integrado el componente `EmailVerificationRequestScreen` cuando `emailVerified == false` directamente en el perfil.
+- Permite al usuario solicitar la generación del código de verificación (E010) y abrir el formulario modal para pegar el código (E011).
+
+#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
+- Conectados los viewmodels `SessionsViewModel`, `EmailVerificationViewModel` y `ConfirmEmailVerificationViewModel` compartiendo la sesión activa en `SharedTokenStorage.instance`.
+- Agregados los diálogos modales para renderizar `ActiveSessionsScreen` y `ConfirmEmailVerificationScreen` dinámicamente.
 
 ---
 
