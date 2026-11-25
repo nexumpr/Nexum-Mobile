@@ -39,9 +39,8 @@ class BudgetsViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<BudgetsUiState, BudgetsIntent, BudgetsEffect>(BudgetsUiState()) {
 
-    init {
-        onIntent(BudgetsIntent.LoadBudgets)
-    }
+    var isLoaded = false
+        private set
 
     override fun onIntent(intent: BudgetsIntent) {
         when (intent) {
@@ -54,7 +53,8 @@ class BudgetsViewModel(
         }
     }
 
-    private fun loadBudgets() {
+    fun loadBudgets() {
+        isLoaded = true
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
             val usageResult = financialRepository.getBudgetUsage(currentState.period)

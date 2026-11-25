@@ -38,9 +38,8 @@ class ProfileViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<ProfileUiState, ProfileIntent, ProfileEffect>(ProfileUiState()) {
 
-    init {
-        onIntent(ProfileIntent.LoadProfile)
-    }
+    var isLoaded = false
+        private set
 
     override fun onIntent(intent: ProfileIntent) {
         when (intent) {
@@ -52,7 +51,8 @@ class ProfileViewModel(
         }
     }
 
-    private fun loadProfile() {
+    fun loadProfile() {
+        isLoaded = true
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
             val profileResult = financialRepository.getUserProfile()

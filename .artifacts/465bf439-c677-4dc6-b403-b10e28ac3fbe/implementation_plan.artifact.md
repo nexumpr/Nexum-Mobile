@@ -1,42 +1,90 @@
-# Plan de Integración Real del Endpoint de Login (E002)
+# Plan de Implementación — Nexum Mobile (Oleada 3 / Endpoints E020, E026, E037, E042–E051)
 
-Migrar el inicio de sesión (`Login`) de un entorno simulado (`MockAuthApi`) a una integración HTTP real consumiendo el endpoint **NEXUM-E002** (`POST /api/v1/auth/login`) en `https://d2lpmqy5w6x9es.cloudfront.net/api/v1/auth/login`, conforme a las especificaciones de payload, metadatos Android y manejo de errores HTTP (400, 401, 429, 500, 503).
+Integrar los **13 endpoints de la Oleada 3** publicados en el backend de producción AWS (`https://d2lpmqy5w6x9es.cloudfront.net/api/v1/`) para completar los módulos de **Dashboard, Presupuestos, Aportaciones a Metas, Eliminación de Metas, Pagos Recurrentes y Exportación de Datos**.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> Este cambio reemplaza la fuente simulada de login por llamadas HTTP reales a CloudFront, manteniendo la arquitectura MVI y el almacenamiento en `TokenStorage`.
+> - **URL de Producción:** Se utiliza la URL oficial de CloudFront `https://d2lpmqy5w6x9es.cloudfront.net/api/v1/`.
+> - **Manejo de Dinero:** Todos los importes financieros se procesan estrictamente como cadenas decimales (`"250.00"`) con 2 decimales en moneda `MXN` usando `BigDecimal` / `String`, sin usar `Float`/`Double`.
+> - **Idempotencia:** Operaciones mutativas (`POST goal-contributions`, `POST reverse`, `POST recurring-payments/payments`) envían `Idempotency-Key` (UUID aleatorio de 16–128 caracteres) reutilizado intacto en reintentos.
+> - **Concurrencia Optimista:** `PUT /budgets` exige el encabezado `If-Match` con el `ETag` exacto obtenido en `GET /budgets`.
+> - **Respuesta HTTP 204:** `DELETE /goals/{goalId}` responde HTTP 204 sin cuerpo JSON.
 
-- Se requiere verificar el manejo correcto de códigos de error HTTP estándar (`400`, `401`, `429`, `500`, `503`) parseando el cuerpo de error JSON `ApiErrorResponse`.
-
-## Open Questions
-
-- Ninguna pregunta pendiente; los contratos y códigos de error están definidos en el requerimiento.
+---
 
 ## Proposed Changes
 
-### Módulo de Autenticación (`mx.nexum.app.auth`)
+### Capa de Datos (`mx.nexum.app.financial.data`)
 
-#### [MODIFY] [AuthDtos.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/data/dto/AuthDtos.kt)
-- Añadir DTOs para `LoginRequestDto`, `LoginResponseDto`, `LoginUserDto`, `SessionIdDto`, `OnboardingConfigDto` y DTOs de error estándar (`ApiErrorResponse`, `ApiErrorPayload`).
+#### [MODIFY] [FinancialDtos.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt)
+- Ajustar y verificar la precisión de los DTOs para los 13 endpoints de Oleada 3:
+  - **E020:** `UserExportResponse` (`profile`, `exportedAt`, `movements`, `goals`, `consents`, `income`, `recurringPayments`, `contributions`, `budgets`, `onboarding`, `preferences`, `nextCursor`).
+  - **E026:** `FinancialSummaryOleada3Dto` (`period`, `currency`, `income`, `expenses`, `savings`, `net`, `asOf`).
+  - **E037:** `RecurringPaymentRecordPaymentRequest` (`paidAt`, `amount`, `currency`).
+  - **E043 & E044:** `ContributionPreviewRequest`, `ContributionPreviewResponse` (`remaining`, `canCommit`), `ContributionCreateRequest`, `GoalAllocationDto`.
+  - **E045 & E046 & E047:** `ContributionDto`, `PageOfContributionResponse`, `ReverseContributionRequest`.
+  - **E048 & E049 & E050:** `BudgetDto`, `PageOfBudgetResponse`, `BudgetReplaceRequest`, `BudgetUsageDto`, `PageOfBudgetUsageResponse`.
+  - **E051:** `DashboardResponse` (`summary`, `goals`, `latestMovements`, `asOf`).
 
-#### [MODIFY] [AuthApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/data/network/AuthApiService.kt)
-- Añadir el método `@POST("auth/login")` para consumir el endpoint E002.
+#### [MODIFY] [FinancialApiService.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt)
+- Declarar y verificar los 13 métodos Retrofit:
+  - `@GET("users/me/export")` `exportUserData(@Query("limit") limit: Int?, @Query("cursor") cursor: String?)`
+  - `@GET("financial-summary")` `getFinancialSummaryOleada3(@Query("period") period: String?)`
+  - `@POST("recurring-payments/{id}/payments")` `recordRecurringPaymentPayment(@Path("id") id: String, @Header("Idempotency-Key") key: String, @Body body: RecurringPaymentRecordPaymentRequest)`
+  - `@DELETE("goals/{goalId}")` `deleteGoal(@Path("goalId") goalId: String): Response<Unit>`
+  - `@POST("goal-contributions/preview")` `previewContribution(@Body body: ContributionPreviewRequest)`
+  - `@POST("goal-contributions")` `createContribution(@Header("Idempotency-Key") key: String, @Body body: ContributionCreateRequest)`
+  - `@GET("goal-contributions")` `getContributions(@Query("limit") limit: Int?, @Query("cursor") cursor: String?, ...)`
+  - `@GET("goal-contributions/{id}")` `getContributionDetail(@Path("id") id: String)`
+  - `@POST("goal-contributions/{id}/reverse")` `reverseContribution(@Path("id") id: String, @Header("Idempotency-Key") key: String, @Body body: ReverseContributionRequest)`
+  - `@GET("budgets")` `getBudgets(@Query("period") period: String?): Response<PageOfBudgetResponse>`
+  - `@PUT("budgets")` `replaceBudgets(@Header("If-Match") ifMatch: String, @Body body: BudgetReplaceRequest): Response<PageOfBudgetResponse>`
+  - `@GET("budgets/usage")` `getBudgetsUsage(@Query("period") period: String?)`
+  - `@GET("dashboard")` `getDashboard(@Query("period") period: String?)`
 
-#### [NEW] [RetrofitAuthApi.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/data/RetrofitAuthApi.kt)
-- Implementar `AuthApi` usando `AuthApiService`, realizando el mapeo de errores HTTP (`401`, `429`, `500`, etc.) a `AuthApiException` con `AuthErrorKind` correspondiente (`INVALID_CREDENTIALS`, `RATE_LIMITED`, `NETWORK`, `UNKNOWN`).
+#### [MODIFY] [FinancialRepository.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt)
+- Implementar los 13 métodos correspondientes en `FinancialRepositoryImpl` garantizando:
+  - Inyección del token Bearer desde `TokenStorage`.
+  - Captura del header `ETag` en `getBudgets()` y paso en `replaceBudgets()`.
+  - Manejo de `Response<Unit>` 204 para `deleteGoal()`.
+  - Captura e interpretación de `ErrorEnvelope` con `toFinancialError()` para errores en pantalla.
 
-#### [MODIFY] [AuthFlow.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/AuthFlow.kt)
-- Actualizar `AuthFlowViewModel` para instanciar `AuthRepositoryImpl` utilizando `RetrofitAuthApi` (manteniendo `MockAuthApi` en pruebas unitarias).
+---
 
-#### [MODIFY] [LoginViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/auth/ui/LoginViewModel.kt)
-- Incluir opcionalmente `deviceId` ("installation-<uuid>") y `platform` ("android") en el request de login conforme a los metadatos especificados.
+### Capa MVI y UI (`mx.nexum.app.financial.ui`)
 
-## Verification Plan
+#### [NEW / MODIFY] [Dashboard & Resumen]
+- **`FinancialSummaryViewModel.kt` / `FinancialSummaryScreen.kt`:** Conectar `getDashboard` (E051) y `getFinancialSummaryOleada3` (E026) para presentar ingresos, egresos, ahorro transferido y saldo neto.
 
-### Automated Tests
-- Ejecutar `./gradlew testDebugUnitTest` para verificar que las pruebas existentes y nuevas pasen correctamente con el repositorio y el manejo de errores HTTP.
-- Ejecutar `./gradlew assembleDebug` para validar que el proyecto compila sin errores.
+#### [NEW / MODIFY] [Presupuestos]
+- **`BudgetsViewModel.kt` / `BudgetsScreen.kt`:**
+  - Consulta de presupuestos (E048) reteniendo el `ETag`.
+  - Consulta de uso real por categoría (E050) con barras de progreso.
+  - Diálogo de edición/reemplazo completo (E049) enviando el `If-Match`.
 
-### Manual Verification
-- Compilar y desplegar en emulador/dispositivo para comprobar el flujo de inicio de sesión contra el servidor real o verificar la correcta construcción del request y manejo de errores.
+#### [NEW / MODIFY] [Metas y Aportaciones]
+- **`GoalsViewModel.kt` / `GoalsScreen.kt`:**
+  - Eliminación de metas (E042).
+  - Modal de Aportación: Previsualizar reparto (E043) con validación de `canCommit` y `remaining == 0.00`, y confirmación con `Idempotency-Key` (E044).
+  - Historial de aportaciones (E045), detalle (E046) y diálogo para Revertir aportación (E047) enviando motivo e `Idempotency-Key`.
+
+#### [MODIFY] [Pagos Recurrentes]
+- **`RecurringPaymentsViewModel.kt` / `RecurringPaymentsScreen.kt`:**
+  - Integrar el registro de pago real (E037) con `Idempotency-Key`.
+
+#### [MODIFY] [Perfil y Ajustes]
+- **`SettingsViewModel.kt` / `SettingsScreen.kt` / `ProfileScreen.kt`:**
+  - Botón "Exportar Mis Datos" (E020) con paginación por cursor.
+
+---
+
+## Plan de Verificación
+
+### Pruebas Automatizadas
+- Compilación completa: `./gradlew assembleDebug`
+- Pruebas unitarias de repositorios, DTOs y ViewModels MVI: `./gradlew testDebugUnitTest`
+- Análisis estático: `./gradlew lintDebug`
+
+### Verificación Manual
+- Probar el flujo completo en emulador/dispositivo contra el servidor de producción CloudFront (`d2lpmqy5w6x9es.cloudfront.net`).

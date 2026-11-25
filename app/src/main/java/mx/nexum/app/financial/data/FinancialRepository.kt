@@ -650,14 +650,14 @@ class FinancialRepositoryImpl(
         is CancellationException -> throw this
         is retrofit2.HttpException -> {
             val errorBody = response()?.errorBody()?.string()
-            val message = try {
+            val errorMessage = try {
                 val json = com.google.gson.JsonParser.parseString(errorBody).asJsonObject
                 json.getAsJsonObject("error")?.get("message")?.asString ?: "Error del servidor (${code()})"
             } catch (_: Exception) {
                 "Error HTTP ${code()}: ${message()}"
             }
-            AuthError(AuthErrorKind.UNKNOWN, message, retryable = code() >= 500)
+            AuthError(AuthErrorKind.UNKNOWN, errorMessage, retryable = code() >= 500)
         }
-        else -> AuthError(AuthErrorKind.UNKNOWN, message ?: "Error de red: ${localizedMessage ?: "desconocido"}", retryable = true)
+        else -> AuthError(AuthErrorKind.UNKNOWN, "Error de red: ${localizedMessage ?: "desconocido"}", retryable = true)
     }
 }

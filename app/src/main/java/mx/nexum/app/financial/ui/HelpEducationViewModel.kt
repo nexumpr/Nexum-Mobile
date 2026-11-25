@@ -32,9 +32,8 @@ class HelpEducationViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<HelpEducationUiState, HelpEducationIntent, HelpEducationEffect>(HelpEducationUiState()) {
 
-    init {
-        onIntent(HelpEducationIntent.LoadHelpData)
-    }
+    var isLoaded = false
+        private set
 
     override fun onIntent(intent: HelpEducationIntent) {
         when (intent) {
@@ -43,6 +42,7 @@ class HelpEducationViewModel(
     }
 
     private fun loadData() {
+        isLoaded = true
         viewModelScope.launch {
             setState { copy(isLoading = true, errorMessage = null) }
             val faqResult = financialRepository.getFaq()

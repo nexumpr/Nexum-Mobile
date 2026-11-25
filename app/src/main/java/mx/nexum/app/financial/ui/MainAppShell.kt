@@ -37,7 +37,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.lifecycle.viewmodel.compose.viewModel
-import mx.nexum.app.auth.data.InMemoryTokenStorage
+import mx.nexum.app.auth.data.SharedTokenStorage
 import mx.nexum.app.auth.data.network.NetworkModule
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
@@ -75,7 +75,7 @@ fun MainAppShell(
     val financialRepository = remember {
         FinancialRepository.create(
             NetworkModule.retrofit.create(FinancialApiService::class.java),
-            InMemoryTokenStorage()
+            SharedTokenStorage.instance
         )
     }
 
@@ -85,7 +85,7 @@ fun MainAppShell(
     val goalsViewModel: GoalsViewModel = viewModel { GoalsViewModel(financialRepository) }
     val budgetsViewModel: BudgetsViewModel = viewModel { BudgetsViewModel(financialRepository) }
     val profileViewModel: ProfileViewModel = viewModel { ProfileViewModel(financialRepository) }
-    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(InMemoryTokenStorage(), onThemeChanged, financialRepository) }
+    val settingsViewModel: SettingsViewModel = viewModel { SettingsViewModel(SharedTokenStorage.instance, onThemeChanged, financialRepository) }
     val privacyViewModel: PrivacyNoticeViewModel = viewModel { PrivacyNoticeViewModel(financialRepository) }
     val helpViewModel: HelpEducationViewModel = viewModel { HelpEducationViewModel(financialRepository) }
 
