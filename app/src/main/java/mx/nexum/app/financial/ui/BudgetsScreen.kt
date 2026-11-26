@@ -1,5 +1,6 @@
 package mx.nexum.app.financial.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -209,20 +210,44 @@ fun BudgetsScreen(
 private fun BudgetUsageCard(usage: BudgetUsageDto) {
     val used = usage.usedAmount.toDoubleOrNull() ?: 0.0
     val limit = usage.limitAmount.toDoubleOrNull() ?: 1.0
-    val progress = (used / limit).toFloat().coerceIn(0f, 1f)
-    val displayPercent = (progress * 100).toInt()
+    val isExceeded = used > limit
+    val rawProgress = if (limit > 0) (used / limit).toFloat() else 0f
+    val progress = rawProgress.coerceIn(0f, 1f)
+    val displayPercent = (rawProgress * 100).toInt()
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-        tonalElevation = 4.dp
+        color = if (isExceeded) {
+            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.85f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        },
+        border = if (isExceeded) BorderStroke(2.dp, MaterialTheme.colorScheme.error) else null,
+        tonalElevation = 6.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            if (isExceeded) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                ) {
+                    Text(
+                        text = "⚠️ ¡PRESUPUESTO EXCEDIDO EN $${String.format(java.util.Locale.US, "%.2f", used - limit)} MXN!",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -231,12 +256,12 @@ private fun BudgetUsageCard(usage: BudgetUsageDto) {
                 Text(
                     text = usage.categoryId.uppercase(),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (isExceeded) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "$displayPercent%",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = if (progress >= 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    color = if (isExceeded || progress >= 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -246,7 +271,7 @@ private fun BudgetUsageCard(usage: BudgetUsageDto) {
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp)),
-                color = if (progress >= 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                color = if (isExceeded || progress >= 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -256,13 +281,13 @@ private fun BudgetUsageCard(usage: BudgetUsageDto) {
             ) {
                 Text(
                     text = "Usado: $${usage.usedAmount}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = if (isExceeded) FontWeight.Bold else FontWeight.Normal),
+                    color = if (isExceeded) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Límite: $${usage.limitAmount}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isExceeded) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
