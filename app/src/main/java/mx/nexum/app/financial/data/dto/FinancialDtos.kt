@@ -469,3 +469,181 @@ data class DashboardResponse(
     @SerializedName("latestMovements") val latestMovements: List<MovementOleada2Dto>,
     @SerializedName("asOf") val asOf: String
 )
+
+// Oleadas 4 & 5 DTOs (E021, E052–E067, E072–E075)
+
+// E052: Insights
+data class InsightDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("explanation") val explanation: String,
+    @SerializedName("period") val period: String,
+    @SerializedName("evidenceCount") val evidenceCount: Int,
+    @SerializedName("modelVersion") val modelVersion: String
+)
+
+data class PageOfInsightResponse(
+    @SerializedName("items") val items: List<InsightDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null,
+    @SerializedName("enoughData") val enoughData: Boolean = true,
+    @SerializedName("minimumSamples") val minimumSamples: Int = 1
+)
+
+// E053: Category Analytics
+data class CategoryAnalyticDto(
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("period") val period: String,
+    @SerializedName("amount") val amount: String,
+    @SerializedName("currency") val currency: String = "MXN",
+    @SerializedName("percentage") val percentage: Int
+)
+
+data class PageOfCategoryAnalyticResponse(
+    @SerializedName("items") val items: List<CategoryAnalyticDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+// E054: Spending Patterns
+data class SpendingPatternDto(
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("description") val description: String,
+    @SerializedName("sampleSize") val sampleSize: Int,
+    @SerializedName("period") val period: String
+)
+
+data class PageOfSpendingPatternResponse(
+    @SerializedName("items") val items: List<SpendingPatternDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+// E055: Recommendations
+data class RecommendationDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("reason") val reason: String,
+    @SerializedName("disclaimer") val disclaimer: String,
+    @SerializedName("modelVersion") val modelVersion: String
+)
+
+data class PageOfRecommendationResponse(
+    @SerializedName("items") val items: List<RecommendationDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null,
+    @SerializedName("hasEnoughData") val hasEnoughData: Boolean = true
+)
+
+// E056: Savings Streak
+data class SavingsStreakDto(
+    @SerializedName("days") val days: Int,
+    @SerializedName("timezone") val timezone: String,
+    @SerializedName("asOfDate") val asOfDate: String
+)
+
+// E057 & E058: Notification Preferences
+data class NotificationPreferencesDto(
+    @SerializedName("pushEnabled") val pushEnabled: Boolean,
+    @SerializedName("emailEnabled") val emailEnabled: Boolean,
+    @SerializedName("reminderEnabled") val reminderEnabled: Boolean,
+    @SerializedName("version") val version: Int,
+    @SerializedName("budgetAlerts") val budgetAlerts: Boolean = true,
+    @SerializedName("goalUpdates") val goalUpdates: Boolean = true,
+    @SerializedName("recurringReminders") val recurringReminders: Boolean = true,
+    @SerializedName("streakReminders") val streakReminders: Boolean = false,
+    @SerializedName("timeZone") val timeZone: String? = null
+)
+
+data class UpdateNotificationPreferencesRequest(
+    @SerializedName("pushEnabled") val pushEnabled: Boolean,
+    @SerializedName("emailEnabled") val emailEnabled: Boolean,
+    @SerializedName("reminderEnabled") val reminderEnabled: Boolean,
+    @SerializedName("budgetAlerts") val budgetAlerts: Boolean = true,
+    @SerializedName("goalUpdates") val goalUpdates: Boolean = true,
+    @SerializedName("recurringReminders") val recurringReminders: Boolean = true,
+    @SerializedName("streakReminders") val streakReminders: Boolean = false,
+    @SerializedName("timeZone") val timeZone: String? = null
+)
+
+// E059: FCM Push Token Register
+data class PushTokenRegisterRequest(
+    @SerializedName("provider") val provider: String = "fcm",
+    @SerializedName("token") val token: String,
+    @SerializedName("deviceLabel") val deviceLabel: String = "Android"
+)
+
+data class PushDeviceResponse(
+    @SerializedName("id") val id: String,
+    @SerializedName("provider") val provider: String,
+    @SerializedName("deviceLabel") val deviceLabel: String,
+    @SerializedName("registeredAt") val registeredAt: String
+)
+
+// E061: Notifications
+data class NotificationDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("message") val message: String,
+    @SerializedName("isRead") val isRead: Boolean,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("unreadCount") val unreadCount: Int? = null
+)
+
+data class PageOfNotificationResponse(
+    @SerializedName("items") val items: List<NotificationDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null,
+    @SerializedName("unreadCount") val unreadCount: Int = 0
+)
+
+// E064-E067: Reminders
+data class ReminderDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("dueAt") val dueAt: String,
+    @SerializedName("timezone") val timezone: String,
+    @SerializedName("active") val active: Boolean,
+    @SerializedName("version") val version: Int,
+    @SerializedName("frequency") val frequency: String? = null
+)
+
+data class PageOfReminderResponse(
+    @SerializedName("items") val items: List<ReminderDto>,
+    @SerializedName("nextCursor") val nextCursor: String? = null
+)
+
+data class CreateReminderRequest(
+    @SerializedName("title") val title: String,
+    @SerializedName("dueAt") val dueAt: String,
+    @SerializedName("timezone") val timezone: String,
+    @SerializedName("frequency") val frequency: String? = null
+)
+
+data class UpdateReminderRequest(
+    @SerializedName("title") val title: String? = null,
+    @SerializedName("dueAt") val dueAt: String? = null,
+    @SerializedName("active") val active: Boolean? = null,
+    @SerializedName("frequency") val frequency: String? = null
+)
+
+// E072 & E073: Health
+data class HealthDto(
+    @SerializedName("status") val status: String,
+    @SerializedName("service") val service: String,
+    @SerializedName("timestamp") val timestamp: String
+)
+
+// E074: Demo Bootstrap
+data class DemoBootstrapResponse(
+    @SerializedName("enabled") val enabled: Boolean,
+    @SerializedName("scope") val scope: String
+)
+
+// E075: Voice Assistant Parse
+data class VoiceParseRequest(
+    @SerializedName("text") val text: String,
+    @SerializedName("locale") val locale: String = "es-MX"
+)
+
+data class VoiceParseResponse(
+    @SerializedName("intent") val intent: String,
+    @SerializedName("requiresConfirmation") val requiresConfirmation: Boolean,
+    @SerializedName("parsedAmount") val parsedAmount: String,
+    @SerializedName("currency") val currency: String = "MXN"
+)

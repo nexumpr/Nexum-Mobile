@@ -21,9 +21,11 @@ import mx.nexum.app.financial.data.dto.CreateMovementOleada2Request
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.CreateReminderRequest
 import mx.nexum.app.financial.data.dto.DashboardResponse
 import mx.nexum.app.financial.data.dto.DeleteAccountRequest
 import mx.nexum.app.financial.data.dto.DeleteAccountResponse
+import mx.nexum.app.financial.data.dto.DemoBootstrapResponse
 import mx.nexum.app.financial.data.dto.EducationTipDto
 import mx.nexum.app.financial.data.dto.FaqItemDto
 import mx.nexum.app.financial.data.dto.FinancialSummaryOleada3Dto
@@ -32,31 +34,48 @@ import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalAllocationDto
 import mx.nexum.app.financial.data.dto.GoalDto
 import mx.nexum.app.financial.data.dto.GoalOleada2Dto
+import mx.nexum.app.financial.data.dto.HealthDto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
 import mx.nexum.app.financial.data.dto.MovementOleada2Dto
+import mx.nexum.app.financial.data.dto.NotificationDto
+import mx.nexum.app.financial.data.dto.NotificationPreferencesDto
 import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetResponse
 import mx.nexum.app.financial.data.dto.PageOfBudgetUsageResponse
+import mx.nexum.app.financial.data.dto.PageOfCategoryAnalyticResponse
 import mx.nexum.app.financial.data.dto.PageOfContributionResponse
+import mx.nexum.app.financial.data.dto.PageOfInsightResponse
+import mx.nexum.app.financial.data.dto.PageOfNotificationResponse
+import mx.nexum.app.financial.data.dto.PageOfRecommendationResponse
+import mx.nexum.app.financial.data.dto.PageOfReminderResponse
+import mx.nexum.app.financial.data.dto.PageOfSpendingPatternResponse
 import mx.nexum.app.financial.data.dto.PreferencesDto
 import mx.nexum.app.financial.data.dto.PrivacyNoticeDto
+import mx.nexum.app.financial.data.dto.PushDeviceResponse
+import mx.nexum.app.financial.data.dto.PushTokenRegisterRequest
 import mx.nexum.app.financial.data.dto.RecordConsentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
 import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.financial.data.dto.RecurringPaymentRecordPaymentRequest
+import mx.nexum.app.financial.data.dto.ReminderDto
 import mx.nexum.app.financial.data.dto.ReverseContributionRequest
+import mx.nexum.app.financial.data.dto.SavingsStreakDto
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
+import mx.nexum.app.financial.data.dto.UpdateNotificationPreferencesRequest
 import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
 import mx.nexum.app.financial.data.dto.UpdatePreferencesRequest
 import mx.nexum.app.financial.data.dto.UpdateProfileRequest
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.UpdateReminderRequest
 import mx.nexum.app.financial.data.dto.UserExportResponse
 import mx.nexum.app.financial.data.dto.UserProfileDto
+import mx.nexum.app.financial.data.dto.VoiceParseRequest
+import mx.nexum.app.financial.data.dto.VoiceParseResponse
 import mx.nexum.app.financial.data.network.FinancialApiService
 import java.util.UUID
 
@@ -123,6 +142,28 @@ interface FinancialRepository {
     suspend fun replaceBudgets(period: String, currency: String = "MXN", budgets: List<BudgetReplaceItemDto>, ifMatch: String): AuthResult<Pair<PageOfBudgetResponse, String?>>
     suspend fun getBudgetUsage(period: String? = null): AuthResult<PageOfBudgetUsageResponse>
     suspend fun getDashboard(period: String? = null): AuthResult<DashboardResponse>
+
+    // Oleadas 4 & 5 Methods (E021, E052–E067, E072–E075)
+    suspend fun getInsights(period: String? = null): AuthResult<PageOfInsightResponse>
+    suspend fun getCategoryAnalytics(period: String? = null): AuthResult<PageOfCategoryAnalyticResponse>
+    suspend fun getSpendingPatterns(period: String? = null): AuthResult<PageOfSpendingPatternResponse>
+    suspend fun getRecommendations(period: String? = null): AuthResult<PageOfRecommendationResponse>
+    suspend fun getSavingsStreak(): AuthResult<SavingsStreakDto>
+    suspend fun getNotificationPreferences(): AuthResult<NotificationPreferencesDto>
+    suspend fun updateNotificationPreferences(request: UpdateNotificationPreferencesRequest, ifMatch: String? = null): AuthResult<NotificationPreferencesDto>
+    suspend fun registerPushToken(token: String, deviceLabel: String = "Android", idempotencyKey: String? = null): AuthResult<PushDeviceResponse>
+    suspend fun deletePushToken(deviceRegistrationId: String): AuthResult<Unit>
+    suspend fun getNotifications(limit: Int? = null, cursor: String? = null, isRead: Boolean? = null, type: String? = null): AuthResult<PageOfNotificationResponse>
+    suspend fun markNotificationRead(notificationId: String): AuthResult<NotificationDto>
+    suspend fun markAllNotificationsRead(): AuthResult<Unit>
+    suspend fun getReminders(limit: Int? = null, cursor: String? = null, active: Boolean? = null): AuthResult<PageOfReminderResponse>
+    suspend fun createReminder(title: String, dueAt: String, timezone: String = "America/Mexico_City", frequency: String? = null, idempotencyKey: String? = null): AuthResult<ReminderDto>
+    suspend fun updateReminder(reminderId: String, ifMatch: String, title: String? = null, dueAt: String? = null, active: Boolean? = null, frequency: String? = null): AuthResult<ReminderDto>
+    suspend fun deleteReminder(reminderId: String): AuthResult<Unit>
+    suspend fun getHealthLive(): AuthResult<HealthDto>
+    suspend fun getHealthReady(): AuthResult<HealthDto>
+    suspend fun getDemoBootstrap(): AuthResult<DemoBootstrapResponse>
+    suspend fun parseVoice(text: String, locale: String = "es-MX"): AuthResult<VoiceParseResponse>
 
     companion object {
         @Suppress("unused")
@@ -659,6 +700,192 @@ class FinancialRepositoryImpl(
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
             val response = api.getDashboard("Bearer $token", period)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    // Oleadas 4 & 5 Implementation (E021, E052–E067, E072–E075)
+
+    override suspend fun getInsights(period: String?): AuthResult<PageOfInsightResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getInsights("Bearer $token", period)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getCategoryAnalytics(period: String?): AuthResult<PageOfCategoryAnalyticResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getCategoryAnalytics("Bearer $token", period)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getSpendingPatterns(period: String?): AuthResult<PageOfSpendingPatternResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getSpendingPatterns("Bearer $token", period)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getRecommendations(period: String?): AuthResult<PageOfRecommendationResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getRecommendations("Bearer $token", period)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getSavingsStreak(): AuthResult<SavingsStreakDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getSavingsStreak("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getNotificationPreferences(): AuthResult<NotificationPreferencesDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getNotificationPreferences("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun updateNotificationPreferences(request: UpdateNotificationPreferencesRequest, ifMatch: String?): AuthResult<NotificationPreferencesDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.updateNotificationPreferences("Bearer $token", ifMatch, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun registerPushToken(token: String, deviceLabel: String, idempotencyKey: String?): AuthResult<PushDeviceResponse> =
+        try {
+            val authToken = tokenStorage.current()?.accessToken ?: ""
+            val key = idempotencyKey ?: ("android-fcm-" + UUID.randomUUID().toString())
+            val request = PushTokenRegisterRequest(token = token, deviceLabel = deviceLabel)
+            val response = api.registerPushToken("Bearer $authToken", key, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun deletePushToken(deviceRegistrationId: String): AuthResult<Unit> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            api.deletePushToken("Bearer $token", deviceRegistrationId)
+            AuthResult.Success(Unit)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getNotifications(limit: Int?, cursor: String?, isRead: Boolean?, type: String?): AuthResult<PageOfNotificationResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getNotifications("Bearer $token", limit, cursor, isRead, type)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun markNotificationRead(notificationId: String): AuthResult<NotificationDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.markNotificationRead("Bearer $token", notificationId)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun markAllNotificationsRead(): AuthResult<Unit> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            api.markAllNotificationsRead("Bearer $token")
+            AuthResult.Success(Unit)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getReminders(limit: Int?, cursor: String?, active: Boolean?): AuthResult<PageOfReminderResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getReminders("Bearer $token", limit, cursor, active)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun createReminder(title: String, dueAt: String, timezone: String, frequency: String?, idempotencyKey: String?): AuthResult<ReminderDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val key = idempotencyKey ?: ("android-rem-" + UUID.randomUUID().toString())
+            val request = CreateReminderRequest(title, dueAt, timezone, frequency)
+            val response = api.createReminder("Bearer $token", key, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun updateReminder(reminderId: String, ifMatch: String, title: String?, dueAt: String?, active: Boolean?, frequency: String?): AuthResult<ReminderDto> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = UpdateReminderRequest(title, dueAt, active, frequency)
+            val response = api.updateReminder("Bearer $token", ifMatch, reminderId, request)
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun deleteReminder(reminderId: String): AuthResult<Unit> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            api.deleteReminder("Bearer $token", reminderId)
+            AuthResult.Success(Unit)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getHealthLive(): AuthResult<HealthDto> =
+        try {
+            val response = api.getHealthLive()
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getHealthReady(): AuthResult<HealthDto> =
+        try {
+            val response = api.getHealthReady()
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun getDemoBootstrap(): AuthResult<DemoBootstrapResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val response = api.getDemoBootstrap("Bearer $token")
+            AuthResult.Success(response)
+        } catch (error: Throwable) {
+            AuthResult.Failure(error.toFinancialError())
+        }
+
+    override suspend fun parseVoice(text: String, locale: String): AuthResult<VoiceParseResponse> =
+        try {
+            val token = tokenStorage.current()?.accessToken ?: ""
+            val request = VoiceParseRequest(text, locale)
+            val response = api.parseVoice("Bearer $token", request)
             AuthResult.Success(response)
         } catch (error: Throwable) {
             AuthResult.Failure(error.toFinancialError())
