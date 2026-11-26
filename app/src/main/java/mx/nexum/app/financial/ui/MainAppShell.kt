@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -106,7 +107,7 @@ fun MainAppShell(
     onLogout: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
-    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email", "notifications", "reminders", "voice"
+    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email", "notifications", "reminders", "voice", "export"
     val scope = rememberCoroutineScope()
 
     BackHandler(enabled = activeOverlay != null || selectedTab != MainTab.Summary) {
@@ -194,10 +195,23 @@ fun MainAppShell(
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
+                SettingsEffect.NavigateToExport -> {
+                    profileViewModel.onIntent(ProfileIntent.OpenExport)
+                    activeOverlay = "export"
+                }
                 SettingsEffect.NavigateToActiveSessions -> {
                     sessionsViewModel.onIntent(SessionsIntent.LoadSessions)
                     activeOverlay = "sessions"
                 }
+                else -> {}
+            }
+        }
+    }
+
+    LaunchedEffect(profileViewModel) {
+        profileViewModel.effects.collect { effect ->
+            when (effect) {
+                ProfileEffect.OpenExportOverlay -> activeOverlay = "export"
                 else -> {}
             }
         }
@@ -314,6 +328,12 @@ fun MainAppShell(
                                     "help" -> HelpEducationScreen(state = helpState)
                                     "notifications" -> NotificationsScreen(state = notificationsState, onIntent = notificationsViewModel::onIntent)
                                     "reminders" -> RemindersScreen(state = remindersState, onIntent = remindersViewModel::onIntent)
+                                    "export" -> ExportDataDialog(
+                                        onDismiss = { activeOverlay = null },
+                                        exportData = profileState.exportData,
+                                        isLoading = profileState.isExportLoading,
+                                        errorMessage = profileState.exportError
+                                    )
                                     "sessions" -> ActiveSessionsScreen(
                                         state = sessionsState,
                                         onIntent = { intent ->
@@ -357,7 +377,7 @@ fun MainAppShell(
                                     )
                                 }
                             }
-                            if (activeOverlay != "voice") {
+                            if (activeOverlay != "voice" && activeOverlay != "export") {
                                 TextButton(
                                     onClick = { activeOverlay = null },
                                     modifier = Modifier

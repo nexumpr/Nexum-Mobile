@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -104,6 +105,17 @@ fun ProfileScreen(
                     MetadataRow(label = "Fecha de Alta", value = if (state.createdAt.length >= 10) state.createdAt.take(10) else "—")
                     MetadataRow(label = "Versión del Perfil", value = "v${state.profileVersion}")
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Export My Data Button (E020)
+            OutlinedButton(
+                onClick = { onIntent(ProfileIntent.OpenExport) },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("📥 Exportar Mis Datos (E020)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(modifier = Modifier.height(16.dp))

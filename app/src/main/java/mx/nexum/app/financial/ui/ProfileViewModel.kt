@@ -8,6 +8,7 @@ import mx.nexum.app.core.mvi.UiEffect
 import mx.nexum.app.core.mvi.UiIntent
 import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
+import mx.nexum.app.financial.data.dto.UserExportResponse
 
 data class ProfileUiState(
     val userId: String = "",
@@ -18,6 +19,9 @@ data class ProfileUiState(
     val profileVersion: Int = 1,
     val language: String = "es",
     val timezone: String = "America/Mexico_City",
+    val exportData: UserExportResponse? = null,
+    val isExportLoading: Boolean = false,
+    val exportError: String? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null
@@ -29,11 +33,13 @@ sealed interface ProfileIntent : UiIntent {
     data class LanguageChanged(val value: String) : ProfileIntent
     data class TimezoneChanged(val value: String) : ProfileIntent
     data object SubmitUpdate : ProfileIntent
+    data object OpenExport : ProfileIntent
 }
 
 @Suppress("unused")
 sealed interface ProfileEffect : UiEffect {
     data class ShowToast(val message: String) : ProfileEffect
+    data object OpenExportOverlay : ProfileEffect
 }
 
 @Suppress("unused")
@@ -51,6 +57,10 @@ class ProfileViewModel(
             is ProfileIntent.LanguageChanged -> setState { copy(language = intent.value, errorMessage = null) }
             is ProfileIntent.TimezoneChanged -> setState { copy(timezone = intent.value, errorMessage = null) }
             ProfileIntent.SubmitUpdate -> updateProfile()
+            ProfileIntent.OpenExport -> {
+                loadExportData()
+                emitEffect(ProfileEffect.OpenExportOverlay)
+            }
         }
     }
 
@@ -86,6 +96,20 @@ class ProfileViewModel(
                         language = prefResult.data.language ?: "es",
                         timezone = prefResult.data.timezone ?: "America/Mexico_City"
                     )
+                }
+            }
+        }
+    }
+
+    private fun loadExportData() {
+        viewModelScope.launch {
+            setState { copy(isExportLoading = true, exportError = null) }
+            when (val result = financialRepository.getUserExport()) {
+                is AuthResult.Success -> {
+                    setState { copy(isExportLoading = false, exportData = result.data) }
+                }
+                is AuthResult.Failure -> {
+                    setState { copy(isExportLoading = false, exportError = result.error.message) }
                 }
             }
         }

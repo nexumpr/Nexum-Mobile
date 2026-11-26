@@ -85,36 +85,43 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Theme Switcher Card
+            // Theme Switcher & Demo Mode Card (E074)
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                 tonalElevation = 8.dp
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Apariencia Aero",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (state.isDarkTheme) "Modo Oscuro Cyber" else "Modo Claro Luminoso",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Apariencia Aero",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (state.isDarkTheme) "Modo Oscuro Cyber" else "Modo Claro Luminoso",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = state.isDarkTheme,
+                            onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) }
                         )
                     }
-                    Switch(
-                        checked = state.isDarkTheme,
-                        onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "🧪 Modo Sandbox / Demostrativo (E074): ${state.demoScope.uppercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
@@ -252,7 +259,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Account Actions (Logout, Active Sessions E008/E009 & Delete Account E014) Card
+            // Account Actions (Logout, Active Sessions E008/E009, Export E020 & Delete Account E014) Card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -282,6 +289,17 @@ fun SettingsScreen(
                             .height(48.dp)
                     ) {
                         Text("📱 Dispositivos y Sesiones Activas (E008/E009)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                    }
+
+                    // Export My Data Button (E020)
+                    OutlinedButton(
+                        onClick = { onIntent(SettingsIntent.OpenExport) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("📥 Exportar Mis Datos (E020)", fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(
