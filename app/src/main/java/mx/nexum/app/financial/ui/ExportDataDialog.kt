@@ -1,7 +1,12 @@
 package mx.nexum.app.financial.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,14 +17,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.google.gson.Gson
 import mx.nexum.app.financial.data.dto.UserExportResponse
 
 @Composable
@@ -29,6 +37,8 @@ fun ExportDataDialog(
     isLoading: Boolean,
     errorMessage: String?
 ) {
+    val context = LocalContext.current
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -95,8 +105,23 @@ fun ExportDataDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cerrar")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (exportData != null) {
+                    OutlinedButton(
+                        onClick = {
+                            val jsonString = Gson().toJson(exportData)
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Nexum Export JSON", jsonString)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Respaldo JSON copiado al portapapeles.", Toast.LENGTH_SHORT).show()
+                        }
+                    ) {
+                        Text("📋 Copiar JSON", fontWeight = FontWeight.Bold)
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Cerrar")
+                }
             }
         }
     )

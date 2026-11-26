@@ -1,6 +1,11 @@
 package mx.nexum.app.financial.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,13 +14,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,21 +41,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
@@ -266,21 +270,29 @@ fun MainAppShell(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (selectedTab) {
-                MainTab.Summary -> FinancialSummaryScreen(state = summaryState)
-                MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
-                MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
-                MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
-                MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
-                MainTab.Analytics -> AnalyticsScreen(state = analyticsState, onIntent = analyticsViewModel::onIntent)
-                MainTab.Profile -> ProfileScreen(
-                    state = profileState,
-                    onIntent = profileViewModel::onIntent,
-                    emailVerificationState = emailVerificationState,
-                    onEmailVerificationIntent = emailVerificationViewModel::onIntent,
-                    onNavigateToConfirmEmail = { activeOverlay = "confirm_email" }
-                )
-                MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(220))
+                },
+                label = "TabTransition"
+            ) { tab ->
+                when (tab) {
+                    MainTab.Summary -> FinancialSummaryScreen(state = summaryState)
+                    MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
+                    MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
+                    MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
+                    MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
+                    MainTab.Analytics -> AnalyticsScreen(state = analyticsState, onIntent = analyticsViewModel::onIntent)
+                    MainTab.Profile -> ProfileScreen(
+                        state = profileState,
+                        onIntent = profileViewModel::onIntent,
+                        emailVerificationState = emailVerificationState,
+                        onEmailVerificationIntent = emailVerificationViewModel::onIntent,
+                        onNavigateToConfirmEmail = { activeOverlay = "confirm_email" }
+                    )
+                    MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
+                }
             }
 
             // Top-right FAB for Notifications & Voice Assistant (E061, E075)
