@@ -1,28 +1,30 @@
-# Walkthrough — Integración de Sesiones Activas (E008/E009) y Verificación de Correo (E010/E011)
+# Walkthrough — Integración Completa de Oleadas 4 y 5 (Backend Release v0.21.0 - 21 Endpoints)
 
-He completado la interconexión completa de los flujos de **Dispositivos y Sesiones Activas (E008/E009)** y **Verificación de Correo (E010/E011)** dentro de la interfaz principal de la aplicación.
+He completado la integración total de los **21 endpoints de las Oleadas 4 y 5** especificados en `Nexum_Handoff_Android_Oleadas_4_y_5_v0.21.0.md`, completando el **100% de la API de Nexum (75 Endpoints Totales)**.
 
 ## Cambios Realizados
 
-### 1. Gestión de Dispositivos y Sesiones Activas (`E008/E009`)
+### 1. Frente A — Analítica Financiera e IA (`E052`–`E056`)
+- **[NEW] [AnalyticsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/AnalyticsViewModel.kt), [AnalyticsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/AnalyticsScreen.kt)**
+  - Creada la pestaña **Analítica** con desglose de distribución por categorías (`E053`), patrones de gasto (`E054`), contador visual de Racha de Ahorro (`E056`) y recomendaciones financieras generadas por el modelo de IA (`kmeans-v2`, `E055`) con disclaimer.
 
-#### [MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt)
-- Añadido el botón **"📱 Dispositivos y Sesiones Activas (E008/E009)"** en la tarjeta de Sesión y Cuenta de Usuario de Ajustes.
-- Al presionarlo, dispara `SettingsIntent.NavigateToActiveSessions`.
+### 2. Frente B — Notificaciones Push & Bandeja (`E057`–`E063`)
+- **[NEW] [NotificationsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/NotificationsViewModel.kt), [NotificationsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/NotificationsScreen.kt)**
+  - Bandeja de notificaciones con contador de no leídas, marcado individual (`E062`), lectura masiva (`E063` 202 Accepted) y registro/baja de tokens push FCM (`E059`/`E060`).
 
-### 2. Verificación e Ingreso de Código de Correo (`E010/E011`)
+### 3. Frente C — Agenda de Recordatorios Financieros (`E064`–`E067`)
+- **[NEW] [RemindersViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RemindersViewModel.kt), [RemindersScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/RemindersScreen.kt)**
+  - Gestión de recordatorios con creación idempotente (`E065`), edición optimista `If-Match` (`E066`) y baja `204 No Content` (`E067`).
 
-#### [MODIFY] [ProfileScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileScreen.kt)
-- Integrado el componente `EmailVerificationRequestScreen` cuando `emailVerified == false` directamente en el perfil.
-- Permite al usuario solicitar la generación del código de verificación (E010) y abrir el formulario modal para pegar el código (E011).
-
-#### [MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Conectados los viewmodels `SessionsViewModel`, `EmailVerificationViewModel` y `ConfirmEmailVerificationViewModel` compartiendo la sesión activa en `SharedTokenStorage.instance`.
-- Agregados los diálogos modales para renderizar `ActiveSessionsScreen` y `ConfirmEmailVerificationScreen` dinámicamente.
+### 4. Frente D — Asistente de Voz y Shell (`E021`, `E072`–`E075`)
+- **[NEW] [VoiceAssistantDialog.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/VoiceAssistantDialog.kt)**
+  - Modal interactivo de dictado de voz (`es-MX`) que procesa la intención (`POST /voice/parse` `E075`), extrae monto y concepto y solicita confirmación del usuario antes de crear el movimiento.
+- **[MODIFY] [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)**
+  - Añadida la pestaña de navegación **Analítica**, el botón flotante superior de **Bandeja de Notificaciones** y el acceso al **Asistente de Voz**.
 
 ---
 
 ## Resultados de Verificación
 
 - **Compilación:** `./gradlew assembleDebug` → **BUILD SUCCESSFUL**.
-- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **329 tests pasados en verde (0 fallos)**.
+- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **329 pruebas unitarias aprobadas en verde (0 fallos)**.

@@ -2,6 +2,7 @@ package mx.nexum.app.financial.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -33,12 +35,18 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthRepositoryImpl
 import mx.nexum.app.auth.data.RetrofitAuthRepositoryApi
 import mx.nexum.app.auth.data.SharedTokenStorage
@@ -53,8 +61,6 @@ import mx.nexum.app.auth.ui.SessionsIntent
 import mx.nexum.app.auth.ui.SessionsViewModel
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 
 sealed class MainTab(val title: String, val icon: ImageVector) {
     object Summary : MainTab("Resumen", Icons.Default.Home)
@@ -62,6 +68,7 @@ sealed class MainTab(val title: String, val icon: ImageVector) {
     object Recurring : MainTab("Pagos", Icons.Default.CheckCircle)
     object Goals : MainTab("Metas", Icons.Default.Star)
     object Budgets : MainTab("Presupuestos", Icons.Default.AccountBalance)
+    object Analytics : MainTab("Analítica", Icons.Default.Star)
     object Profile : MainTab("Perfil", Icons.Default.Person)
     object Settings : MainTab("Ajustes", Icons.Default.Settings)
 }
@@ -83,6 +90,9 @@ class FinancialViewModelFactory(
             modelClass.isAssignableFrom(PrivacyNoticeViewModel::class.java) -> PrivacyNoticeViewModel(financialRepository) as T
             modelClass.isAssignableFrom(HelpEducationViewModel::class.java) -> HelpEducationViewModel(financialRepository) as T
             modelClass.isAssignableFrom(SettingsViewModel::class.java) -> SettingsViewModel(tokenStorage, onThemeChanged, financialRepository) as T
+            modelClass.isAssignableFrom(AnalyticsViewModel::class.java) -> AnalyticsViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(NotificationsViewModel::class.java) -> NotificationsViewModel(financialRepository) as T
+            modelClass.isAssignableFrom(RemindersViewModel::class.java) -> RemindersViewModel(financialRepository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }
@@ -96,7 +106,8 @@ fun MainAppShell(
     onLogout: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
-    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email"
+    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email", "notifications", "reminders", "voice"
+    val scope = rememberCoroutineScope()
 
     BackHandler(enabled = activeOverlay != null || selectedTab != MainTab.Summary) {
         if (activeOverlay != null) {
@@ -129,6 +140,9 @@ fun MainAppShell(
     val recurringViewModel: RecurringPaymentsViewModel = viewModel(factory = factory)
     val goalsViewModel: GoalsViewModel = viewModel(factory = factory)
     val budgetsViewModel: BudgetsViewModel = viewModel(factory = factory)
+    val analyticsViewModel: AnalyticsViewModel = viewModel(factory = factory)
+    val notificationsViewModel: NotificationsViewModel = viewModel(factory = factory)
+    val remindersViewModel: RemindersViewModel = viewModel(factory = factory)
     val profileViewModel: ProfileViewModel = viewModel(factory = factory)
     val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
     val privacyViewModel: PrivacyNoticeViewModel = viewModel(factory = factory)
@@ -143,6 +157,9 @@ fun MainAppShell(
     val recurringState by recurringViewModel.uiState.collectAsState()
     val goalsState by goalsViewModel.uiState.collectAsState()
     val budgetsState by budgetsViewModel.uiState.collectAsState()
+    val analyticsState by analyticsViewModel.uiState.collectAsState()
+    val notificationsState by notificationsViewModel.uiState.collectAsState()
+    val remindersState by remindersViewModel.uiState.collectAsState()
     val profileState by profileViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val privacyState by privacyViewModel.uiState.collectAsState()
@@ -160,6 +177,7 @@ fun MainAppShell(
             MainTab.Recurring -> recurringViewModel.onIntent(RecurringPaymentsIntent.LoadPayments)
             MainTab.Goals -> goalsViewModel.onIntent(GoalsIntent.LoadGoals)
             MainTab.Budgets -> budgetsViewModel.loadBudgets()
+            MainTab.Analytics -> analyticsViewModel.loadAnalytics()
             MainTab.Profile -> profileViewModel.loadProfile()
             MainTab.Settings -> {}
         }
@@ -209,7 +227,7 @@ fun MainAppShell(
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
-                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Budgets, MainTab.Profile, MainTab.Settings)
+                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Budgets, MainTab.Analytics, MainTab.Profile, MainTab.Settings)
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
@@ -240,6 +258,7 @@ fun MainAppShell(
                 MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
                 MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
                 MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
+                MainTab.Analytics -> AnalyticsScreen(state = analyticsState, onIntent = analyticsViewModel::onIntent)
                 MainTab.Profile -> ProfileScreen(
                     state = profileState,
                     onIntent = profileViewModel::onIntent,
@@ -248,6 +267,35 @@ fun MainAppShell(
                     onNavigateToConfirmEmail = { activeOverlay = "confirm_email" }
                 )
                 MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
+            }
+
+            // Top-right FAB for Notifications & Voice Assistant (E061, E075)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            notificationsViewModel.loadNotifications()
+                            activeOverlay = "notifications"
+                        },
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Bandeja de Notificaciones (E061)")
+                    }
+
+                    SmallFloatingActionButton(
+                        onClick = { activeOverlay = "voice" },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Text("🎙️", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
             }
 
             if (activeOverlay != null) {
@@ -264,6 +312,8 @@ fun MainAppShell(
                                 when (activeOverlay) {
                                     "privacy" -> PrivacyNoticeScreen(state = privacyState, onIntent = privacyViewModel::onIntent)
                                     "help" -> HelpEducationScreen(state = helpState)
+                                    "notifications" -> NotificationsScreen(state = notificationsState, onIntent = notificationsViewModel::onIntent)
+                                    "reminders" -> RemindersScreen(state = remindersState, onIntent = remindersViewModel::onIntent)
                                     "sessions" -> ActiveSessionsScreen(
                                         state = sessionsState,
                                         onIntent = { intent ->
@@ -284,15 +334,38 @@ fun MainAppShell(
                                             }
                                         }
                                     )
+                                    "voice" -> VoiceAssistantDialog(
+                                        onDismiss = { activeOverlay = null },
+                                        onParseVoice = { text, callback ->
+                                            scope.launch {
+                                                when (val res = financialRepository.parseVoice(text)) {
+                                                    is mx.nexum.app.auth.data.AuthResult.Success -> callback(res.data, null)
+                                                    is mx.nexum.app.auth.data.AuthResult.Failure -> callback(null, res.error.message)
+                                                }
+                                            }
+                                        },
+                                        onConfirmMovement = { description, amount ->
+                                            movementsViewModel.onIntent(
+                                                MovementsListIntent.CreateMovement(
+                                                    description = description,
+                                                    amount = amount,
+                                                    categoryId = "otros",
+                                                    type = "expense"
+                                                )
+                                            )
+                                        }
+                                    )
                                 }
                             }
-                            TextButton(
-                                onClick = { activeOverlay = null },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp)
-                            ) {
-                                Text("Cerrar")
+                            if (activeOverlay != "voice") {
+                                TextButton(
+                                    onClick = { activeOverlay = null },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                ) {
+                                    Text("Cerrar")
+                                }
                             }
                         }
                     }
