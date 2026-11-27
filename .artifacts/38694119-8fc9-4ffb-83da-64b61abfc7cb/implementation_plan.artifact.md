@@ -1,29 +1,32 @@
-# Plan de Implementación — Unificación Visual Absoluta de Presupuestos, Analítica, Perfil y Ajustes (`SkeuomorphicCard`)
+# Plan de Implementación — Módulo de Aportaciones y Progreso de Metas de Ahorro (Endpoint E044)
 
-Este plan detalla la unificación estricta de las pantallas restantes (**Presupuestos**, **Analítica**, **Perfil** y **Ajustes**) utilizando el componente `SkeuomorphicCard` (chasis de aluminio cepillado y visor LCD empotrado) para lograr una identidad visual 100% uniforme en todo el sistema.
+Este plan detalla la incorporación del flujo de **Aportaciones a Metas de Ahorro (E044 - `POST /goal-contributions`)** en `GoalsScreen.kt` y `GoalsViewModel.kt`, permitiendo al usuario visualizar el detalle de avance y abonar fondos directamente a sus metas activas.
 
 ---
 
 ## User Review Required
 
 > [!IMPORTANT]
-> Revisa la unificación total en Presupuestos, Analítica, Perfil y Ajustes:
+> Revisa las nuevas opciones interactivas para metas de ahorro:
 
-1. **Presupuestos (`BudgetsScreen`):**
-   - Las tarjetas de uso y límite de presupuesto adoptan el chasis metálico hi-fi con visor LCD.
-2. **Analítica e IA (`AnalyticsScreen`):**
-   - Las tarjetas de distribución por categoría y recomendaciones se envuelven en `SkeuomorphicCard`.
-3. **Perfil y Ajustes (`ProfileScreen`, `SettingsScreen`):**
-   - Las tarjetas de identidad, preferencias, tema y seguridad adoptan el acabado metálico esqueumórfico.
+1. **Botón de Aportación en Tarjetas de Meta (`+ $`):**
+   - Cada tarjeta de meta incluye un botón interactivo de aporte económico.
+   - Al presionarlo, abre un diálogo modal para ingresar el monto a abonar (ej. `500.00`).
+2. **Registro Transaccional con E044 (`createGoalContribution`):**
+   - Envía la aportación al backend utilizando el contrato de asignaciones (`GoalAllocationDto`) y clave de idempotencia.
+   - Actualiza automáticamente el progreso en tiempo real al refrescar las metas.
 
 ---
 
 ## Proposed Changes
 
-### Pantallas Restantes (`mx.nexum.app.financial.ui`)
+### Módulo de Metas de Ahorro (`mx.nexum.app.financial.ui`)
 
-#### [MODIFY] [BudgetsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/BudgetsScreen.kt), [AnalyticsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/AnalyticsScreen.kt), [ProfileScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileScreen.kt), [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)
-- Envolver todas las superficies y tarjetas en `SkeuomorphicCard`.
+#### [MODIFY] [GoalsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsViewModel.kt)
+- Añadir la intención `ContributeToGoal(goalId, amount)` invocando `financialRepository.createGoalContribution`.
+
+#### [MODIFY] [GoalsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/GoalsScreen.kt)
+- Añadir el botón de aportación y el diálogo modal para ingresar fondos a una meta específica.
 
 ---
 

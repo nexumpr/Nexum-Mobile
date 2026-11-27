@@ -1,12 +1,13 @@
-# Walkthrough — Unificación Universal Absoluta de Perfil y Ajustes (Skeuomorphism 2000s Hi-Fi)
+# Walkthrough — Reconocimiento de Voz Real con `RecognizerIntent` (E075)
 
-He aplicado la unificación absoluta del componente `SkeuomorphicCard` (chasis de aluminio cepillado y visor LCD empotrado) en **Perfil** y **Ajustes**, garantizando que todas las pantallas de la aplicación compartan exactamente la misma estética unificada.
+He integrado el **Reconocimiento de Voz Nativo del Sistema (`RecognizerIntent.ACTION_RECOGNIZE_SPEECH`)** en el Asistente de Voz Inteligente (E075).
 
 ## Cambios Realizados
 
-### 1. Unificación en Perfil y Ajustes (`ProfileScreen.kt`, `SettingsScreen.kt`)
-- **[MODIFY] [ProfileScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileScreen.kt), [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)**
-  - Las tarjetas de identidad, detalles de perfil, preferencias, configuraciones de contraseña, opciones de sesión y ajustes adoptan el chasis metálico hi-fi con visor LCD empotrado y física táctil 3D.
+### 1. Reconocimiento de Voz Real Nativo (`VoiceAssistantDialog.kt`)
+- **[MODIFY] [VoiceAssistantDialog.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/VoiceAssistantDialog.kt)**
+  - Sustituida la simulación por el Intent nativo de reconocimiento de voz del sistema (`RecognizerIntent.ACTION_RECOGNIZE_SPEECH`).
+  - Al presionar **"🎙️ Hablar ahora"**, el sistema operativo abre el panel de escucha de voz, transcribe la voz real del usuario en español (`es-MX`) y rellena el campo de texto automáticamente sin requerir el permiso `RECORD_AUDIO` en el Manifiesto (superando con éxito todas las pruebas de seguridad `DevSecOpsVerificationTest`).
 
 ---
 

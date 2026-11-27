@@ -1,8 +1,6 @@
-# Task Tracker — Extensión Global Absoluta de la Estética Esqueumórfica
+# Task Tracker — Reconocimiento de Voz Real con `RecognizerIntent`
 
-- [/] **Fase 1: Aplicación de `SkeuomorphicCard` en Login y Registro (`LoginScreen.kt`, `RegisterScreen.kt`)**
-  - [ ] Envolver formularios principales de autenticación en chasis metálico e inset LCD
-- [/] **Fase 2: Aplicación de `SkeuomorphicCard` en Finanzas, Perfil y Ajustes (`RecurringPaymentsScreen.kt`, `GoalsScreen.kt`, `BudgetsScreen.kt`, `ProfileScreen.kt`, `SettingsScreen.kt`)**
-  - [ ] Refactorizar tarjetas de Pagos, Metas, Presupuestos, Perfil y Ajustes
-- [/] **Fase 3: Verificación y Compilación**
+- [/] **Fase 1: Integración de `RecognizerIntent` en `VoiceAssistantDialog.kt`**
+  - [ ] Añadir `ActivityResultContracts.StartActivityForResult()` con `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` para captura de voz real
+- [/] **Fase 2: Verificación y Compilación**
   - [ ] Ejecutar `./gradlew assembleDebug testDebugUnitTest`
