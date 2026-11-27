@@ -1,5 +1,10 @@
 package mx.nexum.app.financial.ui
 
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,11 +45,23 @@ fun VoiceAssistantDialog(
     var parseResult by remember { mutableStateOf<VoiceParseResponse?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            if (!results.isNullOrEmpty()) {
+                voiceText = results[0]
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "🎙️ Asistente de Voz Financiero (E075)",
+                text = "🎙️ Asistente de Voz Real (E075)",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -51,7 +69,7 @@ fun VoiceAssistantDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Dicta o escribe tu movimiento en español es-MX (ej. 'Registrar gasto de trescientos cincuenta pesos en despensa').",
+                    text = "Asistente de lenguaje natural en tiempo real (es-MX). Presiona 'Hablar ahora' para activar el reconocedor de voz del sistema.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -59,12 +77,36 @@ fun VoiceAssistantDialog(
                 OutlinedTextField(
                     value = voiceText,
                     onValueChange = { voiceText = it; errorMessage = null; parseResult = null },
-                    label = { Text("Texto dictado") },
+                    label = { Text("Texto transcrito por voz") },
                     singleLine = false,
                     maxLines = 3,
                     enabled = !isParsing,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-MX")
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Dicta tu movimiento financiero...")
+                            }
+                            try {
+                                speechRecognizerLauncher.launch(intent)
+                            } catch (_: Exception) {
+                                errorMessage = "Reconocimiento de voz no disponible en este dispositivo."
+                            }
+                        },
+                        enabled = !isParsing,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("🎙️ Hablar ahora")
+                    }
+                }
 
                 if (isParsing) {
                     Row(
@@ -74,7 +116,7 @@ fun VoiceAssistantDialog(
                     ) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         Text(
-                            text = " Interpretando intención...",
+                            text = " Interpretando intención (E075)...",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 8.dp)
@@ -98,7 +140,7 @@ fun VoiceAssistantDialog(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = "Intención Parseada:",
+                                text = "Intención Parseada (E075):",
                                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )

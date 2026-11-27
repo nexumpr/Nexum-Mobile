@@ -1,5 +1,6 @@
 package mx.nexum.app.financial.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,23 +51,15 @@ fun SettingsScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Ambient Cyber Glow
-        Box(
-            modifier = Modifier
-                .size(350.dp)
-                .align(Alignment.TopEnd)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            Color.Transparent
-                        )
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1E222B),
+                        Color(0xFF14171E)
                     )
                 )
-        )
-
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -85,36 +77,38 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Theme Switcher Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                tonalElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Apariencia Aero",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (state.isDarkTheme) "Modo Oscuro Cyber" else "Modo Claro Luminoso",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+            // Theme Switcher & Demo Mode Card (E074)
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.primary) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Apariencia Aero",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = if (state.isDarkTheme) "Modo Oscuro Metálico Hi-Fi" else "Modo Claro Luminoso",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = state.isDarkTheme,
+                            onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) }
                         )
                     }
-                    Switch(
-                        checked = state.isDarkTheme,
-                        onCheckedChange = { onIntent(SettingsIntent.ToggleTheme(it)) }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "🧪 Modo Sandbox / Demostrativo (E074): ${state.demoScope.uppercase()}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
@@ -122,22 +116,15 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // Legal & Help Navigation Cards
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                tonalElevation = 8.dp
-            ) {
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.secondary) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
                         text = "Información y Ayuda",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
                     OutlinedButton(
                         onClick = { onIntent(SettingsIntent.OpenPrivacy) },
@@ -159,21 +146,14 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // Change Password Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                tonalElevation = 8.dp
-            ) {
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.tertiary) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "Cambiar Contraseña",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -252,24 +232,17 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Account Actions (Logout, Active Sessions E008/E009 & Delete Account E014) Card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                tonalElevation = 8.dp
-            ) {
+            // Account Actions (Logout, Active Sessions E008/E009, Export E020 & Delete Account E014) Card
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.error) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
                         text = "Sesión y Cuenta de Usuario",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
 
                     // Active Sessions Button (E008/E009)
@@ -282,6 +255,17 @@ fun SettingsScreen(
                             .height(48.dp)
                     ) {
                         Text("📱 Dispositivos y Sesiones Activas (E008/E009)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                    }
+
+                    // Export My Data Button (E020)
+                    OutlinedButton(
+                        onClick = { onIntent(SettingsIntent.OpenExport) },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("📥 Exportar Mis Datos (E020)", fontWeight = FontWeight.Bold)
                     }
 
                     OutlinedButton(

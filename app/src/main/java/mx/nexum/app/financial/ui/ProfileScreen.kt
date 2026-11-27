@@ -17,9 +17,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,23 +47,15 @@ fun ProfileScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Ambient Cyber Glow
-        Box(
-            modifier = Modifier
-                .size(350.dp)
-                .align(Alignment.TopStart)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                            Color.Transparent
-                        )
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1E222B),
+                        Color(0xFF14171E)
                     )
                 )
-        )
-
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -72,7 +64,7 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "PERFIL DE USUARIO DETALLADO",
+                text = "PERFIL DE USUARIO // METADATA",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
@@ -81,17 +73,10 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Metadata card
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                tonalElevation = 4.dp
-            ) {
+            // Metadata card (Skeuomorphic)
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.secondary) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "Detalles de Identidad",
@@ -108,6 +93,17 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Export My Data Button (E020)
+            OutlinedButton(
+                onClick = { onIntent(ProfileIntent.OpenExport) },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("📥 Exportar Mis Datos (E020)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Email Verification Card (E010/E011) if not verified
             if (!state.emailVerified) {
                 EmailVerificationRequestScreen(
@@ -119,21 +115,14 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                tonalElevation = 8.dp
-            ) {
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.primary) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "Configuración y Preferencias",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -233,7 +222,7 @@ private fun MetadataRow(label: String, value: String) {
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
     ) {
         Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface)
+        Text(text = value, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = Color.White)
     }
 }
 

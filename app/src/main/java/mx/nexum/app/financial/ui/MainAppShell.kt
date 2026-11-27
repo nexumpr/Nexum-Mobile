@@ -1,6 +1,11 @@
 package mx.nexum.app.financial.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,12 +14,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,22 +41,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -106,7 +112,7 @@ fun MainAppShell(
     onLogout: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
-    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email", "notifications", "reminders", "voice"
+    var activeOverlay by remember { mutableStateOf<String?>(null) } // "privacy", "help", "sessions", "confirm_email", "notifications", "reminders", "voice", "export"
     val scope = rememberCoroutineScope()
 
     BackHandler(enabled = activeOverlay != null || selectedTab != MainTab.Summary) {
@@ -194,6 +200,10 @@ fun MainAppShell(
                 SettingsEffect.NavigateToLogin -> onLogout()
                 SettingsEffect.NavigateToPrivacy -> activeOverlay = "privacy"
                 SettingsEffect.NavigateToHelp -> activeOverlay = "help"
+                SettingsEffect.NavigateToExport -> {
+                    profileViewModel.onIntent(ProfileIntent.OpenExport)
+                    activeOverlay = "export"
+                }
                 SettingsEffect.NavigateToActiveSessions -> {
                     sessionsViewModel.onIntent(SessionsIntent.LoadSessions)
                     activeOverlay = "sessions"
@@ -203,43 +213,61 @@ fun MainAppShell(
         }
     }
 
+    LaunchedEffect(profileViewModel) {
+        profileViewModel.effects.collect { effect ->
+            when (effect) {
+                ProfileEffect.OpenExportOverlay -> activeOverlay = "export"
+                else -> {}
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier,
         bottomBar = {
             Column {
-                // Neon Top Glow Line
+                // Chrome Metallic Top Bezel Line
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp)
+                        .height(2.dp)
                         .background(
                             Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary,
-                                    Color.Transparent
+                                    Color(0xFF64748B),
+                                    Color(0xFFE2E8F0),
+                                    Color(0xFF64748B)
                                 )
                             )
                         )
                 )
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
+                    containerColor = Color(0xFF141722), // Brushed titanium surface
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    tonalElevation = 12.dp
                 ) {
-                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Budgets, MainTab.Analytics, MainTab.Profile, MainTab.Settings)
+                    val tabs = listOf(
+                        MainTab.Summary,
+                        MainTab.Movements,
+                        MainTab.Recurring,
+                        MainTab.Goals,
+                        MainTab.Budgets,
+                        MainTab.Analytics,
+                        MainTab.Profile,
+                        MainTab.Settings
+                    )
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
-                            label = { Text(tab.title) },
+                            label = { Text(tab.title, style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp)) },
                             selected = selectedTab == tab,
                             onClick = { selectedTab = tab },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                selectedIconColor = Color(0xFF0EA5E9),
+                                unselectedIconColor = Color(0xFF94A3B8),
+                                selectedTextColor = Color(0xFF0EA5E9),
+                                unselectedTextColor = Color(0xFF94A3B8),
+                                indicatorColor = Color(0xFF1E2433) // Physical metallic button bevel
                             )
                         )
                     }
@@ -252,21 +280,29 @@ fun MainAppShell(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (selectedTab) {
-                MainTab.Summary -> FinancialSummaryScreen(state = summaryState)
-                MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
-                MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
-                MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
-                MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
-                MainTab.Analytics -> AnalyticsScreen(state = analyticsState, onIntent = analyticsViewModel::onIntent)
-                MainTab.Profile -> ProfileScreen(
-                    state = profileState,
-                    onIntent = profileViewModel::onIntent,
-                    emailVerificationState = emailVerificationState,
-                    onEmailVerificationIntent = emailVerificationViewModel::onIntent,
-                    onNavigateToConfirmEmail = { activeOverlay = "confirm_email" }
-                )
-                MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(220)) togetherWith fadeOut(animationSpec = tween(220))
+                },
+                label = "TabTransition"
+            ) { tab ->
+                when (tab) {
+                    MainTab.Summary -> FinancialSummaryScreen(state = summaryState)
+                    MainTab.Movements -> MovementsScreen(state = movementsState, onIntent = movementsViewModel::onIntent)
+                    MainTab.Recurring -> RecurringPaymentsScreen(state = recurringState, onIntent = recurringViewModel::onIntent)
+                    MainTab.Goals -> GoalsScreen(state = goalsState, onIntent = goalsViewModel::onIntent)
+                    MainTab.Budgets -> BudgetsScreen(state = budgetsState, onIntent = budgetsViewModel::onIntent)
+                    MainTab.Analytics -> AnalyticsScreen(state = analyticsState, onIntent = analyticsViewModel::onIntent)
+                    MainTab.Profile -> ProfileScreen(
+                        state = profileState,
+                        onIntent = profileViewModel::onIntent,
+                        emailVerificationState = emailVerificationState,
+                        onEmailVerificationIntent = emailVerificationViewModel::onIntent,
+                        onNavigateToConfirmEmail = { activeOverlay = "confirm_email" }
+                    )
+                    MainTab.Settings -> SettingsScreen(state = settingsState, onIntent = settingsViewModel::onIntent)
+                }
             }
 
             // Top-right FAB for Notifications & Voice Assistant (E061, E075)
@@ -314,6 +350,12 @@ fun MainAppShell(
                                     "help" -> HelpEducationScreen(state = helpState)
                                     "notifications" -> NotificationsScreen(state = notificationsState, onIntent = notificationsViewModel::onIntent)
                                     "reminders" -> RemindersScreen(state = remindersState, onIntent = remindersViewModel::onIntent)
+                                    "export" -> ExportDataDialog(
+                                        onDismiss = { activeOverlay = null },
+                                        exportData = profileState.exportData,
+                                        isLoading = profileState.isExportLoading,
+                                        errorMessage = profileState.exportError
+                                    )
                                     "sessions" -> ActiveSessionsScreen(
                                         state = sessionsState,
                                         onIntent = { intent ->
@@ -357,7 +399,7 @@ fun MainAppShell(
                                     )
                                 }
                             }
-                            if (activeOverlay != "voice") {
+                            if (activeOverlay != "voice" && activeOverlay != "export") {
                                 TextButton(
                                     onClick = { activeOverlay = null },
                                     modifier = Modifier

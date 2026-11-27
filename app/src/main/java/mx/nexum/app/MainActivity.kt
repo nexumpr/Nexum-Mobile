@@ -15,12 +15,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val prefs = getSharedPreferences("nexum_theme_prefs", MODE_PRIVATE)
         setContent {
-            var isDarkTheme by remember { mutableStateOf(true) }
+            var isDarkTheme by remember { mutableStateOf(prefs.getBoolean("is_dark_theme", true)) }
             NexumTheme(darkTheme = isDarkTheme) {
                 AuthFlow(
                     isDarkTheme = isDarkTheme,
-                    onThemeChanged = { isDarkTheme = it }
+                    onThemeChanged = { newVal ->
+                        isDarkTheme = newVal
+                        prefs.edit().putBoolean("is_dark_theme", newVal).apply()
+                    }
                 )
             }
         }

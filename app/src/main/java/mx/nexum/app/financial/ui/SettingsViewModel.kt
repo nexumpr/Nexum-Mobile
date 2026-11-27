@@ -16,6 +16,7 @@ data class SettingsUiState(
     val newPassword: String = "",
     val confirmPassword: String = "",
     val isDarkTheme: Boolean = true,
+    val demoScope: String = "sandbox",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null,
@@ -34,6 +35,7 @@ sealed interface SettingsIntent : UiIntent {
     data object SubmitChangePassword : SettingsIntent
     data object OpenPrivacy : SettingsIntent
     data object OpenHelp : SettingsIntent
+    data object OpenExport : SettingsIntent
     data object NavigateToActiveSessions : SettingsIntent
     data object ShowDeleteAccountDialog : SettingsIntent
     data object DismissDeleteAccountDialog : SettingsIntent
@@ -47,6 +49,7 @@ sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
     data object NavigateToPrivacy : SettingsEffect
     data object NavigateToHelp : SettingsEffect
+    data object NavigateToExport : SettingsEffect
     data object NavigateToActiveSessions : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
 }
@@ -57,6 +60,10 @@ class SettingsViewModel(
     private val onThemeChanged: (Boolean) -> Unit = {},
     private val financialRepository: FinancialRepository? = null
 ) : MviViewModel<SettingsUiState, SettingsIntent, SettingsEffect>(SettingsUiState()) {
+
+    init {
+        loadDemoStatus()
+    }
 
     override fun onIntent(intent: SettingsIntent) {
         when (intent) {
@@ -70,6 +77,7 @@ class SettingsViewModel(
             SettingsIntent.SubmitChangePassword -> changePassword()
             SettingsIntent.OpenPrivacy -> emitEffect(SettingsEffect.NavigateToPrivacy)
             SettingsIntent.OpenHelp -> emitEffect(SettingsEffect.NavigateToHelp)
+            SettingsIntent.OpenExport -> emitEffect(SettingsEffect.NavigateToExport)
             SettingsIntent.NavigateToActiveSessions -> emitEffect(SettingsEffect.NavigateToActiveSessions)
             SettingsIntent.ShowDeleteAccountDialog -> setState { copy(showDeleteAccountDialog = true, deleteAccountError = null, deleteAccountPassword = "", deleteAccountConfirmationText = "") }
             SettingsIntent.DismissDeleteAccountDialog -> setState { copy(showDeleteAccountDialog = false) }
@@ -77,6 +85,18 @@ class SettingsViewModel(
             is SettingsIntent.DeleteAccountConfirmationTextChanged -> setState { copy(deleteAccountConfirmationText = intent.v, deleteAccountError = null) }
             SettingsIntent.ConfirmDeleteAccount -> deleteAccount()
             SettingsIntent.Logout -> logout()
+        }
+    }
+
+    private fun loadDemoStatus() {
+        if (financialRepository == null) return
+        viewModelScope.launch {
+            when (val res = financialRepository.getDemoBootstrap()) {
+                is AuthResult.Success -> {
+                    setState { copy(demoScope = res.data.scope) }
+                }
+                is AuthResult.Failure -> {}
+            }
         }
     }
 

@@ -6,22 +6,22 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val AeroFuturisticColorScheme = darkColorScheme(
-    primary = AeroCyan,
-    onPrimary = ObsidianBackground,
-    primaryContainer = AeroCyan.copy(alpha = 0.2f),
-    onPrimaryContainer = AeroCyan,
-    secondary = AeroPurple,
-    onSecondary = TextPrimary,
-    secondaryContainer = AeroPurple.copy(alpha = 0.2f),
-    onSecondaryContainer = AeroPurple,
-    tertiary = AeroGreen,
-    onTertiary = ObsidianBackground,
-    background = ObsidianBackground,
+private val SkeuomorphicColorScheme = darkColorScheme(
+    primary = HifiCyan,
+    onPrimary = TitaniumBackground,
+    primaryContainer = HifiCyan.copy(alpha = 0.25f),
+    onPrimaryContainer = HifiCyan,
+    secondary = HifiAmber,
+    onSecondary = TitaniumBackground,
+    secondaryContainer = HifiAmber.copy(alpha = 0.25f),
+    onSecondaryContainer = HifiAmber,
+    tertiary = HifiGreen,
+    onTertiary = TitaniumBackground,
+    background = TitaniumBackground,
     onBackground = TextPrimary,
-    surface = SurfaceDark,
+    surface = MetallicSurface,
     onSurface = TextPrimary,
-    surfaceVariant = GlassCard,
+    surfaceVariant = MetallicCard,
     onSurfaceVariant = TextSecondary,
     error = NeonError,
     onError = TextPrimary
@@ -36,7 +36,7 @@ private val AeroLightColorScheme = lightColorScheme(
     onSecondary = Color.White,
     secondaryContainer = AeroPurpleDark.copy(alpha = 0.15f),
     onSecondaryContainer = AeroPurpleDark,
-    tertiary = AeroGreen,
+    tertiary = HifiGreen,
     onTertiary = Color.White,
     background = LightBackground,
     onBackground = TextPrimaryLight,
@@ -54,7 +54,7 @@ fun NexumTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) AeroFuturisticColorScheme else AeroLightColorScheme
+    val colorScheme = if (darkTheme) SkeuomorphicColorScheme else AeroLightColorScheme
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

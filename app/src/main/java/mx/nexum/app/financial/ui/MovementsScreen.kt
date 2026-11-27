@@ -68,7 +68,7 @@ fun MovementsScreen(
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                             Color.Transparent
                         )
                     )
@@ -227,16 +227,10 @@ private fun MovementItemCard(
     movement: MovementOleada2Dto,
     onDelete: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-        tonalElevation = 4.dp
-    ) {
+    val accent = if (movement.type == "income") MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
+    SkeuomorphicCard(accentColor = accent) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -244,7 +238,7 @@ private fun MovementItemCard(
                 Text(
                     text = movement.description,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -256,7 +250,7 @@ private fun MovementItemCard(
             Text(
                 text = if (movement.type == "income") "+$${movement.amount}" else "-$${movement.amount}",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (movement.type == "income") MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
+                color = accent
             )
             TextButton(onClick = onDelete) {
                 Text(text = "×", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.headlineMedium)
