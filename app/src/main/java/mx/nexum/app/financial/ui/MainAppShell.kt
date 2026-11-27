@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -225,39 +226,48 @@ fun MainAppShell(
         modifier = modifier,
         bottomBar = {
             Column {
-                // Neon Top Glow Line
+                // Chrome Metallic Top Bezel Line
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp)
+                        .height(2.dp)
                         .background(
                             Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary,
-                                    Color.Transparent
+                                    Color(0xFF64748B),
+                                    Color(0xFFE2E8F0),
+                                    Color(0xFF64748B)
                                 )
                             )
                         )
                 )
                 NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary
+                    containerColor = Color(0xFF141722), // Brushed titanium surface
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    tonalElevation = 12.dp
                 ) {
-                    val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Budgets, MainTab.Analytics, MainTab.Profile, MainTab.Settings)
+                    val tabs = listOf(
+                        MainTab.Summary,
+                        MainTab.Movements,
+                        MainTab.Recurring,
+                        MainTab.Goals,
+                        MainTab.Budgets,
+                        MainTab.Analytics,
+                        MainTab.Profile,
+                        MainTab.Settings
+                    )
                     tabs.forEach { tab ->
                         NavigationBarItem(
                             icon = { Icon(tab.icon, contentDescription = tab.title) },
-                            label = { Text(tab.title) },
+                            label = { Text(tab.title, style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp)) },
                             selected = selectedTab == tab,
                             onClick = { selectedTab = tab },
                             colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.primary,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                selectedTextColor = MaterialTheme.colorScheme.primary,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                selectedIconColor = Color(0xFF0EA5E9),
+                                unselectedIconColor = Color(0xFF94A3B8),
+                                selectedTextColor = Color(0xFF0EA5E9),
+                                unselectedTextColor = Color(0xFF94A3B8),
+                                indicatorColor = Color(0xFF1E2433) // Physical metallic button bevel
                             )
                         )
                     }

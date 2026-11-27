@@ -217,16 +217,9 @@ private fun GoalCard(goal: GoalOleada2Dto) {
     val clampedProgress = rawProgress.coerceIn(0f, 1f)
     val displayPercent = (clampedProgress * 100).toInt()
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-        tonalElevation = 4.dp
-    ) {
+    SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.tertiary) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -236,7 +229,7 @@ private fun GoalCard(goal: GoalOleada2Dto) {
                 Text(
                     text = "🎯 ${goal.name}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Text(
                     text = "$displayPercent%",

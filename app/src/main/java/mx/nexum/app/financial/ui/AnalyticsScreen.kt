@@ -190,13 +190,8 @@ fun AnalyticsScreen(
 @Composable
 private fun CategoryAnalyticCard(category: CategoryAnalyticDto) {
     val progress = (category.percentage / 100f).coerceIn(0f, 1f)
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-        tonalElevation = 4.dp
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.primary) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -204,7 +199,7 @@ private fun CategoryAnalyticCard(category: CategoryAnalyticDto) {
                 Text(
                     text = category.categoryId.uppercase(),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Text(
                     text = "${category.percentage}% ($${category.amount})",
@@ -228,13 +223,8 @@ private fun CategoryAnalyticCard(category: CategoryAnalyticDto) {
 
 @Composable
 private fun RecommendationCard(recommendation: RecommendationDto) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-        tonalElevation = 6.dp
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.secondary) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = recommendation.title,
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
@@ -244,13 +234,13 @@ private fun RecommendationCard(recommendation: RecommendationDto) {
             Text(
                 text = recommendation.reason,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.White
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "💡 ${recommendation.disclaimer}",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

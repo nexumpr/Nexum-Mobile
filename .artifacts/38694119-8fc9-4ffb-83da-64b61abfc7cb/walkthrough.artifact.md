@@ -1,22 +1,12 @@
-# Walkthrough — Cierre Definitivo de Integración (Contrato V6.0.2 / Release v0.21.4 - 75 Endpoints)
+# Walkthrough — Unificación Universal Absoluta de Perfil y Ajustes (Skeuomorphism 2000s Hi-Fi)
 
-He completado el cierre definitivo de integración bajo la norma del **Contrato V6.0.2 / Backend Release v0.21.4**, incorporando las utilidades finales de **Exportación de Datos (E020)**, **Salud del Servidor (E072/E073)** e **Indicador de Modo Demo (E074)**.
+He aplicado la unificación absoluta del componente `SkeuomorphicCard` (chasis de aluminio cepillado y visor LCD empotrado) en **Perfil** y **Ajustes**, garantizando que todas las pantallas de la aplicación compartan exactamente la misma estética unificada.
 
 ## Cambios Realizados
 
-### 1. Exportación de Datos Personales (`E020`)
-- **[NEW] [ExportDataDialog.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ExportDataDialog.kt)**
-  - Diálogo modal para consultar el volcado completo de la cuenta (`GET /users/me/export` E020), desplegando los datos de perfil, movimientos, metas, presupuestos y consentimientos.
+### 1. Unificación en Perfil y Ajustes (`ProfileScreen.kt`, `SettingsScreen.kt`)
 - **[MODIFY] [ProfileScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/ProfileScreen.kt), [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt)**
-  - Añadido el botón **"📥 Exportar Mis Datos (E020)"** en la sección de cuenta de usuario.
-
-### 2. Diagnóstico de Salud de Servidor en AWS (`E072`/`E073`)
-- **[MODIFY] [HelpEducationScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationScreen.kt), [HelpEducationViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt)**
-  - Creada la tarjeta de **"🏥 Estado de Salud del Servidor AWS (E072/E073)"** consultando en tiempo real la vivacidad (`GET /health/live`) y preparación (`GET /health/ready`).
-
-### 3. Modo Demostrativo Sandbox (`E074`)
-- **[MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [SettingsViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsViewModel.kt)**
-  - Añadido el distintivo **"🧪 Modo Sandbox / Demostrativo (E074)"** consultando `GET /demo/bootstrap`.
+  - Las tarjetas de identidad, detalles de perfil, preferencias, configuraciones de contraseña, opciones de sesión y ajustes adoptan el chasis metálico hi-fi con visor LCD empotrado y física táctil 3D.
 
 ---
 
