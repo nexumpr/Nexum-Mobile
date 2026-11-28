@@ -1,7 +1,5 @@
 package mx.nexum.app.financial.ui
 
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthResult
 import mx.nexum.app.core.mvi.MviViewModel
 import mx.nexum.app.core.mvi.UiEffect
@@ -38,6 +36,10 @@ class HelpEducationViewModel(
     var isLoaded = false
         private set
 
+    init {
+        onIntent(HelpEducationIntent.LoadHelpData)
+    }
+
     override fun onIntent(intent: HelpEducationIntent) {
         when (intent) {
             HelpEducationIntent.LoadHelpData -> loadData()
@@ -46,7 +48,16 @@ class HelpEducationViewModel(
 
     private fun loadData() {
         isLoaded = true
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar la ayuda."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             val faqResult = financialRepository.getFaq()
             val tipsResult = financialRepository.getEducationTips()

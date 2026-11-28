@@ -50,6 +50,10 @@ class ProfileViewModel(
     var isLoaded = false
         private set
 
+    init {
+        onIntent(ProfileIntent.LoadProfile)
+    }
+
     override fun onIntent(intent: ProfileIntent) {
         when (intent) {
             ProfileIntent.LoadProfile -> loadProfile()
@@ -66,7 +70,16 @@ class ProfileViewModel(
 
     fun loadProfile() {
         isLoaded = true
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar el perfil."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             val profileResult = financialRepository.getUserProfile()
             val prefResult = financialRepository.getPreferences()
@@ -93,8 +106,8 @@ class ProfileViewModel(
             if (prefResult is AuthResult.Success) {
                 setState {
                     copy(
-                        language = prefResult.data.language ?: "es",
-                        timezone = prefResult.data.timezone ?: "America/Mexico_City"
+                        language = prefResult.data.resolvedLanguage(language),
+                        timezone = prefResult.data.resolvedTimezone(timezone)
                     )
                 }
             }

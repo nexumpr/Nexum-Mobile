@@ -82,7 +82,16 @@ class RecurringPaymentsViewModel(
     }
 
     fun loadPayments() {
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar los pagos recurrentes."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             when (val result = financialRepository.getRecurringPaymentsOleada2()) {
                 is AuthResult.Success -> {

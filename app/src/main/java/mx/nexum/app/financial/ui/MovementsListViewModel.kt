@@ -53,7 +53,16 @@ class MovementsListViewModel(
     }
 
     private fun loadMovements() {
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar los movimientos."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             when (val result = financialRepository.getMovementsOleada2()) {
                 is AuthResult.Success -> {

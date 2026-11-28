@@ -49,7 +49,16 @@ class GoalsViewModel(
     }
 
     private fun loadGoals() {
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar las metas."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             when (val result = financialRepository.getGoalsOleada2()) {
                 is AuthResult.Success -> {

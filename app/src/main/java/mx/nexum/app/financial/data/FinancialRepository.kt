@@ -447,7 +447,7 @@ class FinancialRepositoryImpl(
     override suspend fun updatePreferences(language: String?, timezone: String?, ifMatch: String?): AuthResult<PreferencesDto> =
         try {
             val token = tokenStorage.current()?.accessToken ?: ""
-            val request = UpdatePreferencesRequest(language, timezone)
+            val request = UpdatePreferencesRequest(locale = language, timezone = timezone)
             val response = api.updatePreferences("Bearer $token", ifMatch, request)
             AuthResult.Success(response)
         } catch (error: Throwable) {
