@@ -956,3 +956,60 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
   - `.\gradlew.bat lintDebug --no-daemon` → **BUILD SUCCESSFUL in 4m 5s** · reportes `app/build/reports/lint-results-debug.html` y `.sarif`.
   - Dos ejecuciones intermedias fallaron y fueron corregidas antes de registrar éxito: (1) compilación con `Unresolved reference 'launch'` y fake `AuthApiService` sin `confirmEmailVerification`; (2) 4 pruebas con `UncompletedCoroutinesError` porque el colector de `effects` se lanzó en `TestScope` en lugar de `backgroundScope`. Ningún resultado fallido se documentó como válido.
 - **Riesgos y pendientes:** la invalidación atómica y la persistencia del cambio de correo verificado dependen del backend Go y se consolidan en el siguiente login E002; no se probó contra producción; los tokens y sesiones usados son sintéticos; no se realizaron push, merge, despliegue, llamadas a backend real ni activación de servicios con costo.
+
+## 54. Evidencia — Hotfix de carga segura del Panel Financiero y ruta `financial-summary` (2026-11-28)
+- **Fecha:** 2026-11-28 · **Mandato:** humano autorizó corregir directamente el crash posterior a «Error de red al procesar integración Oleada 1.» al abrir el Panel Financiero, preservando MVI UDF, sin extrapolar a otras unidades.
+- **Diagnóstico (análisis estático, sin logcat real):**
+  - El mensaje rojo provenía de `FinancialRepositoryImpl.getFinancialSummary()` al mapear una excepción de red; no era un error de la Bottom Bar.
+  - `FinancialApiService.getFinancialSummary()` usaba `@GET("summary")`, pero el contrato de integración documentado para E026 es `/api/v1/financial-summary`.
+  - El crash letal ocurría en `ProfileViewModel.loadProfile()`: `PreferencesDto.language` se declaró no-null pero E068 envía `locale`; Gson dejaba `language = null` y `copy(...)` lanzaba `NullPointerException`, cerrando la app.
+  - `MainAppShell` tiene 6 pestañas y 6 ramas de contenido; no hay índices de `NavHost` desincronizados. Se verificó que el fallo no estaba en la navegación inferior.
+- **Decisiones aplicadas:**
+  - `MviViewModel` expone `launchSafely(onError, block)`: propaga `CancellationException` y convierte cualquier otra excepción en estado de error, evitando que una corrutina hija derribe la app.
+  - Las siete cargas iniciales lanzadas por `MainAppShell` usan `launchSafely` con mensajes genéricos en español; no se registran tokens, correos ni datos financieros.
+  - `PreferencesDto` acepta `locale` y `language` legado con defaults nulos y expone `resolvedLanguage(default)` / `resolvedTimezone(default)`; `UpdatePreferencesRequest` envía `locale` según E068.
+  - `FinancialSummaryResponse` acepta nombres E026 (`incomeEquivalent`, `recurringFixedEstimate`, `antExpenses`, `goalReservations`, `availableEstimate`) con defaults `0.0` y `currency` opcional; `oneTimeFixed` queda pendiente de definición de mapeo, no se inventa agregación.
+  - `UserProfileDto` tolera campos ausentes y `displayName`/`name`; `ProfileViewModel` conserva el valor previo cuando el DTO trae nulos.
+- **Alcance ejecutado:**
+  - `app/src/main/java/mx/nexum/app/core/mvi/MviViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt`
+  - `app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt`
+  - `app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/MovementsListViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/GoalsViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/ProfileViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt`
+  - `app/src/test/java/mx/nexum/app/core/mvi/MviCoreTest.kt` (modificado)
+  - `app/src/test/java/mx/nexum/app/financial/data/PreferencesAndSummaryRegressionTest.kt` (creado)
+  - `app/src/test/java/mx/nexum/app/financial/ui/ProfileViewModelRegressionTest.kt` (creado)
+  - El árbol ya estaba sucio con `MainAppShell.kt` (iconos Tabler), `app/build.gradle.kts`, `gradle/libs.versions.toml` y `drawable/nexum_icon.jpeg`; esos cambios preexistentes no se sobrescribieron.
+- **Entorno:** Windows 11 · PowerShell · Android Studio JBR (`JAVA_HOME=C:\Users\demon\AppData\Local\Programs\Android Studio\jbr`) · Kotlin 2.2.10 · Compose Material 3 · Coroutines Test 1.10.1 · Retrofit 2.11.0 · Gson.
+- **Resultados de validación reales:**
+  - `.\gradlew.bat assembleDebug testDebugUnitTest lintDebug` → primera ejecución **FALLIDA** por `PreferencesAndSummaryRegressionTest.financialSummaryAcceptsDocumentedE026FieldNames`: Gson sobrescribía `fixedExpenses` al procesar dos `alternate` (`recurringFixedEstimate` y `oneTimeFixed`). La falla se corrigió antes de registrar éxito, dejando un solo `alternate` por campo.
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL in 1m** · 337/337 tests unitarios (0 fallos, 0 errores) en 40 clases, incluidas las nuevas pruebas de `locale`, DTO y captura segura de excepciones.
+  - `.\gradlew.bat assembleDebug lintDebug` → **BUILD SUCCESSFUL in 3m 24s** · APK debug generado · SARIF con 0 problemas de nivel `error`.
+  - No se ejecutó la app contra backend real ni se capturó logcat; la validación es compilación + suite unitaria + lint.
+- **Riesgos y pendientes:** la revisión local de `specs/380-Resumen-Financiero/spec.md` confirma que `oneTimeFixed` es un importe independiente («obligatorios únicos») y que la fórmula documentada es `availableEstimate = incomeEquivalent - recurringFixedEstimate - oneTimeFixed - antExpenses - goalReservations`; la composición exacta sigue marcada como «por confirmar con Backend». El hotfix no implementó la unidad 380 ni su mapeo completo porque no hubo mandato explícito «implementa specs/380-Resumen-Financiero». El endpoint se alineó al contrato documentado pero no se probó contra el servidor real; no se realizaron push, merge, despliegue ni llamadas a servicios externos.
+
+## 55. Evidencia — Resolución de merge de `origin/main` (Oleada 2 / Play Store) (2026-11-28)
+- **Fecha:** 2026-11-28 · **Mandato:** humano pidió «Resuelve los conflictos conservando toda la funcionalidad de origin/main» y confirmó ejecutar `git add .` tal cual, sin push.
+- **Directiva funcional:** conservar las 8 pestañas de Play Store (`Resumen`, `Movimientos`, `Pagos`, `Metas`, `Presupuestos`, `Analítica`, `Perfil`, `Ajustes`), `AnimatedContent`, campana FCM (E057–E063), asistente de voz (E075), alerta roja de Presupuestos, Analítica IA (E052–E056), Recordatorios (E064–E067), Exportación (E020) y Sandbox (E074); usar iconos Tabler sin etiquetas (`label = null`, `alwaysShowLabel = false`); mantener FAB «+» por pantalla, no añadir uno al shell; blindar cargas iniciales con `launchSafely`.
+- **Conflictos resueltos (6):**
+  - `app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt`: DTOs Oleada 2 de `origin/main` + `UserProfileDto` tolerante a nulos y `displayName`/`name`; `PreferencesDto` con `locale`, `language` legado, `timezone`, `version`, `resolvedLanguage(default)` y `resolvedTimezone(default)`.
+  - `app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt`: 8 `MainTab` con `TablerIcons.Home`, `ArrowsLeftRight`, `CircleCheck`, `Target`, `BuildingBank`, `ChartBar`, `User`, `Settings`; `NavigationBarItem` con icono `Modifier.size(24.dp)` y sin texto; se conservaron overlays, FCM, voz y ramas de contenido de `origin/main`.
+  - `app/src/main/java/mx/nexum/app/financial/ui/ProfileViewModel.kt`: lógica `origin/main` (perfil completo, exportación) + `isLoaded`, `fun loadProfile()` pública, `launchSafely` y preferencias resueltas con `locale ?: language ?: default`.
+  - `app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt`: lógica health/Faq/Tips de `origin/main` + `isLoaded` y `launchSafely`; se conservó `private fun loadData()`.
+  - `app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt`: aviso y consentimientos de `origin/main` + `isLoaded`, `fun loadData()` pública y `launchSafely`.
+  - `app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt`: pagos recurrentes Oleada 2 de `origin/main` + `fun loadPayments()` pública y `launchSafely`.
+- **Correcciones durante la validación:**
+  - `.\gradlew.bat assembleDebug testDebugUnitTest` falló primero en `:app:compileDebugUnitTestKotlin`: `ProfileViewModelRegressionTest.FakeFinancialRepository` no implementaba los 37 métodos nuevos de `FinancialRepository` (Oleada 2/3, Budgets, Analytics, Notificaciones, Recordatorios, Salud, Voz, Exportación). Se añadieron overrides con `NotImplementedError()` y `import mx.nexum.app.financial.data.dto.*`; no se tocaron implementaciones de producción.
+  - La segunda ejecución falló con 2 pruebas de `ProfileViewModelRegressionTest`: `language` quedó `"es"` en vez de `"es-MX"` y `errorMessage` quedó `null`; causa: el merge había eliminado los bloques `init { onIntent(...) }` presentes en la rama hotfix. Se restauraron en `ProfileViewModel.kt`, `HelpEducationViewModel.kt` y `PrivacyNoticeViewModel.kt`; `RecurringPaymentsViewModel.kt` ya conservó su `init` de `origin/main`.
+- **Entorno:** Windows 11 · PowerShell · Android Studio JBR (`JAVA_HOME=C:\Users\demon\AppData\Local\Programs\Android Studio\jbr`) · Kotlin 2.2.10 · Compose Material 3 · Gradle configuration cache reutilizada.
+- **Resultados de validación reales:**
+  - Búsqueda de marcadores `^(<<<<<<<|=======|>>>>>>>)` en `app/src/**/*.{kt,xml}` → **0 coincidencias**; los `=======` en `app/build/outputs/**` y `.opencode/node_modules/**` son falsos positivos generados/no fuente.
+  - `git diff --check` → sin errores de whitespace; único aviso: `LF will be replaced by CRLF` en `ProfileViewModelRegressionTest.kt`.
+  - `.\gradlew.bat assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL in 40s** · APK debug generado · 337/337 tests unitarios (0 fallos, 0 errores) en 41 clases de resultados.
+- **Riesgos y pendientes:** no se ejecutó `lintDebug` en este merge porque la validación acordada fue `assembleDebug` + `testDebugUnitTest`; la lógica nueva de Budgets/Analytics/Notificaciones/Recordatorios se conservó de `origin/main` pero no se probó contra backend real; no se hizo push, despliegue ni activación de servicios con costo. El merge queda pendiente de `git add .` + `git commit --no-edit` tras esta evidencia.

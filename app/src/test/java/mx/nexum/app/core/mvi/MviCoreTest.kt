@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -62,6 +63,18 @@ class MviCoreTest {
                 }
             }
         }
+    }
+
+    class SafeViewModel : MviViewModel<TestState, TestIntent, TestEffect>(TestState()) {
+        var capturedError: Throwable? = null
+
+        fun fail() {
+            launchSafely(onError = { capturedError = it }) {
+                throw IllegalStateException("fallo sintético")
+            }
+        }
+
+        override fun onIntent(intent: TestIntent) = Unit
     }
 
     @Before
@@ -135,6 +148,17 @@ class MviCoreTest {
         assertEquals(TestState(), vm.uiState.value) // El estado permanece inalterado
 
         collectJob.cancel()
+    }
+
+    @Test
+    fun launchSafelyCapturesFailuresWithoutBreakingTheViewModel() = runTest {
+        val vm = SafeViewModel()
+
+        vm.fail()
+
+        assertNotNull(vm.capturedError)
+        assertTrue(vm.capturedError is IllegalStateException)
+        assertEquals(TestState(), vm.uiState.value)
     }
 
     @Test

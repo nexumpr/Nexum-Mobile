@@ -14,15 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -47,10 +41,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowsLeftRight
+import compose.icons.tablericons.BuildingBank
+import compose.icons.tablericons.ChartBar
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.Home
+import compose.icons.tablericons.Settings
+import compose.icons.tablericons.Target
+import compose.icons.tablericons.User
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthRepositoryImpl
@@ -69,14 +71,14 @@ import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.network.FinancialApiService
 
 sealed class MainTab(val title: String, val icon: ImageVector) {
-    object Summary : MainTab("Resumen", Icons.Default.Home)
-    object Movements : MainTab("Movimientos", Icons.Default.List)
-    object Recurring : MainTab("Pagos", Icons.Default.CheckCircle)
-    object Goals : MainTab("Metas", Icons.Default.Star)
-    object Budgets : MainTab("Presupuestos", Icons.Default.AccountBalance)
-    object Analytics : MainTab("Analítica", Icons.Default.Star)
-    object Profile : MainTab("Perfil", Icons.Default.Person)
-    object Settings : MainTab("Ajustes", Icons.Default.Settings)
+    object Summary : MainTab("Resumen", TablerIcons.Home)
+    object Movements : MainTab("Movimientos", TablerIcons.ArrowsLeftRight)
+    object Recurring : MainTab("Pagos", TablerIcons.CircleCheck)
+    object Goals : MainTab("Metas", TablerIcons.Target)
+    object Budgets : MainTab("Presupuestos", TablerIcons.BuildingBank)
+    object Analytics : MainTab("Analítica", TablerIcons.ChartBar)
+    object Profile : MainTab("Perfil", TablerIcons.User)
+    object Settings : MainTab("Ajustes", TablerIcons.Settings)
 }
 
 class FinancialViewModelFactory(
@@ -258,8 +260,15 @@ fun MainAppShell(
                     )
                     tabs.forEach { tab ->
                         NavigationBarItem(
-                            icon = { Icon(tab.icon, contentDescription = tab.title) },
-                            label = { Text(tab.title, style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp)) },
+                            icon = {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = tab.title,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            label = null,
+                            alwaysShowLabel = false,
                             selected = selectedTab == tab,
                             onClick = { selectedTab = tab },
                             colors = NavigationBarItemDefaults.colors(

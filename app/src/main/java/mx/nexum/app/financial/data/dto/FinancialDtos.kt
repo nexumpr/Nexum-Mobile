@@ -54,11 +54,12 @@ data class UpdateIncomeRequest(
 )
 
 data class FinancialSummaryResponse(
-    @SerializedName("income") val income: Double,
-    @SerializedName("fixedExpenses") val fixedExpenses: Double,
-    @SerializedName("variableExpenses") val variableExpenses: Double,
-    @SerializedName("savings") val savings: Double,
-    @SerializedName("available") val available: Double
+    @SerializedName(value = "income", alternate = ["incomeEquivalent"]) val income: Double = 0.0,
+    @SerializedName(value = "fixedExpenses", alternate = ["recurringFixedEstimate"]) val fixedExpenses: Double = 0.0,
+    @SerializedName(value = "variableExpenses", alternate = ["antExpenses"]) val variableExpenses: Double = 0.0,
+    @SerializedName(value = "savings", alternate = ["goalReservations"]) val savings: Double = 0.0,
+    @SerializedName(value = "available", alternate = ["availableEstimate"]) val available: Double = 0.0,
+    @SerializedName("currency") val currency: String? = null
 )
 
 // Units 390, 400, 410, 420, 320: Movements DTOs
@@ -173,12 +174,12 @@ data class UpdateOnboardingRequest(
 
 // Oleada 1 DTOs (E012, E013, E015, E016, E017, E068, E069, E070, E071)
 data class UserProfileDto(
-    @SerializedName("id") val id: String?,
-    @SerializedName("email") val email: String?,
-    @SerializedName("displayName") val displayName: String?,
-    @SerializedName("emailVerified") val emailVerified: Boolean?,
-    @SerializedName("createdAt") val createdAt: String?,
-    @SerializedName("version") val version: Int?
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("email") val email: String? = null,
+    @SerializedName(value = "displayName", alternate = ["name"]) val displayName: String? = null,
+    @SerializedName("emailVerified") val emailVerified: Boolean? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("version") val version: Int? = null
 )
 
 data class UpdateProfileRequest(
@@ -204,13 +205,18 @@ data class RecordConsentRequest(
 )
 
 data class PreferencesDto(
-    @SerializedName("language") val language: String?,
-    @SerializedName("timezone") val timezone: String?,
-    @SerializedName("version") val version: Int?
-)
+    @SerializedName("locale") val locale: String? = null,
+    @SerializedName("language") val language: String? = null,
+    @SerializedName("timezone") val timezone: String? = null,
+    @SerializedName("version") val version: Int? = null
+) {
+    fun resolvedLanguage(default: String): String = locale ?: language ?: default
+
+    fun resolvedTimezone(default: String): String = timezone ?: default
+}
 
 data class UpdatePreferencesRequest(
-    @SerializedName("language") val language: String?,
+    @SerializedName("locale") val locale: String?,
     @SerializedName("timezone") val timezone: String?
 )
 

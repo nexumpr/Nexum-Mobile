@@ -1,7 +1,5 @@
 package mx.nexum.app.financial.ui
 
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
 import mx.nexum.app.auth.data.AuthResult
 import mx.nexum.app.core.mvi.MviViewModel
 import mx.nexum.app.core.mvi.UiEffect
@@ -41,7 +39,16 @@ class FinancialSummaryViewModel(
     }
 
     private fun loadSummary() {
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar el resumen financiero."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             when (val result = financialRepository.getFinancialSummary()) {
                 is AuthResult.Success -> {

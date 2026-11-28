@@ -2,6 +2,8 @@ package mx.nexum.app.core.mvi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +49,21 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(
      */
     protected fun setState(reducer: S.() -> S) {
         _uiState.update { it.reducer() }
+    }
+
+    protected fun launchSafely(
+        onError: (Throwable) -> Unit,
+        block: suspend CoroutineScope.() -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Throwable) {
+                onError(error)
+            }
+        }
     }
 
     /**
