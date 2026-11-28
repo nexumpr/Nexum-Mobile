@@ -8,19 +8,29 @@ import mx.nexum.app.core.mvi.UiEffect
 import mx.nexum.app.core.mvi.UiIntent
 import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
-import mx.nexum.app.financial.data.dto.MovementDto
+import mx.nexum.app.financial.data.dto.CreateMovementOleada2Request
+import mx.nexum.app.financial.data.dto.MovementOleada2Dto
+import java.util.Locale
+import java.util.UUID
 
 data class MovementsListUiState(
-    val movements: List<MovementDto> = emptyList(),
+    val movements: List<MovementOleada2Dto> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) : UiState
 
 sealed interface MovementsListIntent : UiIntent {
     data object LoadMovements : MovementsListIntent
+    data class CreateMovement(
+        val description: String,
+        val amount: String,
+        val categoryId: String,
+        val type: String
+    ) : MovementsListIntent
     data class DeleteMovement(val movementId: String) : MovementsListIntent
 }
 
+@Suppress("unused")
 sealed interface MovementsListEffect : UiEffect {
     data class ShowToast(val message: String) : MovementsListEffect
 }
@@ -37,6 +47,7 @@ class MovementsListViewModel(
     override fun onIntent(intent: MovementsListIntent) {
         when (intent) {
             MovementsListIntent.LoadMovements -> loadMovements()
+            is MovementsListIntent.CreateMovement -> createMovement(intent.description, intent.amount, intent.categoryId, intent.type)
             is MovementsListIntent.DeleteMovement -> deleteMovement(intent.movementId)
         }
     }
@@ -53,7 +64,7 @@ class MovementsListViewModel(
             }
         ) {
             setState { copy(isLoading = true, errorMessage = null) }
-            when (val result = financialRepository.getMovements()) {
+            when (val result = financialRepository.getMovementsOleada2()) {
                 is AuthResult.Success -> {
                     setState { copy(isLoading = false, movements = result.data) }
                 }
@@ -64,9 +75,36 @@ class MovementsListViewModel(
         }
     }
 
+    private fun createMovement(description: String, rawAmount: String, categoryId: String, type: String) {
+        viewModelScope.launch {
+            setState { copy(isLoading = true, errorMessage = null) }
+            val parsedDouble = rawAmount.replace("$", "").trim().toDoubleOrNull() ?: 0.0
+            val formattedAmount = String.format(Locale.US, "%.2f", parsedDouble)
+
+            val request = CreateMovementOleada2Request(
+                type = type,
+                amount = formattedAmount,
+                currency = "MXN",
+                categoryId = categoryId.ifBlank { "otros" },
+                description = description,
+                occurredAt = java.time.Instant.now().toString()
+            )
+            val idempotencyKey = "android-mov-" + UUID.randomUUID().toString()
+            when (val result = financialRepository.createMovementOleada2(request, idempotencyKey)) {
+                is AuthResult.Success -> {
+                    emitEffect(MovementsListEffect.ShowToast("Movimiento registrado en servidor."))
+                    loadMovements()
+                }
+                is AuthResult.Failure -> {
+                    setState { copy(isLoading = false, errorMessage = result.error.message) }
+                }
+            }
+        }
+    }
+
     private fun deleteMovement(movementId: String) {
         viewModelScope.launch {
-            when (val result = financialRepository.deleteMovement(movementId)) {
+            when (val result = financialRepository.deleteMovementOleada2(movementId)) {
                 is AuthResult.Success -> {
                     emitEffect(MovementsListEffect.ShowToast("Movimiento eliminado exitosamente."))
                     loadMovements()

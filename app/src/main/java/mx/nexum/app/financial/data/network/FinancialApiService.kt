@@ -1,36 +1,81 @@
 package mx.nexum.app.financial.data.network
 
 import mx.nexum.app.financial.data.dto.BootstrapResponse
+import mx.nexum.app.financial.data.dto.BudgetReplaceRequest
 import mx.nexum.app.financial.data.dto.CategoryDto
 import mx.nexum.app.financial.data.dto.ConsentItemDto
+import mx.nexum.app.financial.data.dto.ContributionCreateRequest
+import mx.nexum.app.financial.data.dto.ContributionDto
+import mx.nexum.app.financial.data.dto.ContributionPreviewRequest
+import mx.nexum.app.financial.data.dto.ContributionPreviewResponse
+import mx.nexum.app.financial.data.dto.CreateGoalOleada2Request
 import mx.nexum.app.financial.data.dto.CreateGoalRequest
 import mx.nexum.app.financial.data.dto.CreateGoalResponse
+import mx.nexum.app.financial.data.dto.CreateMovementOleada2Request
 import mx.nexum.app.financial.data.dto.CreateMovementRequest
+import mx.nexum.app.financial.data.dto.CreateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.CreateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.CreateReminderRequest
+import mx.nexum.app.financial.data.dto.DashboardResponse
+import mx.nexum.app.financial.data.dto.DeleteAccountRequest
+import mx.nexum.app.financial.data.dto.DeleteAccountResponse
+import mx.nexum.app.financial.data.dto.DemoBootstrapResponse
 import mx.nexum.app.financial.data.dto.EducationTipDto
 import mx.nexum.app.financial.data.dto.FaqItemDto
+import mx.nexum.app.financial.data.dto.FinancialSummaryOleada3Dto
 import mx.nexum.app.financial.data.dto.FinancialSummaryResponse
 import mx.nexum.app.financial.data.dto.FrequencyDto
 import mx.nexum.app.financial.data.dto.GoalDto
+import mx.nexum.app.financial.data.dto.GoalOleada2Dto
+import mx.nexum.app.financial.data.dto.GoalsListResponse
+import mx.nexum.app.financial.data.dto.HealthDto
 import mx.nexum.app.financial.data.dto.IncomeDto
 import mx.nexum.app.financial.data.dto.MovementDto
+import mx.nexum.app.financial.data.dto.MovementOleada2Dto
+import mx.nexum.app.financial.data.dto.MovementsListResponse
+import mx.nexum.app.financial.data.dto.NotificationDto
+import mx.nexum.app.financial.data.dto.NotificationPreferencesDto
 import mx.nexum.app.financial.data.dto.OnboardingStatusResponse
+import mx.nexum.app.financial.data.dto.PageOfBudgetResponse
+import mx.nexum.app.financial.data.dto.PageOfBudgetUsageResponse
+import mx.nexum.app.financial.data.dto.PageOfCategoryAnalyticResponse
+import mx.nexum.app.financial.data.dto.PageOfContributionResponse
+import mx.nexum.app.financial.data.dto.PageOfInsightResponse
+import mx.nexum.app.financial.data.dto.PageOfNotificationResponse
+import mx.nexum.app.financial.data.dto.PageOfRecommendationResponse
+import mx.nexum.app.financial.data.dto.PageOfReminderResponse
+import mx.nexum.app.financial.data.dto.PageOfSpendingPatternResponse
 import mx.nexum.app.financial.data.dto.PreferencesDto
 import mx.nexum.app.financial.data.dto.PrivacyNoticeDto
+import mx.nexum.app.financial.data.dto.PushDeviceResponse
+import mx.nexum.app.financial.data.dto.PushTokenRegisterRequest
 import mx.nexum.app.financial.data.dto.RecordConsentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentRequest
 import mx.nexum.app.financial.data.dto.RecordPaymentResponse
 import mx.nexum.app.financial.data.dto.RecurringPaymentDto
+import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
+import mx.nexum.app.financial.data.dto.RecurringPaymentRecordPaymentRequest
+import mx.nexum.app.financial.data.dto.RecurringPaymentsListResponse
+import mx.nexum.app.financial.data.dto.ReminderDto
+import mx.nexum.app.financial.data.dto.ReverseContributionRequest
+import mx.nexum.app.financial.data.dto.SavingsStreakDto
 import mx.nexum.app.financial.data.dto.UpdateIncomeRequest
 import mx.nexum.app.financial.data.dto.UpdateMovementRequest
+import mx.nexum.app.financial.data.dto.UpdateNotificationPreferencesRequest
 import mx.nexum.app.financial.data.dto.UpdateOnboardingRequest
 import mx.nexum.app.financial.data.dto.UpdatePreferencesRequest
 import mx.nexum.app.financial.data.dto.UpdateProfileRequest
+import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentOleada2Request
 import mx.nexum.app.financial.data.dto.UpdateRecurringPaymentRequest
+import mx.nexum.app.financial.data.dto.UpdateReminderRequest
+import mx.nexum.app.financial.data.dto.UserExportResponse
 import mx.nexum.app.financial.data.dto.UserProfileDto
+import mx.nexum.app.financial.data.dto.VoiceParseRequest
+import mx.nexum.app.financial.data.dto.VoiceParseResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -229,4 +274,294 @@ interface FinancialApiService {
     suspend fun getEducationTips(
         @Query("locale") locale: String? = null
     ): List<EducationTipDto>
+
+    // Oleada 2 (E014, E027–E041)
+    @HTTP(method = "DELETE", path = "users/me", hasBody = true)
+    suspend fun deleteAccount(
+        @Header("Authorization") authorization: String,
+        @Body request: DeleteAccountRequest
+    ): DeleteAccountResponse
+
+    @GET("movements")
+    suspend fun getMovementsOleada2(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("type") type: String? = null,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null
+    ): MovementsListResponse
+
+    @POST("movements")
+    suspend fun createMovementOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateMovementOleada2Request
+    ): MovementOleada2Dto
+
+    @DELETE("movements/{movementId}")
+    suspend fun deleteMovementOleada2(
+        @Header("Authorization") authorization: String,
+        @Path("movementId") movementId: String
+    )
+
+    @GET("recurring-payments")
+    suspend fun getRecurringPaymentsOleada2(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("active") active: Boolean? = null,
+        @Query("type") type: String? = null
+    ): RecurringPaymentsListResponse
+
+    @POST("recurring-payments")
+    suspend fun createRecurringPaymentOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateRecurringPaymentOleada2Request
+    ): RecurringPaymentOleada2Dto
+
+    @PATCH("recurring-payments/{recurringPaymentId}")
+    suspend fun updateRecurringPaymentOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("If-Match") ifMatch: String,
+        @Path("recurringPaymentId") recurringPaymentId: String,
+        @Body request: UpdateRecurringPaymentOleada2Request
+    ): RecurringPaymentOleada2Dto
+
+    @DELETE("recurring-payments/{recurringPaymentId}")
+    suspend fun deleteRecurringPaymentOleada2(
+        @Header("Authorization") authorization: String,
+        @Path("recurringPaymentId") recurringPaymentId: String
+    )
+
+    @GET("goals")
+    suspend fun getGoalsOleada2(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("status") status: String? = null
+    ): GoalsListResponse
+
+    @POST("goals")
+    suspend fun createGoalOleada2(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateGoalOleada2Request
+    ): GoalOleada2Dto
+
+    // Oleada 3 Endpoints (E020, E026, E037, E042–E051)
+    @GET("users/me/export")
+    suspend fun getUserExport(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null
+    ): UserExportResponse
+
+    @GET("financial-summary")
+    suspend fun getFinancialSummaryOleada3(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): FinancialSummaryOleada3Dto
+
+    @POST("recurring-payments/{recurringPaymentId}/payments")
+    suspend fun recordRecurringPaymentPaymentOleada3(
+        @Header("Authorization") authorization: String,
+        @Path("recurringPaymentId") recurringPaymentId: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: RecurringPaymentRecordPaymentRequest
+    ): MovementOleada2Dto
+
+    @DELETE("goals/{goalId}")
+    suspend fun deleteGoalOleada3(
+        @Header("Authorization") authorization: String,
+        @Path("goalId") goalId: String
+    )
+
+    @POST("goal-contributions/preview")
+    suspend fun previewGoalContribution(
+        @Header("Authorization") authorization: String,
+        @Body request: ContributionPreviewRequest
+    ): ContributionPreviewResponse
+
+    @POST("goal-contributions")
+    suspend fun createGoalContribution(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: ContributionCreateRequest
+    ): ContributionDto
+
+    @GET("goal-contributions")
+    suspend fun getGoalContributions(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("goalId") goalId: String? = null,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null,
+        @Query("status") status: String? = null
+    ): PageOfContributionResponse
+
+    @GET("goal-contributions/{contributionId}")
+    suspend fun getGoalContributionDetail(
+        @Header("Authorization") authorization: String,
+        @Path("contributionId") contributionId: String
+    ): ContributionDto
+
+    @POST("goal-contributions/{contributionId}/reverse")
+    suspend fun reverseGoalContribution(
+        @Header("Authorization") authorization: String,
+        @Path("contributionId") contributionId: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: ReverseContributionRequest
+    ): ContributionDto
+
+    @GET("budgets")
+    suspend fun getBudgets(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("period") period: String? = null
+    ): retrofit2.Response<PageOfBudgetResponse>
+
+    @PUT("budgets")
+    suspend fun replaceBudgets(
+        @Header("Authorization") authorization: String,
+        @Header("If-Match") ifMatch: String,
+        @Body request: BudgetReplaceRequest
+    ): retrofit2.Response<PageOfBudgetResponse>
+
+    @GET("budgets/usage")
+    suspend fun getBudgetUsage(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): PageOfBudgetUsageResponse
+
+    @GET("dashboard")
+    suspend fun getDashboard(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): DashboardResponse
+
+    // Oleadas 4 & 5 Endpoints (E021, E052–E067, E072–E075)
+
+    @GET("analytics/insights")
+    suspend fun getInsights(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): PageOfInsightResponse
+
+    @GET("analytics/categories")
+    suspend fun getCategoryAnalytics(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): PageOfCategoryAnalyticResponse
+
+    @GET("analytics/spending-patterns")
+    suspend fun getSpendingPatterns(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): PageOfSpendingPatternResponse
+
+    @GET("analytics/recommendations")
+    suspend fun getRecommendations(
+        @Header("Authorization") authorization: String,
+        @Query("period") period: String? = null
+    ): PageOfRecommendationResponse
+
+    @GET("analytics/savings-streak")
+    suspend fun getSavingsStreak(
+        @Header("Authorization") authorization: String
+    ): SavingsStreakDto
+
+    @GET("notification-preferences")
+    suspend fun getNotificationPreferences(
+        @Header("Authorization") authorization: String
+    ): NotificationPreferencesDto
+
+    @PUT("notification-preferences")
+    suspend fun updateNotificationPreferences(
+        @Header("Authorization") authorization: String,
+        @Header("If-Match") ifMatch: String? = null,
+        @Body request: UpdateNotificationPreferencesRequest
+    ): NotificationPreferencesDto
+
+    @POST("devices/push-tokens")
+    suspend fun registerPushToken(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: PushTokenRegisterRequest
+    ): PushDeviceResponse
+
+    @DELETE("devices/push-tokens/{deviceRegistrationId}")
+    suspend fun deletePushToken(
+        @Header("Authorization") authorization: String,
+        @Path("deviceRegistrationId") deviceRegistrationId: String
+    )
+
+    @GET("notifications")
+    suspend fun getNotifications(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("isRead") isRead: Boolean? = null,
+        @Query("type") type: String? = null
+    ): PageOfNotificationResponse
+
+    @PATCH("notifications/{notificationId}/read")
+    suspend fun markNotificationRead(
+        @Header("Authorization") authorization: String,
+        @Path("notificationId") notificationId: String
+    ): NotificationDto
+
+    @POST("notifications/read-all")
+    suspend fun markAllNotificationsRead(
+        @Header("Authorization") authorization: String
+    )
+
+    @GET("reminders")
+    suspend fun getReminders(
+        @Header("Authorization") authorization: String,
+        @Query("limit") limit: Int? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("active") active: Boolean? = null
+    ): PageOfReminderResponse
+
+    @POST("reminders")
+    suspend fun createReminder(
+        @Header("Authorization") authorization: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateReminderRequest
+    ): ReminderDto
+
+    @PATCH("reminders/{reminderId}")
+    suspend fun updateReminder(
+        @Header("Authorization") authorization: String,
+        @Header("If-Match") ifMatch: String,
+        @Path("reminderId") reminderId: String,
+        @Body request: UpdateReminderRequest
+    ): ReminderDto
+
+    @DELETE("reminders/{reminderId}")
+    suspend fun deleteReminder(
+        @Header("Authorization") authorization: String,
+        @Path("reminderId") reminderId: String
+    )
+
+    @GET("health/live")
+    suspend fun getHealthLive(): HealthDto
+
+    @GET("health/ready")
+    suspend fun getHealthReady(): HealthDto
+
+    @GET("demo/bootstrap")
+    suspend fun getDemoBootstrap(
+        @Header("Authorization") authorization: String
+    ): DemoBootstrapResponse
+
+    @POST("voice/parse")
+    suspend fun parseVoice(
+        @Header("Authorization") authorization: String,
+        @Body request: VoiceParseRequest
+    ): VoiceParseResponse
 }

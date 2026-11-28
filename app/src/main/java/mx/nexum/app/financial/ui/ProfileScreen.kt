@@ -3,6 +3,7 @@ package mx.nexum.app.financial.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,9 +17,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,34 +30,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.nexum.app.auth.ui.EmailVerificationIntent
+import mx.nexum.app.auth.ui.EmailVerificationRequestScreen
+import mx.nexum.app.auth.ui.EmailVerificationUiState
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
 fun ProfileScreen(
     state: ProfileUiState,
     onIntent: (ProfileIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    emailVerificationState: EmailVerificationUiState = EmailVerificationUiState(userEmail = state.email, isEmailVerified = state.emailVerified),
+    onEmailVerificationIntent: (EmailVerificationIntent) -> Unit = {},
+    onNavigateToConfirmEmail: () -> Unit = {}
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Ambient Cyber Glow
-        Box(
-            modifier = Modifier
-                .size(350.dp)
-                .align(Alignment.TopStart)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                            Color.Transparent
-                        )
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1E222B),
+                        Color(0xFF14171E)
                     )
                 )
-        )
-
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,30 +64,65 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "PERFIL DE USUARIO",
+                text = "PERFIL DE USUARIO // METADATA",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.5.sp
                 ),
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                tonalElevation = 8.dp
-            ) {
+            // Metadata card (Skeuomorphic)
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.secondary) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Información de Cuenta",
+                        text = "Detalles de Identidad",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    MetadataRow(label = "ID de Usuario", value = state.userId.ifBlank { "Cargando..." })
+                    MetadataRow(label = "Verificación de Correo", value = if (state.emailVerified) "Verificado ✓" else "Pendiente de verificación")
+                    MetadataRow(label = "Fecha de Alta", value = if (state.createdAt.length >= 10) state.createdAt.take(10) else "—")
+                    MetadataRow(label = "Versión del Perfil", value = "v${state.profileVersion}")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Export My Data Button (E020)
+            OutlinedButton(
+                onClick = { onIntent(ProfileIntent.OpenExport) },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("📥 Exportar Mis Datos (E020)", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Email Verification Card (E010/E011) if not verified
+            if (!state.emailVerified) {
+                EmailVerificationRequestScreen(
+                    state = emailVerificationState.copy(userEmail = state.email, isEmailVerified = state.emailVerified),
+                    onIntent = onEmailVerificationIntent,
+                    onNavigateToConfirmVerification = onNavigateToConfirmEmail,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.primary) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Configuración y Preferencias",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -179,12 +213,25 @@ fun ProfileScreen(
     }
 }
 
+@Composable
+private fun MetadataRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = Color.White)
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun ProfilePreview() {
     NexumTheme {
         ProfileScreen(
-            state = ProfileUiState(email = "usuario@nexum.mx", displayName = "Usuario Nexum"),
+            state = ProfileUiState(email = "usuario@nexum.mx", displayName = "Usuario Nexum", userId = "uuid-1234", emailVerified = true, createdAt = "2026-11-20T18:00:00Z"),
             onIntent = {}
         )
     }

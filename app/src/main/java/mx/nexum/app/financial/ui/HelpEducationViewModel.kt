@@ -8,10 +8,13 @@ import mx.nexum.app.core.mvi.UiState
 import mx.nexum.app.financial.data.FinancialRepository
 import mx.nexum.app.financial.data.dto.EducationTipDto
 import mx.nexum.app.financial.data.dto.FaqItemDto
+import mx.nexum.app.financial.data.dto.HealthDto
 
 data class HelpEducationUiState(
     val faqs: List<FaqItemDto> = emptyList(),
     val tips: List<EducationTipDto> = emptyList(),
+    val healthLive: HealthDto? = null,
+    val healthReady: HealthDto? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 ) : UiState
@@ -30,6 +33,9 @@ class HelpEducationViewModel(
     private val financialRepository: FinancialRepository
 ) : MviViewModel<HelpEducationUiState, HelpEducationIntent, HelpEducationEffect>(HelpEducationUiState()) {
 
+    var isLoaded = false
+        private set
+
     init {
         onIntent(HelpEducationIntent.LoadHelpData)
     }
@@ -41,6 +47,7 @@ class HelpEducationViewModel(
     }
 
     private fun loadData() {
+        isLoaded = true
         launchSafely(
             onError = {
                 setState {
@@ -54,15 +61,21 @@ class HelpEducationViewModel(
             setState { copy(isLoading = true, errorMessage = null) }
             val faqResult = financialRepository.getFaq()
             val tipsResult = financialRepository.getEducationTips()
+            val liveRes = financialRepository.getHealthLive()
+            val readyRes = financialRepository.getHealthReady()
 
             val faqs = (faqResult as? AuthResult.Success)?.data ?: emptyList()
             val tips = (tipsResult as? AuthResult.Success)?.data ?: emptyList()
+            val live = (liveRes as? AuthResult.Success)?.data
+            val ready = (readyRes as? AuthResult.Success)?.data
 
             setState {
                 copy(
                     isLoading = false,
                     faqs = faqs,
-                    tips = tips
+                    tips = tips,
+                    healthLive = live,
+                    healthReady = ready
                 )
             }
         }

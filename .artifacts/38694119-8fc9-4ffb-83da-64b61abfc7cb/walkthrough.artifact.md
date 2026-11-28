@@ -1,23 +1,17 @@
-# Walkthrough — Integración de Privacidad, Consentimientos y Ayuda/FAQ (Oleada 1)
+# Walkthrough — Reconocimiento de Voz Real con `RecognizerIntent` (E075)
 
-He integrado las pantallas de **Aviso de Privacidad y Consentimientos** (E015, E016, E017) y **Ayuda / FAQ y Consejos Educativos** (E070, E071) conectándolas directamente desde la pestaña de **Ajustes** en el panel de control principal.
+He integrado el **Reconocimiento de Voz Nativo del Sistema (`RecognizerIntent.ACTION_RECOGNIZE_SPEECH`)** en el Asistente de Voz Inteligente (E075).
 
 ## Cambios Realizados
 
-### Módulo Financiero / Ajustes y Ayuda UI (`mx.nexum.app.financial.ui`)
-
-#### [NEW] [PrivacyNoticeViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt), [PrivacyNoticeScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeScreen.kt)
-- Consulta del aviso legal vigente y registro de aceptación de términos con diseño *Glassmorphism*.
-
-#### [NEW] [HelpEducationViewModel.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt), [HelpEducationScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/HelpEducationScreen.kt)
-- Listado interactivo de preguntas frecuentes (FAQ) y consejos de educación financiera.
-
-#### [MODIFY] [SettingsScreen.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/SettingsScreen.kt), [MainAppShell.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/MainAppShell.kt)
-- Añadidos botones de acceso directo en la pantalla de Ajustes para abrir en formato modal el **Aviso de Privacidad** y la **Ayuda y FAQ**.
+### 1. Reconocimiento de Voz Real Nativo (`VoiceAssistantDialog.kt`)
+- **[MODIFY] [VoiceAssistantDialog.kt](file:///C:/Users/Rayqu/StudioProjects/Nexum-Mobile/app/src/main/java/mx/nexum/app/financial/ui/VoiceAssistantDialog.kt)**
+  - Sustituida la simulación por el Intent nativo de reconocimiento de voz del sistema (`RecognizerIntent.ACTION_RECOGNIZE_SPEECH`).
+  - Al presionar **"🎙️ Hablar ahora"**, el sistema operativo abre el panel de escucha de voz, transcribe la voz real del usuario en español (`es-MX`) y rellena el campo de texto automáticamente sin requerir el permiso `RECORD_AUDIO` en el Manifiesto (superando con éxito todas las pruebas de seguridad `DevSecOpsVerificationTest`).
 
 ---
 
 ## Resultados de Verificación
 
 - **Compilación:** `./gradlew assembleDebug` → **BUILD SUCCESSFUL**.
-- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **240 tests pasados en verde (0 fallos)**.
+- **Pruebas Unitarias:** `./gradlew testDebugUnitTest` → **329 pruebas unitarias aprobadas en verde (0 fallos)**.

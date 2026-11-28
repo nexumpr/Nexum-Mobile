@@ -1,5 +1,7 @@
 package mx.nexum.app.financial.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,6 +40,8 @@ fun PrivacyNoticeScreen(
     onIntent: (PrivacyNoticeIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -78,7 +84,7 @@ fun PrivacyNoticeScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else {
-                val notice = state.notice ?: PrivacyNoticeDto("v1.0", "Aviso General", "Tus datos financieros están protegidos bajo estrictos estándares de encriptación y cumplimiento normativo.", "2026-11-01")
+                val notice = state.notice ?: PrivacyNoticeDto("v1.0", "Aviso de Privacidad y Términos", "Tus datos financieros están protegidos bajo estrictos estándares de encriptación y cumplimiento normativo.", "2026-11-01")
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -109,12 +115,28 @@ fun PrivacyNoticeScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // External Web Link Button for Official Terms & Privacy
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://nexumpr.github.io/nexum-privacidad/"))
+                                try {
+                                    context.startActivity(intent)
+                                } catch (_: Exception) {}
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("🌐 Consultar Términos y Condiciones en la Web ↗", fontWeight = FontWeight.SemiBold)
+                        }
+
                         state.successMessage?.let { success ->
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(text = success, color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall)
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
                         Button(
                             onClick = { onIntent(PrivacyNoticeIntent.AcceptConsent(notice.version)) },
                             enabled = !state.isLoading,

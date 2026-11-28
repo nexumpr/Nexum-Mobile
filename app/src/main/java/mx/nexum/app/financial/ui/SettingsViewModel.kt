@@ -2,22 +2,29 @@ package mx.nexum.app.financial.ui
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import mx.nexum.app.auth.data.InMemoryTokenStorage
+import mx.nexum.app.auth.data.AuthResult
+import mx.nexum.app.auth.data.SharedTokenStorage
 import mx.nexum.app.auth.data.TokenStorage
 import mx.nexum.app.core.mvi.MviViewModel
 import mx.nexum.app.core.mvi.UiEffect
 import mx.nexum.app.core.mvi.UiIntent
 import mx.nexum.app.core.mvi.UiState
+import mx.nexum.app.financial.data.FinancialRepository
 
 data class SettingsUiState(
     val currentPassword: String = "",
     val newPassword: String = "",
     val confirmPassword: String = "",
     val isDarkTheme: Boolean = true,
+    val demoScope: String = "sandbox",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null,
-    val isLoggedOut: Boolean = false
+    val isLoggedOut: Boolean = false,
+    val showDeleteAccountDialog: Boolean = false,
+    val deleteAccountPassword: String = "",
+    val deleteAccountConfirmationText: String = "",
+    val deleteAccountError: String? = null
 ) : UiState
 
 sealed interface SettingsIntent : UiIntent {
@@ -28,23 +35,35 @@ sealed interface SettingsIntent : UiIntent {
     data object SubmitChangePassword : SettingsIntent
     data object OpenPrivacy : SettingsIntent
     data object OpenHelp : SettingsIntent
-    data object Logout : SettingsIntent
+    data object OpenExport : SettingsIntent
     data object NavigateToActiveSessions : SettingsIntent
+    data object ShowDeleteAccountDialog : SettingsIntent
+    data object DismissDeleteAccountDialog : SettingsIntent
+    data class DeleteAccountPasswordChanged(val v: String) : SettingsIntent
+    data class DeleteAccountConfirmationTextChanged(val v: String) : SettingsIntent
+    data object ConfirmDeleteAccount : SettingsIntent
+    data object Logout : SettingsIntent
 }
 
 sealed interface SettingsEffect : UiEffect {
     data object NavigateToLogin : SettingsEffect
     data object NavigateToPrivacy : SettingsEffect
     data object NavigateToHelp : SettingsEffect
+    data object NavigateToExport : SettingsEffect
     data object NavigateToActiveSessions : SettingsEffect
     data class ShowToast(val message: String) : SettingsEffect
 }
 
 @Suppress("unused")
 class SettingsViewModel(
-    private val tokenStorage: TokenStorage = InMemoryTokenStorage(),
-    private val onThemeChanged: (Boolean) -> Unit = {}
+    private val tokenStorage: TokenStorage = SharedTokenStorage.instance,
+    private val onThemeChanged: (Boolean) -> Unit = {},
+    private val financialRepository: FinancialRepository? = null
 ) : MviViewModel<SettingsUiState, SettingsIntent, SettingsEffect>(SettingsUiState()) {
+
+    init {
+        loadDemoStatus()
+    }
 
     override fun onIntent(intent: SettingsIntent) {
         when (intent) {
@@ -58,11 +77,25 @@ class SettingsViewModel(
             SettingsIntent.SubmitChangePassword -> changePassword()
             SettingsIntent.OpenPrivacy -> emitEffect(SettingsEffect.NavigateToPrivacy)
             SettingsIntent.OpenHelp -> emitEffect(SettingsEffect.NavigateToHelp)
+            SettingsIntent.OpenExport -> emitEffect(SettingsEffect.NavigateToExport)
+            SettingsIntent.NavigateToActiveSessions -> emitEffect(SettingsEffect.NavigateToActiveSessions)
+            SettingsIntent.ShowDeleteAccountDialog -> setState { copy(showDeleteAccountDialog = true, deleteAccountError = null, deleteAccountPassword = "", deleteAccountConfirmationText = "") }
+            SettingsIntent.DismissDeleteAccountDialog -> setState { copy(showDeleteAccountDialog = false) }
+            is SettingsIntent.DeleteAccountPasswordChanged -> setState { copy(deleteAccountPassword = intent.v, deleteAccountError = null) }
+            is SettingsIntent.DeleteAccountConfirmationTextChanged -> setState { copy(deleteAccountConfirmationText = intent.v, deleteAccountError = null) }
+            SettingsIntent.ConfirmDeleteAccount -> deleteAccount()
             SettingsIntent.Logout -> logout()
-            SettingsIntent.NavigateToActiveSessions -> {
-                viewModelScope.launch {
-                    emitEffect(SettingsEffect.NavigateToActiveSessions)
+        }
+    }
+
+    private fun loadDemoStatus() {
+        if (financialRepository == null) return
+        viewModelScope.launch {
+            when (val res = financialRepository.getDemoBootstrap()) {
+                is AuthResult.Success -> {
+                    setState { copy(demoScope = res.data.scope) }
                 }
+                is AuthResult.Failure -> {}
             }
         }
     }
@@ -91,6 +124,39 @@ class SettingsViewModel(
                 )
             }
             emitEffect(SettingsEffect.ShowToast("Contraseña actualizada exitosamente."))
+        }
+    }
+
+    private fun deleteAccount() {
+        val current = currentState
+        if (current.deleteAccountConfirmationText != "DELETE_MY_ACCOUNT") {
+            setState { copy(deleteAccountError = "Debes escribir exactamente 'DELETE_MY_ACCOUNT'") }
+            return
+        }
+        if (current.deleteAccountPassword.isBlank()) {
+            setState { copy(deleteAccountError = "Ingresa tu contraseña actual") }
+            return
+        }
+
+        viewModelScope.launch {
+            setState { copy(isLoading = true, deleteAccountError = null) }
+            if (financialRepository != null) {
+                when (val result = financialRepository.deleteAccount(current.deleteAccountPassword)) {
+                    is AuthResult.Success<*> -> {
+                        setState { copy(isLoading = false, showDeleteAccountDialog = false, isLoggedOut = true) }
+                        emitEffect(SettingsEffect.ShowToast("Eliminación de cuenta programada (202 Accepted)."))
+                        emitEffect(SettingsEffect.NavigateToLogin)
+                    }
+                    is AuthResult.Failure -> {
+                        setState { copy(isLoading = false, deleteAccountError = result.error.message) }
+                    }
+                }
+            } else {
+                tokenStorage.clear()
+                setState { copy(isLoading = false, showDeleteAccountDialog = false, isLoggedOut = true) }
+                emitEffect(SettingsEffect.ShowToast("Eliminación de cuenta programada."))
+                emitEffect(SettingsEffect.NavigateToLogin)
+            }
         }
     }
 

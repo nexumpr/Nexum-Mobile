@@ -13,13 +13,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import mx.nexum.app.financial.data.dto.RecurringPaymentDto
+import mx.nexum.app.financial.data.dto.RecurringPaymentOleada2Dto
 import mx.nexum.app.ui.theme.NexumTheme
 
 @Composable
@@ -37,6 +49,15 @@ fun RecurringPaymentsScreen(
     onIntent: (RecurringPaymentsIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showAddDialog by remember { mutableStateOf(false) }
+    var editingPayment by remember { mutableStateOf<RecurringPaymentOleada2Dto?>(null) }
+    var deletingPaymentId by remember { mutableStateOf<String?>(null) }
+
+    var conceptInput by remember { mutableStateOf("") }
+    var amountInput by remember { mutableStateOf("") }
+    var startDateInput by remember { mutableStateOf("2026-11-01") }
+    var nextDueDateInput by remember { mutableStateOf("2026-12-01") }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -50,7 +71,7 @@ fun RecurringPaymentsScreen(
                 .background(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
                             Color.Transparent
                         )
                     )
@@ -73,13 +94,43 @@ fun RecurringPaymentsScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            state.errorMessage?.let { err ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Text(
+                        text = "Error: $err",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (state.payments.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No hay pagos programados.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "No tienes pagos programados.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Toca el botón + para agregar tu primer pago recurrente.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
@@ -90,39 +141,200 @@ fun RecurringPaymentsScreen(
                         RecurringPaymentCard(
                             payment = payment,
                             onRecordPayment = { onIntent(RecurringPaymentsIntent.RecordPayment(payment.id, payment.amount)) },
-                            onDelete = { onIntent(RecurringPaymentsIntent.DeletePayment(payment.id)) }
+                            onEdit = { editingPayment = payment },
+                            onDelete = { deletingPaymentId = payment.id }
                         )
                     }
                 }
             }
+        }
+
+        // FAB to add real recurring payment
+        FloatingActionButton(
+            onClick = { showAddDialog = true },
+            shape = CircleShape,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Nuevo Pago Programado")
+        }
+
+        // Create Dialog
+        if (showAddDialog) {
+            AlertDialog(
+                onDismissRequest = { showAddDialog = false },
+                title = { Text("Nuevo Pago Recurrente", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = conceptInput,
+                            onValueChange = { conceptInput = it },
+                            label = { Text("Nombre del pago") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = amountInput,
+                            onValueChange = { amountInput = it },
+                            label = { Text("Monto (ej. 3500.00)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = startDateInput,
+                            onValueChange = { startDateInput = it },
+                            label = { Text("Fecha de Inicio (YYYY-MM-DD)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = nextDueDateInput,
+                            onValueChange = { nextDueDateInput = it },
+                            label = { Text("Próximo Vencimiento (YYYY-MM-DD)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (conceptInput.isNotBlank() && amountInput.isNotBlank()) {
+                                onIntent(
+                                    RecurringPaymentsIntent.CreatePayment(
+                                        name = conceptInput.trim(),
+                                        amount = amountInput.trim(),
+                                        startDate = startDateInput.trim(),
+                                        nextDueDate = nextDueDateInput.trim()
+                                    )
+                                )
+                            }
+                            showAddDialog = false
+                            conceptInput = ""
+                            amountInput = ""
+                        }
+                    ) {
+                        Text("Crear en Servidor")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showAddDialog = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
+        // Edit Dialog (E035)
+        editingPayment?.let { paymentToEdit ->
+            var editName by remember { mutableStateOf(paymentToEdit.name) }
+            var editAmount by remember { mutableStateOf(paymentToEdit.amount) }
+            var editDueDate by remember { mutableStateOf(paymentToEdit.nextDueDate) }
+
+            AlertDialog(
+                onDismissRequest = { editingPayment = null },
+                title = { Text("Editar Pago Recurrente (E035)", fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = editName,
+                            onValueChange = { editName = it },
+                            label = { Text("Nombre del pago") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = editAmount,
+                            onValueChange = { editAmount = it },
+                            label = { Text("Monto ($)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = editDueDate,
+                            onValueChange = { editDueDate = it },
+                            label = { Text("Próximo Vencimiento (YYYY-MM-DD)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (editName.isNotBlank() && editAmount.isNotBlank()) {
+                                onIntent(
+                                    RecurringPaymentsIntent.EditPayment(
+                                        paymentId = paymentToEdit.id,
+                                        name = editName.trim(),
+                                        amount = editAmount.trim(),
+                                        nextDueDate = editDueDate.trim(),
+                                        version = paymentToEdit.version
+                                    )
+                                )
+                            }
+                            editingPayment = null
+                        }
+                    ) {
+                        Text("Guardar Cambios (PATCH)")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { editingPayment = null }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+
+        // Delete Confirmation Dialog (E036)
+        deletingPaymentId?.let { targetId ->
+            AlertDialog(
+                onDismissRequest = { deletingPaymentId = null },
+                title = { Text("Desactivar Pago Programado", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error) },
+                text = { Text("¿Estás seguro que deseas desactivar esta regla de pago recurrente? Conservará tu historial de pagos pasados.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            onIntent(RecurringPaymentsIntent.DeletePayment(targetId))
+                            deletingPaymentId = null
+                        },
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Desactivar", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deletingPaymentId = null }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }
 
 @Composable
 private fun RecurringPaymentCard(
-    payment: RecurringPaymentDto,
+    payment: RecurringPaymentOleada2Dto,
     onRecordPayment: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-        tonalElevation = 4.dp
-    ) {
+    SkeuomorphicCard(accentColor = MaterialTheme.colorScheme.primary) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = payment.concept,
+                    text = payment.name,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -140,6 +352,9 @@ private fun RecurringPaymentCard(
                 TextButton(onClick = onRecordPayment) {
                     Text(text = "✓", color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.headlineSmall)
                 }
+                TextButton(onClick = onEdit) {
+                    Text(text = "✎", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                }
                 TextButton(onClick = onDelete) {
                     Text(text = "×", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.headlineMedium)
                 }
@@ -153,12 +368,7 @@ private fun RecurringPaymentCard(
 private fun RecurringPreview() {
     NexumTheme {
         RecurringPaymentsScreen(
-            state = RecurringPaymentsUiState(
-                payments = listOf(
-                    RecurringPaymentDto("1", "Internet Fibra", 650.0, "cat_1", "fixed", "monthly", 650.0, true),
-                    RecurringPaymentDto("2", "Electricidad", 800.0, "cat_2", "variable", "monthly", null, true)
-                )
-            ),
+            state = RecurringPaymentsUiState(),
             onIntent = {}
         )
     }
