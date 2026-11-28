@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -27,13 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowsLeftRight
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.Home
+import compose.icons.tablericons.Settings
+import compose.icons.tablericons.Target
+import compose.icons.tablericons.User
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mx.nexum.app.auth.data.AuthRepository
 import mx.nexum.app.auth.data.TokenStorage
@@ -47,12 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 sealed class MainTab(val title: String, val icon: ImageVector) {
-    object Summary : MainTab("Resumen", Icons.Default.Home)
-    object Movements : MainTab("Movimientos", Icons.Default.List)
-    object Recurring : MainTab("Pagos", Icons.Default.CheckCircle)
-    object Goals : MainTab("Metas", Icons.Default.Star)
-    object Profile : MainTab("Perfil", Icons.Default.Person)
-    object Settings : MainTab("Ajustes", Icons.Default.Settings)
+    object Summary : MainTab("Resumen", TablerIcons.Home)
+    object Movements : MainTab("Movimientos", TablerIcons.ArrowsLeftRight)
+    object Recurring : MainTab("Pagos", TablerIcons.CircleCheck)
+    object Goals : MainTab("Metas", TablerIcons.Target)
+    object Profile : MainTab("Perfil", TablerIcons.User)
+    object Settings : MainTab("Ajustes", TablerIcons.Settings)
 }
 
 @Composable
@@ -146,8 +147,14 @@ fun MainAppShell(
                     val tabs = listOf(MainTab.Summary, MainTab.Movements, MainTab.Recurring, MainTab.Goals, MainTab.Profile, MainTab.Settings)
                     tabs.forEach { tab ->
                         NavigationBarItem(
-                            icon = { Icon(tab.icon, contentDescription = tab.title) },
-                            label = { Text(tab.title) },
+                            icon = {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = tab.title,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            },
+                            alwaysShowLabel = false,
                             selected = selectedTab == tab,
                             onClick = { selectedTab = tab },
                             colors = NavigationBarItemDefaults.colors(

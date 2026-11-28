@@ -53,7 +53,16 @@ class ProfileViewModel(
     }
 
     private fun loadProfile() {
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar el perfil."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             val profileResult = financialRepository.getUserProfile()
             val prefResult = financialRepository.getPreferences()
@@ -63,9 +72,9 @@ class ProfileViewModel(
                     setState {
                         copy(
                             isLoading = false,
-                            email = profileResult.data.email,
-                            displayName = profileResult.data.displayName,
-                            emailVerified = profileResult.data.emailVerified
+                            email = profileResult.data.email ?: email,
+                            displayName = profileResult.data.displayName ?: displayName,
+                            emailVerified = profileResult.data.emailVerified ?: emailVerified
                         )
                     }
                 }
@@ -77,8 +86,8 @@ class ProfileViewModel(
             if (prefResult is AuthResult.Success) {
                 setState {
                     copy(
-                        language = prefResult.data.language,
-                        timezone = prefResult.data.timezone
+                        language = prefResult.data.resolvedLanguage(language),
+                        timezone = prefResult.data.resolvedTimezone(timezone)
                     )
                 }
             }

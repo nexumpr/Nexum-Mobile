@@ -956,3 +956,40 @@ Consultar `specs/README.md`, escoger una unidad de arquitectura base y autorizar
   - `.\gradlew.bat lintDebug --no-daemon` → **BUILD SUCCESSFUL in 4m 5s** · reportes `app/build/reports/lint-results-debug.html` y `.sarif`.
   - Dos ejecuciones intermedias fallaron y fueron corregidas antes de registrar éxito: (1) compilación con `Unresolved reference 'launch'` y fake `AuthApiService` sin `confirmEmailVerification`; (2) 4 pruebas con `UncompletedCoroutinesError` porque el colector de `effects` se lanzó en `TestScope` en lugar de `backgroundScope`. Ningún resultado fallido se documentó como válido.
 - **Riesgos y pendientes:** la invalidación atómica y la persistencia del cambio de correo verificado dependen del backend Go y se consolidan en el siguiente login E002; no se probó contra producción; los tokens y sesiones usados son sintéticos; no se realizaron push, merge, despliegue, llamadas a backend real ni activación de servicios con costo.
+
+## 54. Evidencia — Hotfix de carga segura del Panel Financiero y ruta `financial-summary` (2026-11-28)
+- **Fecha:** 2026-11-28 · **Mandato:** humano autorizó corregir directamente el crash posterior a «Error de red al procesar integración Oleada 1.» al abrir el Panel Financiero, preservando MVI UDF, sin extrapolar a otras unidades.
+- **Diagnóstico (análisis estático, sin logcat real):**
+  - El mensaje rojo provenía de `FinancialRepositoryImpl.getFinancialSummary()` al mapear una excepción de red; no era un error de la Bottom Bar.
+  - `FinancialApiService.getFinancialSummary()` usaba `@GET("summary")`, pero el contrato de integración documentado para E026 es `/api/v1/financial-summary`.
+  - El crash letal ocurría en `ProfileViewModel.loadProfile()`: `PreferencesDto.language` se declaró no-null pero E068 envía `locale`; Gson dejaba `language = null` y `copy(...)` lanzaba `NullPointerException`, cerrando la app.
+  - `MainAppShell` tiene 6 pestañas y 6 ramas de contenido; no hay índices de `NavHost` desincronizados. Se verificó que el fallo no estaba en la navegación inferior.
+- **Decisiones aplicadas:**
+  - `MviViewModel` expone `launchSafely(onError, block)`: propaga `CancellationException` y convierte cualquier otra excepción en estado de error, evitando que una corrutina hija derribe la app.
+  - Las siete cargas iniciales lanzadas por `MainAppShell` usan `launchSafely` con mensajes genéricos en español; no se registran tokens, correos ni datos financieros.
+  - `PreferencesDto` acepta `locale` y `language` legado con defaults nulos y expone `resolvedLanguage(default)` / `resolvedTimezone(default)`; `UpdatePreferencesRequest` envía `locale` según E068.
+  - `FinancialSummaryResponse` acepta nombres E026 (`incomeEquivalent`, `recurringFixedEstimate`, `antExpenses`, `goalReservations`, `availableEstimate`) con defaults `0.0` y `currency` opcional; `oneTimeFixed` queda pendiente de definición de mapeo, no se inventa agregación.
+  - `UserProfileDto` tolera campos ausentes y `displayName`/`name`; `ProfileViewModel` conserva el valor previo cuando el DTO trae nulos.
+- **Alcance ejecutado:**
+  - `app/src/main/java/mx/nexum/app/core/mvi/MviViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/data/FinancialRepository.kt`
+  - `app/src/main/java/mx/nexum/app/financial/data/dto/FinancialDtos.kt`
+  - `app/src/main/java/mx/nexum/app/financial/data/network/FinancialApiService.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/FinancialSummaryViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/MovementsListViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/RecurringPaymentsViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/GoalsViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/ProfileViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/PrivacyNoticeViewModel.kt`
+  - `app/src/main/java/mx/nexum/app/financial/ui/HelpEducationViewModel.kt`
+  - `app/src/test/java/mx/nexum/app/core/mvi/MviCoreTest.kt` (modificado)
+  - `app/src/test/java/mx/nexum/app/financial/data/PreferencesAndSummaryRegressionTest.kt` (creado)
+  - `app/src/test/java/mx/nexum/app/financial/ui/ProfileViewModelRegressionTest.kt` (creado)
+  - El árbol ya estaba sucio con `MainAppShell.kt` (iconos Tabler), `app/build.gradle.kts`, `gradle/libs.versions.toml` y `drawable/nexum_icon.jpeg`; esos cambios preexistentes no se sobrescribieron.
+- **Entorno:** Windows 11 · PowerShell · Android Studio JBR (`JAVA_HOME=C:\Users\demon\AppData\Local\Programs\Android Studio\jbr`) · Kotlin 2.2.10 · Compose Material 3 · Coroutines Test 1.10.1 · Retrofit 2.11.0 · Gson.
+- **Resultados de validación reales:**
+  - `.\gradlew.bat assembleDebug testDebugUnitTest lintDebug` → primera ejecución **FALLIDA** por `PreferencesAndSummaryRegressionTest.financialSummaryAcceptsDocumentedE026FieldNames`: Gson sobrescribía `fixedExpenses` al procesar dos `alternate` (`recurringFixedEstimate` y `oneTimeFixed`). La falla se corrigió antes de registrar éxito, dejando un solo `alternate` por campo.
+  - `.\gradlew.bat testDebugUnitTest` → **BUILD SUCCESSFUL in 1m** · 337/337 tests unitarios (0 fallos, 0 errores) en 40 clases, incluidas las nuevas pruebas de `locale`, DTO y captura segura de excepciones.
+  - `.\gradlew.bat assembleDebug lintDebug` → **BUILD SUCCESSFUL in 3m 24s** · APK debug generado · SARIF con 0 problemas de nivel `error`.
+  - No se ejecutó la app contra backend real ni se capturó logcat; la validación es compilación + suite unitaria + lint.
+- **Riesgos y pendientes:** la revisión local de `specs/380-Resumen-Financiero/spec.md` confirma que `oneTimeFixed` es un importe independiente («obligatorios únicos») y que la fórmula documentada es `availableEstimate = incomeEquivalent - recurringFixedEstimate - oneTimeFixed - antExpenses - goalReservations`; la composición exacta sigue marcada como «por confirmar con Backend». El hotfix no implementó la unidad 380 ni su mapeo completo porque no hubo mandato explícito «implementa specs/380-Resumen-Financiero». El endpoint se alineó al contrato documentado pero no se probó contra el servidor real; no se realizaron push, merge, despliegue ni llamadas a servicios externos.

@@ -67,7 +67,7 @@ interface FinancialApiService {
         @Body request: UpdateIncomeRequest
     ): IncomeDto
 
-    @GET("summary")
+    @GET("financial-summary")
     suspend fun getFinancialSummary(
         @Header("Authorization") authorization: String
     ): FinancialSummaryResponse

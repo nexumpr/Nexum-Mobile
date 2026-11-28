@@ -46,7 +46,16 @@ class PrivacyNoticeViewModel(
     }
 
     private fun loadData() {
-        viewModelScope.launch {
+        launchSafely(
+            onError = {
+                setState {
+                    copy(
+                        isLoading = false,
+                        errorMessage = "No fue posible cargar el aviso de privacidad."
+                    )
+                }
+            }
+        ) {
             setState { copy(isLoading = true, errorMessage = null) }
             val noticeResult = financialRepository.getCurrentPrivacyNotice()
             val consentsResult = financialRepository.getUserConsents()
